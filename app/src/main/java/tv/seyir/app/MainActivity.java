@@ -75,7 +75,7 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
         Button searchButton=Ui.button(this,"Ara",this::search);top.addView(searchButton);defaultFocus=searchButton;space(top);
         top.addView(Ui.button(this,"Favoriler",()->showLibrary("favorites")));space(top);
         top.addView(Ui.button(this,"Devam et",()->showLibrary("history")));space(top);
-        top.addView(Ui.button(this,"Bilgi",()->new AlertDialog.Builder(this).setTitle("Seyir TV · 0.2.0")
+        top.addView(Ui.button(this,"Bilgi",()->new AlertDialog.Builder(this).setTitle("Seyir TV · 0.2.1")
             .setMessage("Film ve dizilerin, tek ekranda.\n\nYön tuşları: gezin\nOK: seç\nGeri: önceki ekran\n\nFavoriler ve izleme ilerlemesi bu cihazda saklanır. Kaynaklar kendi sitelerinden yüklenir; açılmaları sitelerin erişilebilirliğine bağlıdır.\n\nHarici hesap veya eklenti kurulumu gerekmez.")
             .setPositiveButton("Tamam",null).show()));space(top);
         top.addView(Ui.button(this,"Güncelle",()->AppUpdater.check(this,true)));space(top);
@@ -262,12 +262,16 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
     private String bestStream(){
         String fallback=null;
         for(String candidate:streams.keySet()){
+            if(MediaPolicy.isAd(candidate)) continue;
             if(fallback==null)fallback=candidate;
             String lower=candidate.toLowerCase(Locale.ROOT);
             if(!lower.matches(".*(^|[/_.?&=-])(audio|sound|aac|mp3)([/_.?&=-]|$).*")&&
                (lower.contains("master")||lower.contains("index")||lower.contains("playlist")))return candidate;
         }
-        for(String candidate:streams.keySet())if(!candidate.toLowerCase(Locale.ROOT).matches(".*(^|[/_.?&=-])(audio|sound|aac|mp3)([/_.?&=-]|$).*"))return candidate;
+        for(String candidate:streams.keySet()){
+            if(MediaPolicy.isAd(candidate)) continue;
+            if(!candidate.toLowerCase(Locale.ROOT).matches(".*(^|[/_.?&=-])(audio|sound|aac|mp3)([/_.?&=-]|$).*"))return candidate;
+        }
         return fallback;
     }
     private void play(String url){

@@ -51,7 +51,7 @@ public final class SiteEngine {
         s.setUseWideViewPort(true); s.setLoadWithOverviewMode(true);
         CookieManager.getInstance().setAcceptThirdPartyCookies(web,true);
         if(WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)&&WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)){
-            Set<String> origins=new HashSet<>();for(Source s0:Source.values()){String host=Uri.parse(s0.home).getHost().replaceFirst("^www\\.","");origins.add("https://"+host);origins.add("https://*."+host);}origins.add("https://rapidvid.net");origins.add("https://*.rapidvid.net");origins.add("https://pichive.online");origins.add("https://*.pichive.online");origins.add("https://vidmoly.to");origins.add("https://*.vidmoly.to");origins.add("https://vidmoly.net");origins.add("https://*.vidmoly.net");
+            Set<String> origins=new HashSet<>();for(Source s0:Source.values()){String host=Uri.parse(s0.home).getHost().replaceFirst("^www\\.","");origins.add("https://"+host);origins.add("https://*."+host);}origins.add("https://rapidvid.net");origins.add("https://*.rapidvid.net");origins.add("https://pichive.online");origins.add("https://*.pichive.online");origins.add("https://vidmoly.to");origins.add("https://*.vidmoly.to");origins.add("https://vidmoly.net");origins.add("https://*.vidmoly.net");origins.add("https://ksdpictures.site");origins.add("https://*.ksdpictures.site");origins.add("https://yabancidizim.com");origins.add("https://*.yabancidizim.com");
             WebViewCompat.addWebMessageListener(web,"SeyirMedia",origins,(view,message,origin,main,reply)->{
                 if(!captureActive||destroyed||message.getData()==null||message.getData().length()>16384)return;
                 try{JSONObject data=new JSONObject(message.getData());String u=data.optString("url"),page=data.optString("page");if(!MediaPolicy.isVideo(u)||!MediaPolicy.isHttps(page)||!Objects.equals(Uri.parse(page).getHost(),origin.getHost()))return;if(streams.size()<40&&streams.add(u)){Map<String,String> h=new HashMap<>();h.put("Referer",page);h.put("User-Agent",web.getSettings().getUserAgentString());listener.stream(u,h);}}catch(Exception ignored){}
@@ -86,6 +86,9 @@ public final class SiteEngine {
             }
             @Override public WebResourceResponse shouldInterceptRequest(WebView v,WebResourceRequest r) {
                 String url=r.getUrl().toString();
+                if(MediaPolicy.isAd(url)) {
+                    return new WebResourceResponse("text/plain","UTF-8",new java.io.ByteArrayInputStream(new byte[0]));
+                }
                 if(captureActive&&"GET".equals(r.getMethod())&&MediaPolicy.isVideo(url)) {
                     Map<String,String> headers=new HashMap<>();
                     for(Map.Entry<String,String> h:r.getRequestHeaders().entrySet())

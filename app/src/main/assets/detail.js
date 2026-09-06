@@ -4,7 +4,7 @@
   const absolute = value => { try { const u = new URL(value, location.href); return u.protocol === 'https:' ? u.href : ''; } catch (_) { return ''; } };
   const host = location.hostname.replace(/^www\./, '');
   const episodes = [], frames = [], actions = [], seenEpisodes = new Set(), seenFrames = new Set();
-  const addFrame = value => { const url = absolute(value); if (url && !/youtube|doubleclick|googlesyndication/i.test(url) && !seenFrames.has(url)) { seenFrames.add(url); frames.push(url); } };
+  const addFrame = value => { const url = absolute(value); if (url && !/youtube|doubleclick|googlesyndication|googlead|adservice|adsystem|popads|adsterra|propeller|banner|traffic|1xbet|betwinner/i.test(url) && !seenFrames.has(url)) { seenFrames.add(url); frames.push(url); } };
   const addEpisode = (value, label, forcedSeason) => {
     const url = absolute(value); if (!url || seenEpisodes.has(url)) return;
     const match = url.match(/(?:-|\/)(\d+)-sezon-(\d+)-bolum/i) || clean(label).match(/(\d+)\.?\s*sezon\s*(\d+)\.?\s*bölüm/i);
@@ -51,11 +51,11 @@
     });
     document.querySelectorAll('iframe').forEach(frame => addFrame(frame.getAttribute('src') || frame.getAttribute('data-src')));
   } else if (host.includes('dizibox')) {
-    // DiziBOX has one independent URL per season and episode anchors use .season-episode.
-    seasonLoading = fetchSeasonPages('a.btn[href*="/dizi/"][href*="sezon"]', (doc, base, rows) => {
-      doc.querySelectorAll('a.season-episode[href]').forEach(anchor => { const label = clean(anchor.textContent), match = label.match(/(\d+)\.?\s*sezon\s*(\d+)\.?\s*bölüm/i); rows.push({ url: new URL(anchor.getAttribute('href'), base).href, label, season: match ? Number(match[1]) : 0 }); });
+    // DiziBOX has one independent URL per season and episode anchors use .season-episode or slug pattern.
+    seasonLoading = fetchSeasonPages('a.btn[href*="/dizi/"][href*="sezon"],a[href*="-sezon/"]', (doc, base, rows) => {
+      doc.querySelectorAll('a.season-episode[href],a[href*="-sezon-"][href*="-bolum"]').forEach(anchor => { const label = clean(anchor.textContent), match = label.match(/(\d+)\.?\s*sezon\s*(\d+)\.?\s*bölüm/i) || anchor.getAttribute('href').match(/(\d+)-sezon-(\d+)-bolum/i); rows.push({ url: new URL(anchor.getAttribute('href'), base).href, label, season: match ? Number(match[1]) : 0 }); });
     });
-    document.querySelectorAll('a.season-episode[href]').forEach(anchor => addEpisode(anchor.getAttribute('href'), anchor.textContent, 0));
+    document.querySelectorAll('a.season-episode[href],a[href*="-sezon-"][href*="-bolum"]').forEach(anchor => addEpisode(anchor.getAttribute('href'), anchor.textContent, 0));
     document.querySelectorAll('iframe').forEach(frame => addFrame(frame.getAttribute('src') || frame.getAttribute('data-src')));
     document.querySelectorAll('.sources a, .video-options a, [class*="source"] a, .parts a').forEach(a => {
       const txt = clean(a.textContent);

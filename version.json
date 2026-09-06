@@ -1,6 +1,6 @@
 {
-  "versionCode": 11,
-  "versionName": "0.2.0",
-  "changelog": "Dizi oynatma sorunu cozuldu ve profesyonel alt kontrol cubugu oynatici eklendi.",
+  "versionCode": 12,
+  "versionName": "0.2.1",
+  "changelog": "Dizi video oynatiminda reklam engelleme ve DiziBOX/Dizilla akis yakalama duzeltmeleri.",
   "apkUrl": "https://github.com/muco3327/seyir-tv/releases/latest/download/Seyir-TV.apk"
 }
