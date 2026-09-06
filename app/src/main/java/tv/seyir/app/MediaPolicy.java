@@ -19,8 +19,16 @@ public final class MediaPolicy {
     }
     public static boolean isVideo(String url) {
         if (!isHttps(url)) return false;
-        String p = URI.create(url).getPath().toLowerCase(Locale.ROOT);
-        return p.endsWith(".m3u8") || p.endsWith(".mp4");
+        try {
+            String p = URI.create(url).getPath();
+            if (p == null) return false;
+            p = p.toLowerCase(Locale.ROOT);
+            return p.endsWith(".m3u8") || p.endsWith(".mp4");
+        } catch (RuntimeException e) { return false; }
+    }
+    public static boolean isEpisode(String url) {
+        if (url == null) return false;
+        return url.matches(".*(?:[0-9]+-sezon-[0-9]+-bolum|/bolum/|[0-9]+-sezon|/dizi/[^/]+/[^/]+).*");
     }
     public static String key(String source, String page) {
         return source + ":" + page.replaceAll("[?#].*$", "");

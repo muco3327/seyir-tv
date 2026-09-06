@@ -158,7 +158,9 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
         if(!isEpisode(item)){if(series==null||!series.url.equals(item.url)){seriesEpisodes.clear();expandedSeasons.clear();}series=item;}
         scroll.post(()->scroll.scrollTo(0,0));
         resolvingSource=false;activeSourcePanel=null;
-        hideBrowser();playWhenFound=false;selected=item;source=item.source;streams.clear();imageGeneration++;heading.setText(item.title);status.setText("Bölümler ve oynatma seçenekleri yükleniyor…");
+        boolean isEp=isEpisode(item);
+        hideBrowser();playWhenFound=isEp;selected=item;source=item.source;streams.clear();imageGeneration++;heading.setText(item.title);
+        status.setText(isEp?"Bölüm kaynağı aranıyor ve hazırlanıyor…":"Bölümler ve oynatma seçenekleri yükleniyor…");
         body.removeAllViews();detailPanel=Ui.column(this);body.addView(detailPanel);
         LinearLayout controls=Ui.row(this);controls.addView(Ui.button(this,"‹ Listeye dön",this::returnToList));space(controls);
         Button favorite=Ui.button(this,library.contains("favorites",item)?"★ Favorilerde":"☆ Favorilere ekle",()->{});
@@ -184,6 +186,15 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
             LinearLayout choices=Ui.column(this);
             detailPanel.addView(Ui.button(this,a.optString("label"),()->{selectSource(choices);resolvingSource=true;engine.action(id);}));detailPanel.addView(choices);Ui.gap(detailPanel,8);
         }
+        if(isEpisode(selected)&&activeSourcePanel==null&&!resolvingSource){
+            if(frames!=null&&frames.length()>0){
+                String frame=frames.optString(0);
+                if(MediaPolicy.isHttps(frame)){resolvingSource=true;engine.frame(frame);}
+            } else if(actions!=null&&actions.length()>0){
+                JSONObject a=actions.optJSONObject(0);
+                if(a!=null){String id=a.optString("id");resolvingSource=true;engine.action(id);}
+            }
+        }
         if(!isEpisode(selected)&&episodes!=null&&episodes.length()>0){
             detailPanel.addView(Ui.text(this,"Sezonlar",20,Ui.WHITE));Ui.gap(detailPanel,10);
             TreeMap<Integer,List<TitleItem>> seasons=new TreeMap<>();
@@ -202,7 +213,7 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
         detailPanel.addView(Ui.button(this,"Site oynatıcısını göster",this::showBrowser));
         status.setText(!isEpisode(selected)&&episodes!=null&&episodes.length()>0?"Sezonu açıp bir bölüm seç":"Bir oynatma kaynağı seç");
     }
-    private static boolean isEpisode(TitleItem item){return item!=null&&item.url.matches(".*(?:[0-9]+-sezon-[0-9]+-bolum|/bolum/).*");}
+    private static boolean isEpisode(TitleItem item){return item!=null&&MediaPolicy.isEpisode(item.url);}
     private static int episodeNumber(TitleItem item){java.util.regex.Matcher m=java.util.regex.Pattern.compile("-sezon-([0-9]+)-bolum").matcher(item.url);return m.find()?Integer.parseInt(m.group(1)):0;}
     private void addEpisodeNavigation(JSONArray entries){
         TitleItem previous=null,next=null;
@@ -215,13 +226,19 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
     }
     @Override public void stream(String url,Map<String,String> headers){
         if(selected==null||streams.containsKey(url))return;streams.put(url,headers);
-        status.setText("Video bağlantısı bulundu. Dahili oynatıcıda açabilirsin.");
+        status.setText("Video bağlantısı bulundu. Dahili oynatıcı açılıyor…");
         if(browserVisible)updateBrowserToolbar();
-        if(activeSourcePanel!=null){if(streams.size()==1)activeSourcePanel.removeAllViews();Button b=Ui.button(this,"▶ Video "+streams.size()+" · Oynat",()->play(url));activeSourcePanel.addView(b);Ui.gap(activeSourcePanel,6);if(streams.size()==1&&!browserVisible)b.requestFocus();}
-        if(playWhenFound){
+        LinearLayout targetPanel=activeSourcePanel!=null?activeSourcePanel:streamPanel!=null?streamPanel:detailPanel;
+        if(targetPanel!=null){
+            if(streams.size()==1&&targetPanel==activeSourcePanel)targetPanel.removeAllViews();
+            Button b=Ui.button(this,"▶ Dahili Oynatıcıda Oynat ("+streams.size()+")",()->play(url));
+            targetPanel.addView(b);Ui.gap(targetPanel,6);
+            if(!browserVisible)b.requestFocus();
+        }
+        if(playWhenFound||isEpisode(selected)){
             if(pendingAutoPlay!=null)engine.web.removeCallbacks(pendingAutoPlay);
-            pendingAutoPlay=()->{if(playWhenFound&&!streams.isEmpty()){playWhenFound=false;play(bestStream());}};
-            engine.web.postDelayed(pendingAutoPlay,900);
+            pendingAutoPlay=()->{if(!streams.isEmpty()){playWhenFound=false;play(bestStream());}};
+            engine.web.postDelayed(pendingAutoPlay,500);
         }
     }
     private void selectSource(LinearLayout panel){

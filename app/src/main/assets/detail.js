@@ -36,6 +36,19 @@
     if (/\/dizi\//.test(location.pathname)) seasonLoading = fetchSeasonPages('a[href$="-sezon"],a[href$="-sezon/"]', (doc, base, rows) => {
       doc.querySelectorAll('a.text.block[href*="-sezon-"][href*="-bolum"],a[href*="-sezon-"][href*="-bolum"]').forEach(anchor => { const url = new URL(anchor.getAttribute('href'), base).href, match = url.match(/(\d+)-sezon-(\d+)-bolum/i); if (match) rows.push({ url, label: clean(anchor.textContent), season: Number(match[1]) }); });
     });
+    const playBtn = document.querySelector('.player button, .feather-play, #play-video, button[aria-label*="Play" i]');
+    if (playBtn) {
+      const btn = playBtn.closest ? (playBtn.closest('button') || playBtn) : playBtn;
+      if (btn && btn.setAttribute && !btn.getAttribute('data-seyir-clicked')) {
+        btn.setAttribute('data-seyir-clicked', '1');
+        try { if (typeof btn.click === 'function') btn.click(); } catch (_) {}
+      }
+      addAction(btn, '▶ Oynatıcıyı Başlat');
+    }
+    document.querySelectorAll('button,[role="button"]').forEach(b => {
+      const txt = clean(b.textContent);
+      if (/^(türkçe|dublaj|altyazı|kaynak|alternatif|player|rapid|vid|part)/i.test(txt) && txt.length < 30) addAction(b, txt);
+    });
     document.querySelectorAll('iframe').forEach(frame => addFrame(frame.getAttribute('src') || frame.getAttribute('data-src')));
   } else if (host.includes('dizibox')) {
     // DiziBOX has one independent URL per season and episode anchors use .season-episode.
@@ -44,6 +57,10 @@
     });
     document.querySelectorAll('a.season-episode[href]').forEach(anchor => addEpisode(anchor.getAttribute('href'), anchor.textContent, 0));
     document.querySelectorAll('iframe').forEach(frame => addFrame(frame.getAttribute('src') || frame.getAttribute('data-src')));
+    document.querySelectorAll('.sources a, .video-options a, [class*="source"] a, .parts a').forEach(a => {
+      const txt = clean(a.textContent);
+      if (txt.length > 1 && txt.length < 30) addAction(a, txt);
+    });
   } else if (host.includes('hdfilmcehennemi')) {
     document.querySelectorAll('iframe').forEach(frame => addFrame(frame.getAttribute('src') || frame.getAttribute('data-src')));
     document.querySelectorAll('button,[role="button"],a').forEach(element => { const label = clean(element.textContent); if (/^(rapid|vid|sibnet|ok\.?ru|dublaj|altyazı|türkçe|izle|oynat)/i.test(label)) addAction(element, label); });

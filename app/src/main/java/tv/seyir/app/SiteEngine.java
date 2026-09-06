@@ -111,13 +111,16 @@ public final class SiteEngine {
         requestPage=source.home;web.stopLoading();web.loadUrl(source.home);scheduleRead(generation,0);
     }
     public void detail(TitleItem item) {
-        captureActive=false;pendingAction=null;web.onResume();
+        captureActive=MediaPolicy.isEpisode(item.url);pendingAction=null;web.onResume();
         accessBlocked=false;frameHost="";
         if(!item.source.owns(item.url))return;
         source=item.source;mode="detail";query="";generation++;
         handler.removeCallbacksAndMessages(null);streams.clear();requestPage=item.url;
         web.stopLoading();web.loadUrl(item.url);
-        int g=generation;handler.postDelayed(()->readDetail(g),2500);
+        int g=generation;
+        handler.postDelayed(()->readDetail(g),1500);
+        handler.postDelayed(()->readDetail(g),3000);
+        handler.postDelayed(()->readDetail(g),6000);
     }
     public void frame(String url) {
         if(!MediaPolicy.isHttps(url))return;
@@ -125,17 +128,20 @@ public final class SiteEngine {
         accessBlocked=false;frameHost=Uri.parse(url).getHost();
         String ref=web.getUrl(); mode="frame";generation++;
         handler.removeCallbacksAndMessages(null);streams.clear();
-        if(source==Source.DIZILLA||source==Source.FULLHD||source==Source.DIZIBOX){
-            // Keep the embed in its original parent page, with its existing cookies and navigation context.
+        if(source==Source.FULLHD){
+            // Keep the embed in its original parent page for FullHD
             if(!requestPage.equals(web.getUrl()))web.loadUrl(requestPage);
             else startFrame(generation,0);
             int g=generation;handler.postDelayed(()->{if(!destroyed&&g==generation&&streams.isEmpty()&&!accessBlocked)listener.status("Yayın alınamadı. Oynatıcı reklam veya kullanıcı tıklaması bekliyor olabilir. Site oynatıcısını aç.");},90000);
             return;
         }
-        Map<String,String> headers=new HashMap<>();if(ref!=null)headers.put("Referer",ref);
+        Map<String,String> headers=new HashMap<>();
+        if(ref!=null&&!ref.equals("about:blank"))headers.put("Referer",ref);
+        else if(requestPage!=null&&!requestPage.isEmpty())headers.put("Referer",requestPage);
         web.loadUrl(url,headers);
         int g=generation;
-        handler.postDelayed(()->{if(!destroyed&&g==generation&&streams.isEmpty()&&!accessBlocked)listener.status("Dahili yayın bağlantısı henüz alınamadı. Site oynatıcısını gösterip oynat düğmesine bas.");},20000);
+        startFrame(g,0);
+        handler.postDelayed(()->{if(!destroyed&&g==generation&&streams.isEmpty()&&!accessBlocked)listener.status("Dahili yayın bağlantısı henüz alınamadı. Site oynatıcısını gösterip oynat düğmesine bas.");},25000);
     }
     private void blocked(){accessBlocked=true;listener.status("Yayın sunucusu erişimi engelledi. Bu, videonun olmadığı anlamına gelmez. Bölüm sayfasını tarayıcıda açabilirsin.");}
     public void showOriginalPage(){

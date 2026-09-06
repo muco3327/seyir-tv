@@ -1,17 +1,20 @@
-SEYİR TV - SÜRÜM 0.1.9
+SEYİR TV - SÜRÜM 0.2.0
 
-1. Seyir-TV-0.1.9.apk dosyasını Mi Box'a aktar.
+1. Seyir-TV-0.2.0.apk dosyasını Mi Box'a aktar.
 2. Dosyayı aç ve Yükle'ye bas.
 3. Seyir TV'yi uygulamalar listesinden aç.
-4. Üstten kaynak seç; kumandayla içerik kartını aç.
+4. Film veya Dizi seç; kumandayla sezon/bölüm seçtiğinde otomatik olarak kaynak yakalanır ve oynatıcı başlar.
 
-Önceki sürüm kuruluysa bu APK'yı onun üzerine doğrudan yükleyebilirsin.
-Mi Box 2. Nesil (Android TV 11) kumanda medya tuşları, odak animasyonu ve
-oynatıcı çökme korumaları bu sürümde güncellendi.
+YENİLİKLER (v0.2.0):
+- Dizi Oynatma Sorunları Giderildi:
+  * Dizilla ve DiziBOX üzerindeki bölüm iframe ve video player tetikleyicileri düzeltildi.
+  * Sezon ve bölüm seçildiğinde video akışı otomatik yakalanıp doğrudan oynatılıyor.
+- Profesyonel Alt Kontrol Çubuğu (Dahili Oynatıcı):
+  * Ekran Sığdırma Modları: FIT (Orijinal Oran), ZOOM (Kırparak Tam Ekran), FILL (Uzatılmış Tam Ekran).
+  * Çözünürlük/Kalite Seçimi: Yayındaki tüm çözünürlükleri (1080p, 720p, 480p, 360p vb.) listeler ve anlık değiştirir; "Otomatik" (Adaptive) modu destekler.
+  * Ses ve Altyazı Parça Seçimi: Çoklu ses ve altyazı desteği.
+  * Oynatma Hızı: 0.5x ile 2.0x arası ayarlanabilir hız.
+  * Mi Box Kumanda Desteği: D-Pad, OK, Play/Pause, Rewind/Forward tuşları ile tam uyumlu; 5 saniye sonra kontroller otomatik gizlenir.
 
 Eklenti adresi veya API anahtarı girmen gerekmez.
-
-Bu APK derlendi ve kod testleri geçti. Mi Box/emülatörde gerçek
-oynatma henüz doğrulanmadı; ilk deneme sürümüdür.
-
-Kaynak açılmazsa hata metnini ve hangi kaynak/film olduğunu belirt.
+Önceki sürüm kuruluysa bu APK'yı onun üzerine doğrudan güncelleyebilirsiniz.

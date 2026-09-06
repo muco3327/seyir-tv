@@ -2,16 +2,15 @@
 
 Mi Box ve Android TV için, dört kaynağı yerel Android TV arayüzünde gösteren uygulama.
 
-### Son düzeltme (v0.1.9)
-- Mi Box 2. Nesil (Android TV 11) kumandası için İleri Sarma / Geri Sarma (`FAST_FORWARD`, `REWIND`, `NEXT`, `PREVIOUS`) medya tuşları eklendi.
-- Kart ve buton odaklanmalarında TV için belirginleştirici scale ve elevation animasyonu eklendi.
-- Oynatıcıda olası `null` başlık ve MIME tipi çözümleri güvenli hale getirildi; alternatif parça olmayan yayınlar için bilgilendirme eklendi.
-- Farklı kaynaklardan kaydedilen Favoriler ve Devam Et afişlerinin doğru Referer ile yüklenmesi sağlandı.
-- Android 11 ve 12+ standartlarına uygun veri yedekleme kuralları tanımlandı.
+### Son düzeltme (v0.2.0)
+- **Dizi Oynatma Düzeltildi:** Dizilla ve DiziBOX üzerindeki bölüm iframe ve video player tetikleyicileri düzeltildi; sezon/bölüm seçildiğinde video akışı otomatik yakalanıp doğrudan başlatılıyor.
+- **Profesyonel Alt Kontrol Çubuğu:** Dahili oynatıcı kontrolleri tamamen alt panelde toplandı; ilerleme çubuğu, süre, ileri/geri sarma, ekran sığdırma modları, kalite/çözünürlük seçici, ses/altyazı seçici ve oynatma hızı eklendi.
+- **Çözünürlük ve Kalite Seçimi:** Yayındaki tüm çözünürlükleri (1080p, 720p, 480p, 360p vb.) algılar ve anlık geçiş sağlar; varsayılan olarak "Otomatik" (Adaptive Bitrate) modu destekler.
+- **Ekran Sığdırma (Resize):** Orijinal (FIT), Kırpma (ZOOM) ve Tam Ekran Uzatma (FILL) modları arasında geçiş imkanı.
 
 ## Kurulum
 
-`dist/Seyir-TV-0.1.9.apk` dosyasını Mi Box'a aktarın ve açıp yükleyin. Uygulama TV'nin uygulamalar listesinde **Seyir TV** adıyla görünür. Eklenti URL'si, API anahtarı veya sunucu kurulumu istemez.
+`dist/Seyir-TV-0.2.0.apk` dosyasını Mi Box'a aktarın ve açıp yükleyin. Uygulama TV'nin uygulamalar listesinde **Seyir TV** adıyla görünür. Eklenti URL'si, API anahtarı veya sunucu kurulumu istemez.
 
 ## Kullanım
 
@@ -55,7 +54,7 @@ Android Studio ile bu klasörü açabilirsiniz. Android SDK 36 ve JDK 17+ gereki
 .\tools\build.ps1 -Check
 ```
 
-Derleme çıktısı: `dist/Seyir-TV-0.1.8.apk`.
+Derleme çıktısı: `dist/Seyir-TV-0.2.0.apk`.
 Android test paketi: `app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk`.
 
 `tools/test-device.ps1`, yalnızca bu proje için `emulator-5580` ve `.local/avd/SeyirTest.avd` test ortamını kullanır; gerçek Mi Box'a bağlanmaz. Test cihazı başlatma/kurulum/ekran kaydı adımları için ilgili ortam izinleri gerekir.

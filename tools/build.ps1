@@ -12,5 +12,5 @@ try {
     & $gradleBin @tasks --console=plain --no-daemon --no-problems-report
     if($LASTEXITCODE -ne 0) { throw 'Derleme başarısız.' }
     New-Item -ItemType Directory -Path (Join-Path $projectRoot 'dist') -Force | Out-Null
-    Copy-Item (Join-Path $projectRoot 'app\build\outputs\apk\debug\app-debug.apk') (Join-Path $projectRoot 'dist\Seyir-TV-0.1.9.apk')
+    Copy-Item (Join-Path $projectRoot 'app\build\outputs\apk\debug\app-debug.apk') (Join-Path $projectRoot 'dist\Seyir-TV-0.2.0.apk')
 } finally { Pop-Location }
