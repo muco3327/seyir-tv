@@ -4,6 +4,7 @@ local.properties
 research/
 tools/local-*
 *.jks
+!app/release.jks
 *.keystore
 .local/
 backup_*/

@@ -65,6 +65,7 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
         createShell();
         if(state!=null)try{source=Source.valueOf(state.getString("source",Source.FULLHD.name()));}catch(Exception ignored){}
         openSource(source);
+        AppUpdater.check(this, false);
     }
     private void createShell(){
         shell=Ui.column(this);shell.setBackgroundColor(Ui.BG);int pad=Ui.dp(this,24);shell.setPadding(pad,Ui.dp(this,16),pad,Ui.dp(this,10));
@@ -74,9 +75,10 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
         Button searchButton=Ui.button(this,"Ara",this::search);top.addView(searchButton);defaultFocus=searchButton;space(top);
         top.addView(Ui.button(this,"Favoriler",()->showLibrary("favorites")));space(top);
         top.addView(Ui.button(this,"Devam et",()->showLibrary("history")));space(top);
-        top.addView(Ui.button(this,"Bilgi",()->new AlertDialog.Builder(this).setTitle("Seyir TV · 0.1.8")
-            .setMessage("Film ve dizilerin, tek ekranda.\n\nYön tuşları: gezin\nOK: seç\nGeri: önceki ekran\n\nFavoriler ve izleme ilerlemesi bu cihazda saklanır. Kaynaklar kendi sitelerinden yüklenir; açılmaları sitelerin erişilebilirliğine bağlıdır.\n\nİlk deneme sürümü. Harici hesap veya eklenti kurulumu gerekmez.")
+        top.addView(Ui.button(this,"Bilgi",()->new AlertDialog.Builder(this).setTitle("Seyir TV · 0.2.0")
+            .setMessage("Film ve dizilerin, tek ekranda.\n\nYön tuşları: gezin\nOK: seç\nGeri: önceki ekran\n\nFavoriler ve izleme ilerlemesi bu cihazda saklanır. Kaynaklar kendi sitelerinden yüklenir; açılmaları sitelerin erişilebilirliğine bağlıdır.\n\nHarici hesap veya eklenti kurulumu gerekmez.")
             .setPositiveButton("Tamam",null).show()));space(top);
+        top.addView(Ui.button(this,"Güncelle",()->AppUpdater.check(this,true)));space(top);
         top.addView(Ui.button(this,"Yenile",()->{if(selected!=null)openDetail(selected);else openSource(source);}));space(top);
         top.addView(Ui.button(this,"Site görünümü",this::showBrowser));
         HorizontalScrollView toolsBar=new HorizontalScrollView(this);toolsBar.setHorizontalScrollBarEnabled(false);toolsBar.addView(top);shell.addView(toolsBar);Ui.gap(shell,14);

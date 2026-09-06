@@ -17,11 +17,28 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
-    buildTypes { release { minifyEnabled false } }
+    signingConfigs {
+        release {
+            storeFile file('release.jks')
+            storePassword 'seyirtv'
+            keyAlias 'seyir'
+            keyPassword 'seyirtv'
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.release
+        }
+        debug {
+            signingConfig signingConfigs.release
+        }
+    }
     lint { abortOnError true }
 }
 
 dependencies {
+    implementation 'androidx.core:core:1.15.0'
     implementation 'androidx.webkit:webkit:1.12.1'
     implementation 'androidx.media3:media3-exoplayer:1.8.0'
     implementation 'androidx.media3:media3-exoplayer-hls:1.8.0'

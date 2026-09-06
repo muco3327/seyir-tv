@@ -1,0 +1,47 @@
+name: Release APK
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Build Release APK
+        run: |
+          chmod +x ./gradlew
+          ./gradlew assembleRelease --no-daemon
+
+      - name: Prepare Artifacts
+        run: |
+          mkdir -p release_assets
+          cp app/build/outputs/apk/release/app-release.apk release_assets/Seyir-TV.apk
+          if [ -n "${{ github.ref_name }}" ]; then
+            cp app/build/outputs/apk/release/app-release.apk release_assets/Seyir-TV-${{ github.ref_name }}.apk
+          fi
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, "refs/tags/")
+        with:
+          files: release_assets/*
+          generate_release_notes: true
+
