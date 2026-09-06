@@ -2,5 +2,5 @@
   "versionCode": 12,
   "versionName": "0.2.1",
   "changelog": "Dizi video oynatiminda reklam engelleme ve DiziBOX/Dizilla akis yakalama duzeltmeleri.",
-  "apkUrl": "https://github.com/muco3327/seyir-tv/releases/latest/download/Seyir-TV.apk"
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.2.1.apk"
 }

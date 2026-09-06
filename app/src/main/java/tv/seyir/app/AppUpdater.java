@@ -34,7 +34,7 @@ public final class AppUpdater {
     public static final String GITHUB_OWNER = "muco3327";
     public static final String GITHUB_REPO = "seyir-tv";
     public static final String VERSION_URL = "https://raw.githubusercontent.com/" + GITHUB_OWNER + "/" + GITHUB_REPO + "/main/version.json";
-    public static final String RELEASES_URL = "https://github.com/" + GITHUB_OWNER + "/" + GITHUB_REPO + "/releases";
+    public static final String DEFAULT_APK_URL = "https://raw.githubusercontent.com/" + GITHUB_OWNER + "/" + GITHUB_REPO + "/main/dist/Seyir-TV.apk";
 
     private static final Handler mainHandler = new Handler(Looper.getMainLooper());
     private static boolean isDownloading = false;
@@ -69,7 +69,7 @@ public final class AppUpdater {
                 int remoteCode = json.optInt("versionCode", 0);
                 String remoteName = json.optString("versionName", "Bilinmeyen");
                 String changelog = json.optString("changelog", "Performans ve hata duzeltmeleri.");
-                String apkUrl = json.optString("apkUrl", RELEASES_URL + "/latest/download/Seyir-TV.apk");
+                String apkUrl = json.optString("apkUrl", DEFAULT_APK_URL);
 
                 PackageManager pm = activity.getPackageManager();
                 PackageInfo pInfo = pm.getPackageInfo(activity.getPackageName(), 0);
