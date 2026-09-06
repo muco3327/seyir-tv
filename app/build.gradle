@@ -1,0 +1,30 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'tv.seyir.app'
+    compileSdk 36
+    useLibrary 'android.test.runner'
+    useLibrary 'android.test.base'
+    defaultConfig {
+        applicationId 'tv.seyir.app'
+        minSdk 26
+        targetSdk 35
+        versionCode 10
+        versionName '0.1.9'
+        testInstrumentationRunner 'android.test.InstrumentationTestRunner'
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    buildTypes { release { minifyEnabled false } }
+    lint { abortOnError true }
+}
+
+dependencies {
+    implementation 'androidx.webkit:webkit:1.12.1'
+    implementation 'androidx.media3:media3-exoplayer:1.8.0'
+    implementation 'androidx.media3:media3-exoplayer-hls:1.8.0'
+    implementation 'androidx.media3:media3-ui:1.8.0'
+    testImplementation 'junit:junit:4.13.2'
+}

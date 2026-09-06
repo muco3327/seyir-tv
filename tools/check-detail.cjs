@@ -1,0 +1,15 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const html=fs.readFileSync('research/reacher.html','utf8');
+const scripts=[...html.matchAll(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g)].map(m=>({textContent:m[1]}));
+assert.ok(scripts.length,'Fixture must contain structured data');
+const document={title:'Reacher',querySelector:()=>null,querySelectorAll:s=>s==='script[type="application/ld+json"]'?scripts:[]};
+const result=JSON.parse(vm.runInNewContext(fs.readFileSync('app/src/main/assets/detail.js','utf8'),{document,URL,window:{},location:new URL('https://dizilla.now/dizi/reacher-c01')}));
+const expected=[];function walk(x){if(!x||typeof x!=='object')return;if(x['@type']==='TVEpisode')expected.push(x.url);Object.values(x).forEach(walk)}scripts.forEach(s=>walk(JSON.parse(s.textContent)));
+assert.deepEqual(new Set(result.episodes.map(e=>e.url)),new Set(expected));
+assert.ok(result.episodes.some(e=>e.season===2&&e.title==='2. Sezon · 2. Bölüm'));
+assert.equal(new Set(result.episodes.map(e=>e.url)).size,result.episodes.length);
+console.log('PASS: all '+result.episodes.length+' structured episodes extracted and grouped by season');
+const lazyDocument={title:'Valhalla',querySelector:()=>null,querySelectorAll:s=>s==='#plx iframe'?[{getAttribute:k=>k==='src'?'about:blank':k==='data-src'?'https://rapidvid.net/vx/example':null}]:[]};
+const lazy=JSON.parse(vm.runInNewContext(fs.readFileSync('app/src/main/assets/detail.js','utf8'),{document:lazyDocument,URL,window:{},location:new URL('https://www.fullhdfilmizlesene.now/film/valhalla/')}));
+assert.deepEqual(lazy.frames,['https://rapidvid.net/vx/example']);
+console.log('PASS: lazy player URL survives an about:blank iframe src');
