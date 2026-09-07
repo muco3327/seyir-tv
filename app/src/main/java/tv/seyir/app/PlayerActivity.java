@@ -169,15 +169,11 @@ public final class PlayerActivity extends Activity {
     private void initialize() {
         if (player != null || url == null || closing || isFinishing() || video == null) return;
         try {
-            String cookie = CookieManager.getInstance().getCookie(url);
-            android.net.Uri origin = android.net.Uri.parse(url);
             DefaultHttpDataSource.Factory http = new DefaultHttpDataSource.Factory().setDefaultRequestProperties(headers)
                 .setConnectTimeoutMs(15000).setReadTimeoutMs(20000).setAllowCrossProtocolRedirects(true);
             ResolvingDataSource.Factory data = new ResolvingDataSource.Factory(http, spec -> {
-                boolean same = Objects.equals(origin.getScheme(), spec.uri.getScheme()) &&
-                               Objects.equals(origin.getHost(), spec.uri.getHost()) &&
-                               origin.getPort() == spec.uri.getPort();
-                return same && cookie != null ? spec.withAdditionalHeaders(Collections.singletonMap("Cookie", cookie)) : spec;
+                String reqCookie = CookieManager.getInstance().getCookie(spec.uri.toString());
+                return reqCookie != null ? spec.withAdditionalHeaders(Collections.singletonMap("Cookie", reqCookie)) : spec;
             });
 
             player = new ExoPlayer.Builder(this, new DefaultRenderersFactory(this).setEnableDecoderFallback(true))

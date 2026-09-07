@@ -95,8 +95,11 @@ public final class SiteEngine {
                 }
                 if(captureActive&&"GET".equals(r.getMethod())&&MediaPolicy.isVideo(url)) {
                     Map<String,String> headers=new HashMap<>();
-                    for(Map.Entry<String,String> h:r.getRequestHeaders().entrySet())
-                        if(h.getKey().equalsIgnoreCase("Referer")||h.getKey().equalsIgnoreCase("Origin")||h.getKey().equalsIgnoreCase("User-Agent")) headers.put(h.getKey(),h.getValue());
+                    for(Map.Entry<String,String> h:r.getRequestHeaders().entrySet()) {
+                        String k = h.getKey();
+                        if(k.equalsIgnoreCase("Referer")||k.equalsIgnoreCase("Origin")||k.equalsIgnoreCase("User-Agent")) headers.put(k,h.getValue());
+                    }
+                    if(!headers.containsKey("User-Agent") || headers.get("User-Agent") == null) headers.put("User-Agent", web.getSettings().getUserAgentString());
                     int g=generation;
                     handler.post(()->{if(!destroyed&&captureActive&&g==generation&&streams.size()<40&&streams.add(url))listener.stream(url,headers);});
                 }
