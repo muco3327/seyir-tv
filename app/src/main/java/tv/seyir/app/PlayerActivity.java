@@ -26,6 +26,7 @@ public final class PlayerActivity extends Activity {
     private Button btnTopBack, btnRewind, btnPlayPause, btnForward, btnResize, btnQuality, btnAudio, btnSubtitle, btnSpeed;
     private String url;
     private final Map<String,String> headers = new HashMap<>();
+    private final List<String> fallbackList = new ArrayList<>();
     private long position;
     private boolean shouldPlay = true, closing = false, userScrubbing = false;
     private int resizeModeIndex = 0;
@@ -50,12 +51,22 @@ public final class PlayerActivity extends Activity {
     private final Runnable updateProgressTask = new Runnable() {
         @Override public void run() {
             if (player != null && !closing) {
-                long pos = player.getCurrentPosition();
-                long dur = player.getDuration();
-                if (dur > 0 && !userScrubbing) {
-                    tvCurrentTime.setText(formatTime(pos));
-                    tvTotalTime.setText(formatTime(dur));
-                    playerProgress.setProgress((int)(pos * 1000 / dur));
+                boolean isLive = player.isCurrentMediaItemLive() || player.getDuration() <= 0;
+                if (isLive) {
+                    tvCurrentTime.setText("CANLI YAYIN");
+                    tvTotalTime.setText("🔴 CANLI");
+                    playerProgress.setEnabled(false);
+                    playerProgress.setProgress(1000);
+                    btnRewind.setVisibility(View.GONE);
+                    btnForward.setVisibility(View.GONE);
+                } else {
+                    long pos = player.getCurrentPosition();
+                    long dur = player.getDuration();
+                    if (dur > 0 && !userScrubbing) {
+                        tvCurrentTime.setText(formatTime(pos));
+                        tvTotalTime.setText(formatTime(dur));
+                        playerProgress.setProgress((int)(pos * 1000 / dur));
+                    }
                 }
                 updateQualityLabel();
                 progressHandler.postDelayed(this, 1000);
@@ -70,6 +81,12 @@ public final class PlayerActivity extends Activity {
             title = TitleItem.read(new JSONObject(getIntent().getStringExtra("item")), Source.FULLHD);
             url = getIntent().getStringExtra("url");
             if (!MediaPolicy.isVideo(url)) { finish(); return; }
+            String[] fallbacks = getIntent().getStringArrayExtra("fallbackUrls");
+            if (fallbacks != null) {
+                for (String fb : fallbacks) {
+                    if (fb != null && !fb.isEmpty() && !fallbackList.contains(fb)) fallbackList.add(fb);
+                }
+            }
             String rawHeaders = getIntent().getStringExtra("headers");
             if (rawHeaders != null) {
                 JSONObject h = new JSONObject(rawHeaders);
@@ -155,7 +172,7 @@ public final class PlayerActivity extends Activity {
             String cookie = CookieManager.getInstance().getCookie(url);
             android.net.Uri origin = android.net.Uri.parse(url);
             DefaultHttpDataSource.Factory http = new DefaultHttpDataSource.Factory().setDefaultRequestProperties(headers)
-                .setConnectTimeoutMs(15000).setReadTimeoutMs(20000).setAllowCrossProtocolRedirects(false);
+                .setConnectTimeoutMs(15000).setReadTimeoutMs(20000).setAllowCrossProtocolRedirects(true);
             ResolvingDataSource.Factory data = new ResolvingDataSource.Factory(http, spec -> {
                 boolean same = Objects.equals(origin.getScheme(), spec.uri.getScheme()) &&
                                Objects.equals(origin.getHost(), spec.uri.getHost()) &&
@@ -190,8 +207,9 @@ public final class PlayerActivity extends Activity {
                 @Override public void onPlaybackStateChanged(int s) {
                     if (player == null || closing) return;
                     if (s == Player.STATE_READY) {
-                        playerStatusBadge.setText("Hazır");
-                        library.save("history", title, false);
+                        boolean isLive = player.isCurrentMediaItemLive() || player.getDuration() <= 0;
+                        playerStatusBadge.setText(isLive ? "🔴 CANLI" : "Hazır");
+                        if (!isLive) library.save("history", title, false);
                         updateQualityLabel();
                         scheduleHide();
                     } else if (s == Player.STATE_BUFFERING) {
@@ -206,6 +224,16 @@ public final class PlayerActivity extends Activity {
                     updateQualityLabel();
                 }
                 @Override public void onPlayerError(PlaybackException e) {
+                    if (!fallbackList.isEmpty()) {
+                        String nextUrl = fallbackList.remove(0);
+                        if (!nextUrl.equals(url)) {
+                            url = nextUrl;
+                            playerStatusBadge.setText("Yedek sunucu deneniyor…");
+                            release();
+                            initialize();
+                            return;
+                        }
+                    }
                     showError(e.getErrorCodeName());
                 }
             });

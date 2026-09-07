@@ -8,3 +8,5 @@ tools/local-*
 *.keystore
 .local/
 backup_*/
+__pycache__/
+*.py[cod]

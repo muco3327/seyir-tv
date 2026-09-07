@@ -1,6 +1,6 @@
 {
-  "versionCode": 12,
-  "versionName": "0.2.1",
-  "changelog": "Dizi video oynatiminda reklam engelleme ve DiziBOX/Dizilla akis yakalama duzeltmeleri.",
-  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.2.1.apk"
+  "versionCode": 13,
+  "versionName": "0.3.0",
+  "changelog": "Tek tikla otomatik oynatma, Turkce Dublaj/Altyazi secim uyarisi ve Canli Spor (beIN Sports, S Sport, Tivibu) alani eklendi.",
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.3.0.apk"
 }

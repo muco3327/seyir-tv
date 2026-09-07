@@ -7,13 +7,15 @@ import java.util.Locale;
 public final class MediaPolicy {
     private MediaPolicy() { }
     public static boolean isHttps(String url) {
+        if (url == null) return false;
         try {
             URI uri = URI.create(url);
+            String scheme = uri.getScheme();
+            if (!"https".equalsIgnoreCase(scheme) && !"http".equalsIgnoreCase(scheme)) return false;
             String h = uri.getHost();
-            if (!"https".equalsIgnoreCase(uri.getScheme()) || h == null || uri.getUserInfo() != null) return false;
+            if (h == null || uri.getUserInfo() != null) return false;
             h = h.toLowerCase(Locale.ROOT);
-            if (h.equals("localhost") || h.endsWith(".local") || h.endsWith(".localhost") || h.startsWith("[")) return false;
-            if (h.matches("[0-9.]+")) return false;
+            if (h.equals("localhost") || h.endsWith(".local") || h.endsWith(".localhost") || h.startsWith("[") || h.matches("[0-9.]+")) return false;
             return true;
         } catch (RuntimeException e) { return false; }
     }
@@ -47,13 +49,15 @@ public final class MediaPolicy {
                u.contains("clickadu");
     }
     public static boolean isVideo(String url) {
+        if (url == null || isAd(url)) return false;
         if (!isHttps(url)) return false;
-        if (isAd(url)) return false;
         try {
-            String p = URI.create(url).getPath();
+            URI uri = URI.create(url);
+            String p = uri.getPath();
             if (p == null) return false;
-            p = p.toLowerCase(Locale.ROOT);
-            return p.endsWith(".m3u8") || p.endsWith(".mp4");
+            String lp = p.toLowerCase(Locale.ROOT);
+            return lp.endsWith(".m3u8") || lp.endsWith(".mp4") || lp.endsWith(".ts") ||
+                   lp.contains(".m3u8/") || lp.contains(".mp4/") || lp.contains(".ts/");
         } catch (RuntimeException e) { return false; }
     }
     public static boolean isEpisode(String url) {

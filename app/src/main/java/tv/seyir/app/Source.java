@@ -6,11 +6,13 @@ public enum Source {
     FULLHD("FullHD Filmizlesene", "https://www.fullhdfilmizlesene.now/", "FİLM"),
     CEHENNEM("HD Film Cehennemi", "https://www.hdfilmcehennemi.nl/", "FİLM · DİZİ"),
     DIZILLA("Dizilla", "https://dizilla.now/", "DİZİ"),
-    DIZIBOX("DiziBOX", "https://dizibox.now/", "DİZİ");
+    DIZIBOX("DiziBOX", "https://dizibox.now/", "DİZİ"),
+    SPORTS("Canlı Spor", "https://raw.githubusercontent.com/muco3327/seyir-tv/main/sports.json", "CANLI YAYIN");
 
     public final String title, home, kind;
     Source(String title, String home, String kind) { this.title = title; this.home = home; this.kind = kind; }
     public boolean owns(String url) {
+        if (this == SPORTS) return true;
         if (!MediaPolicy.isHttps(url)) return false;
         try {
             URI uri = URI.create(url);

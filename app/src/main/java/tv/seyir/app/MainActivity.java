@@ -75,8 +75,8 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
         Button searchButton=Ui.button(this,"Ara",this::search);top.addView(searchButton);defaultFocus=searchButton;space(top);
         top.addView(Ui.button(this,"Favoriler",()->showLibrary("favorites")));space(top);
         top.addView(Ui.button(this,"Devam et",()->showLibrary("history")));space(top);
-        top.addView(Ui.button(this,"Bilgi",()->new AlertDialog.Builder(this).setTitle("Seyir TV · 0.2.1")
-            .setMessage("Film ve dizilerin, tek ekranda.\n\nYön tuşları: gezin\nOK: seç\nGeri: önceki ekran\n\nFavoriler ve izleme ilerlemesi bu cihazda saklanır. Kaynaklar kendi sitelerinden yüklenir; açılmaları sitelerin erişilebilirliğine bağlıdır.\n\nHarici hesap veya eklenti kurulumu gerekmez.")
+        top.addView(Ui.button(this,"Bilgi",()->new AlertDialog.Builder(this).setTitle("Seyir TV · 0.3.0")
+            .setMessage("Film, dizi ve canlı spor yayınları tek ekranda.\n\nYön tuşları: gezin\nOK: seç\nGeri: önceki ekran\n\nFavoriler ve izleme ilerlemesi bu cihazda saklanır. Kaynaklar kendi sitelerinden yüklenir.\n\nHarici hesap veya eklenti kurulumu gerekmez.")
             .setPositiveButton("Tamam",null).show()));space(top);
         top.addView(Ui.button(this,"Güncelle",()->AppUpdater.check(this,true)));space(top);
         top.addView(Ui.button(this,"Yenile",()->{if(selected!=null)openDetail(selected);else openSource(source);}));space(top);
@@ -98,7 +98,21 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
         returnCatalog.clear();returnHeading="";returnScrollY=0;
         resolvingSource=false;activeSourcePanel=null;
         hideBrowser();playWhenFound=false;source=s;selected=null;section="catalog";query="";streams.clear();catalog.clear();body.removeAllViews();imageGeneration++;
-        heading.setText(s.title);status.setText("Güncel içerikler yükleniyor…");loading();engine.catalog(s,"");
+        heading.setText(s.title);
+        if(s==Source.SPORTS){
+            status.setText("Canlı spor yayınları yükleniyor…");
+            loading();
+            SportsManager.loadChannels(this,channels->{
+                if(source!=Source.SPORTS||selected!=null)return;
+                List<TitleItem> items=new ArrayList<>();
+                for(SportsManager.SportChannel ch:channels){
+                    items.add(ch.toTitleItem());
+                }
+                catalog(items,items.size()+" kanal");
+            });
+            return;
+        }
+        status.setText("Güncel içerikler yükleniyor…");loading();engine.catalog(s,"");
     }
     private void loading(){TextView t=Ui.text(this,"İzleyeceğin bir sonraki hikâyeyi buluyoruz…",18,Ui.MUTED);t.setPadding(12,Ui.dp(this,48),12,12);body.addView(t);}
     @Override public void catalog(List<TitleItem> items,String message){
@@ -114,7 +128,14 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
         View firstCard=null;
         for(TitleItem item:items){
             LinearLayout card=Ui.column(this);Ui.focus(card);card.setPadding(Ui.dp(this,5),Ui.dp(this,5),Ui.dp(this,5),Ui.dp(this,8));card.setContentDescription(item.title+", "+item.source.title);
-            ImageView poster=new ImageView(this);poster.setScaleType(ImageView.ScaleType.CENTER_CROP);poster.setBackground(Ui.shape(Ui.PANEL,0,this));poster.setContentDescription(item.title);
+            ImageView poster=new ImageView(this);
+            if(item.source==Source.SPORTS){
+                poster.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                poster.setPadding(Ui.dp(this,8),Ui.dp(this,8),Ui.dp(this,8),Ui.dp(this,8));
+            } else {
+                poster.setScaleType(ImageView.ScaleType.CENTER_CROP);
+            }
+            poster.setBackground(Ui.shape(Ui.PANEL,0,this));poster.setContentDescription(item.title);
             card.addView(poster,new LinearLayout.LayoutParams(-1,Ui.dp(this,cardWidth*1.30f)));loadPoster(poster,item.image,item.source,g);
             TextView name=Ui.text(this,item.title,14,Ui.WHITE);Ui.bold(name);name.setMaxLines(2);name.setMinLines(2);name.setEllipsize(TextUtils.TruncateAt.END);name.setPadding(5,8,5,2);card.addView(name);
             String info=item.info;if(section.equals("history")){long p=library.position(item)/60000;info=p>0?p+". dakikadan devam":"İzlemeye devam et";}
@@ -122,7 +143,7 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
             card.setOnClickListener(v->openDetail(item));GridLayout.LayoutParams lp=new GridLayout.LayoutParams();lp.width=Ui.dp(this,cardWidth);lp.setMargins(0,0,Ui.dp(this,12),Ui.dp(this,14));grid.addView(card,lp);
             if(firstCard==null)firstCard=card;
         }
-        body.addView(grid);if(section.equals("catalog")&&query.isEmpty())body.addView(Ui.button(this,"Sonraki sayfa →",()->{status.setText("Sonraki sayfa yükleniyor…");engine.nextPage();}));
+        body.addView(grid);if(section.equals("catalog")&&query.isEmpty()&&source!=Source.SPORTS)body.addView(Ui.button(this,"Sonraki sayfa →",()->{status.setText("Sonraki sayfa yükleniyor…");engine.nextPage();}));
         View focus=firstCard;firstContentFocus=focus;body.post(()->{if(!browserVisible&&selected==null&&focus!=null&&g==imageGeneration){focus.requestFocus();}});
     }
     private void loadPoster(ImageView view,String url,Source itemSource,int g){
@@ -131,7 +152,9 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
             if(g!=imageGeneration)return;
             HttpURLConnection conn=null;
             try{
-                conn=(HttpURLConnection)new URL(url).openConnection();conn.setConnectTimeout(8000);conn.setReadTimeout(8000);conn.setRequestProperty("Referer",itemSource!=null?itemSource.home:source.home);
+                conn=(HttpURLConnection)new URL(url).openConnection();conn.setConnectTimeout(8000);conn.setReadTimeout(8000);
+                if(itemSource!=Source.SPORTS)conn.setRequestProperty("Referer",itemSource!=null?itemSource.home:source.home);
+                else conn.setRequestProperty("User-Agent","Mozilla/5.0");
                 if(conn.getResponseCode()!=200)return;
                 try(InputStream in=conn.getInputStream();ByteArrayOutputStream out=new ByteArrayOutputStream()){
                     byte[] buf=new byte[8192];int n;while((n=in.read(buf))!=-1){out.write(buf,0,n);if(out.size()>3*1024*1024)return;}
@@ -142,11 +165,26 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
         });
     }
     private void search(){
-        EditText input=new EditText(this);input.setSingleLine();input.setHint("Film veya dizi adı");input.setText(query);
+        EditText input=new EditText(this);input.setSingleLine();input.setHint("Film, dizi veya kanal adı");input.setText(query);
         new AlertDialog.Builder(this).setTitle(source.title+" içinde ara").setView(input)
             .setPositiveButton("Ara",(d,w)->{
                 String q=input.getText().toString().trim();if(q.isEmpty())return;
-                hideBrowser();selected=null;section="catalog";query=q;heading.setText("“"+q+"”");body.removeAllViews();loading();status.setText("Kaynakta aranıyor…");engine.catalog(source,q);
+                hideBrowser();selected=null;section="catalog";query=q;heading.setText("“"+q+"”");body.removeAllViews();loading();
+                if(source==Source.SPORTS){
+                    status.setText("Spor kanalları taranıyor…");
+                    SportsManager.loadChannels(this,channels->{
+                        List<TitleItem> items=new ArrayList<>();
+                        String lower=q.toLowerCase(Locale.ROOT);
+                        for(SportsManager.SportChannel ch:channels){
+                            if(ch.name.toLowerCase(Locale.ROOT).contains(lower)||ch.category.toLowerCase(Locale.ROOT).contains(lower)){
+                                items.add(ch.toTitleItem());
+                            }
+                        }
+                        catalog(items,items.size()+" kanal");
+                    });
+                } else {
+                    status.setText("Kaynakta aranıyor…");engine.catalog(source,q);
+                }
                 ((InputMethodManager)getSystemService(INPUT_METHOD_SERVICE)).hideSoftInputFromWindow(input.getWindowToken(),0);
             }).setNegativeButton("Vazgeç",null).show();input.requestFocus();
     }
@@ -154,6 +192,12 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
         hideBrowser();selected=null;section=kind;heading.setText(kind.equals("favorites")?"Favorilerin":"Kaldığın yerden");status.setText("Bu cihazda saklanır");renderCatalog(library.list(kind));
     }
     private void openDetail(TitleItem item){
+        if(item==null)return;
+        if(item.source==Source.SPORTS){
+            SportsManager.SportChannel ch=SportsManager.getChannel(item.url);
+            if(ch==null)ch=SportsManager.getChannel(item.title);
+            if(ch!=null){playSport(item,ch);return;}
+        }
         if(selected==null&&!catalog.isEmpty()){
             returnCatalog.clear();returnCatalog.addAll(catalog);returnHeading=heading.getText().toString();returnStatus=status.getText().toString();returnScrollY=scroll.getScrollY();
         }
@@ -161,8 +205,8 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
         scroll.post(()->scroll.scrollTo(0,0));
         resolvingSource=false;activeSourcePanel=null;
         boolean isEp=isEpisode(item);
-        hideBrowser();playWhenFound=isEp;selected=item;source=item.source;streams.clear();imageGeneration++;heading.setText(item.title);
-        status.setText(isEp?"Bölüm kaynağı aranıyor ve hazırlanıyor…":"Bölümler ve oynatma seçenekleri yükleniyor…");
+        hideBrowser();playWhenFound=true;selected=item;source=item.source;streams.clear();imageGeneration++;heading.setText(item.title);
+        status.setText(isEp?"Bölüm yayını aranıyor ve hazırlanıyor…":"Film yayını aranıyor ve hazırlanıyor…");
         body.removeAllViews();detailPanel=Ui.column(this);body.addView(detailPanel);
         LinearLayout controls=Ui.row(this);controls.addView(Ui.button(this,"‹ Listeye dön",this::returnToList));space(controls);
         Button favorite=Ui.button(this,library.contains("favorites",item)?"★ Favorilerde":"☆ Favorilere ekle",()->{});
@@ -170,50 +214,138 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
         description=Ui.text(this,"",14,Ui.MUTED);description.setMaxLines(4);detailPanel.addView(description);
         streamPanel=Ui.column(this);body.addView(streamPanel);engine.detail(item);
     }
+    private void playSport(TitleItem item,SportsManager.SportChannel ch){
+        if(ch==null||ch.urls.isEmpty())return;
+        Intent i=new Intent(this,PlayerActivity.class);
+        i.putExtra("item",item.json().toString());
+        i.putExtra("url",ch.getPrimaryUrl());
+        if(ch.urls.size()>1)i.putExtra("fallbackUrls",ch.urls.toArray(new String[0]));
+        if(ch.headers!=null&&!ch.headers.isEmpty())i.putExtra("headers",new JSONObject(ch.headers).toString());
+        startActivity(i);
+    }
     @Override public void detail(JSONObject data){
         if(selected==null||detailPanel==null)return;
         if(resolvingSource){JSONArray found=data.optJSONArray("frames");if(found!=null&&found.length()>0){String frame=found.optString(0);if(MediaPolicy.isHttps(frame)){resolvingSource=false;engine.frame(frame);}}return;}
         while(detailPanel.getChildCount()>3)detailPanel.removeViewAt(detailPanel.getChildCount()-1);
         description.setText(data.optString("description"));Ui.gap(detailPanel,12);
         JSONArray frames=data.optJSONArray("frames"),actions=data.optJSONArray("actions"),episodes=data.optJSONArray("episodes");
-        if(isEpisode(selected))addEpisodeNavigation(episodes);
-        if(frames!=null&&(actions==null||actions.length()==0))for(int i=0;i<frames.length();i++){
-            String frame=frames.optString(i);if(!MediaPolicy.isHttps(frame))continue;
-            String host=android.net.Uri.parse(frame).getHost();
-            LinearLayout choices=Ui.column(this);
-            detailPanel.addView(Ui.button(this,"▶ Kaynak · "+host,()->{selectSource(choices);engine.frame(frame);}));detailPanel.addView(choices);Ui.gap(detailPanel,8);
+        boolean isEp=isEpisode(selected);
+        if(isEp)addEpisodeNavigation(episodes);
+        boolean isSeriesOverview=!isEp&&episodes!=null&&episodes.length()>0;
+        if(isSeriesOverview){
+            playWhenFound=false;
+            detailPanel.addView(Ui.text(this,"Sezonlar ve Bölümler",20,Ui.WHITE));Ui.gap(detailPanel,10);
+            renderEpisodes(episodes);
+            detailPanel.addView(Ui.button(this,"Site oynatıcısını göster",this::showBrowser));
+            status.setText("Sezonu açıp bir bölüm seç");
+            return;
         }
-        if(actions!=null)for(int i=0;i<actions.length();i++){
-            JSONObject a=actions.optJSONObject(i);if(a==null)continue;String id=a.optString("id");
-            LinearLayout choices=Ui.column(this);
-            detailPanel.addView(Ui.button(this,a.optString("label"),()->{selectSource(choices);resolvingSource=true;engine.action(id);}));detailPanel.addView(choices);Ui.gap(detailPanel,8);
+
+        JSONObject dublajAction=findAction(actions,"dublaj","tr dub","türkçe ses");
+        JSONObject altyaziAction=findAction(actions,"altyaz","alt yazı","sub","orijinal","orjinal");
+        boolean hasBothLanguages=dublajAction!=null&&altyaziAction!=null;
+
+        LinearLayout actionCard=Ui.column(this);
+        actionCard.setBackground(Ui.shape(Ui.PANEL,0,this));
+        actionCard.setPadding(Ui.dp(this,16),Ui.dp(this,14),Ui.dp(this,16),Ui.dp(this,14));
+        TextView autoStatus=Ui.text(this,"🎬 Yayın sunucusuna bağlanılıyor, video hazır olduğunda otomatik başlayacak…",14,Ui.MINT);
+        actionCard.addView(autoStatus);
+        Ui.gap(actionCard,10);
+        LinearLayout playBtnRow=Ui.row(this);
+
+        if(hasBothLanguages){
+            Button btnDub=Ui.button(this,"🇹🇷 Türkçe Dublaj ile Oynat",()->{
+                playWhenFound=true;resolvingSource=true;
+                status.setText("Türkçe Dublaj yayını hazırlanıyor…");
+                autoStatus.setText("🎬 Türkçe Dublaj hazırlanıyor, otomatik başlatılacak…");
+                engine.action(dublajAction.optString("id"));
+            });
+            Button btnSub=Ui.button(this,"📝 Türkçe Altyazı ile Oynat",()->{
+                playWhenFound=true;resolvingSource=true;
+                status.setText("Türkçe Altyazı yayını hazırlanıyor…");
+                autoStatus.setText("🎬 Türkçe Altyazı hazırlanıyor, otomatik başlatılacak…");
+                engine.action(altyaziAction.optString("id"));
+            });
+            playBtnRow.addView(btnDub);space(playBtnRow);playBtnRow.addView(btnSub);
+            actionCard.addView(playBtnRow);
+            detailPanel.addView(actionCard);
+            Ui.gap(detailPanel,12);
+            showLanguageDialog(dublajAction,altyaziAction,autoStatus);
+            btnDub.requestFocus();
+        } else {
+            Button btnPlay=Ui.button(this,"▶ Hemen Oynat",()->{
+                playWhenFound=true;
+                if(!streams.isEmpty())play(bestStream());
+                else autoStatus.setText("🎬 Yayın aranıyor, otomatik başlatılacak…");
+            });
+            playBtnRow.addView(btnPlay);
+            actionCard.addView(playBtnRow);
+            detailPanel.addView(actionCard);
+            Ui.gap(detailPanel,12);
+            btnPlay.requestFocus();
+
+            playWhenFound=true;
+            if(dublajAction!=null){resolvingSource=true;engine.action(dublajAction.optString("id"));}
+            else if(altyaziAction!=null){resolvingSource=true;engine.action(altyaziAction.optString("id"));}
+            else if(actions!=null&&actions.length()>0){JSONObject a=actions.optJSONObject(0);if(a!=null){resolvingSource=true;engine.action(a.optString("id"));}}
+            else if(frames!=null&&frames.length()>0){String frame=frames.optString(0);if(MediaPolicy.isHttps(frame)){resolvingSource=true;engine.frame(frame);}}
         }
-        if(isEpisode(selected)&&activeSourcePanel==null&&!resolvingSource){
-            if(frames!=null&&frames.length()>0){
-                String frame=frames.optString(0);
-                if(MediaPolicy.isHttps(frame)){resolvingSource=true;engine.frame(frame);}
-            } else if(actions!=null&&actions.length()>0){
-                JSONObject a=actions.optJSONObject(0);
-                if(a!=null){String id=a.optString("id");resolvingSource=true;engine.action(id);}
+
+        LinearLayout altSources=Ui.column(this);altSources.setVisibility(View.GONE);
+        if(actions!=null&&actions.length()>2){
+            for(int i=0;i<actions.length();i++){
+                JSONObject a=actions.optJSONObject(i);if(a==null)continue;String id=a.optString("id");String lbl=a.optString("label");
+                altSources.addView(Ui.button(this,"Kaynak: "+lbl,()->{playWhenFound=true;resolvingSource=true;engine.action(id);}));Ui.gap(altSources,6);
+            }
+        } else if(frames!=null&&frames.length()>1){
+            for(int i=0;i<frames.length();i++){
+                String frame=frames.optString(i);if(!MediaPolicy.isHttps(frame))continue;String host=android.net.Uri.parse(frame).getHost();
+                altSources.addView(Ui.button(this,"Kaynak "+(i+1)+" ("+host+")",()->{playWhenFound=true;engine.frame(frame);}));Ui.gap(altSources,6);
             }
         }
-        if(!isEpisode(selected)&&episodes!=null&&episodes.length()>0){
-            detailPanel.addView(Ui.text(this,"Sezonlar",20,Ui.WHITE));Ui.gap(detailPanel,10);
-            TreeMap<Integer,List<TitleItem>> seasons=new TreeMap<>();
-            for(int i=0;i<episodes.length();i++)try{JSONObject entry=episodes.getJSONObject(i);TitleItem episode=TitleItem.read(entry,source);if(source.owns(episode.url))seasons.computeIfAbsent(entry.optInt("season",0),k->new ArrayList<>()).add(episode);}catch(Exception ignored){}
-            seriesEpisodes.clear();for(List<TitleItem> list:seasons.values()){list.sort(Comparator.comparingInt(MainActivity::episodeNumber));seriesEpisodes.addAll(list);}
-            for(Map.Entry<Integer,List<TitleItem>> group:seasons.entrySet()){
-                String label=group.getKey()==0?"Bölüm seç":group.getKey()+". Sezon · "+group.getValue().size()+" bölüm";
-                LinearLayout episodeList=Ui.column(this);episodeList.setPadding(Ui.dp(this,20),Ui.dp(this,8),0,Ui.dp(this,8));
-                for(TitleItem episode:group.getValue()){episodeList.addView(Ui.button(this,episode.title,()->openDetail(episode)));Ui.gap(episodeList,6);}
-                boolean expanded=expandedSeasons.contains(group.getKey());episodeList.setVisibility(expanded?View.VISIBLE:View.GONE);
-                Button seasonButton=Ui.button(this,(expanded?"▾ ":"▸ ")+label,()->{});
-                seasonButton.setOnClickListener(v->{boolean show=episodeList.getVisibility()!=View.VISIBLE;episodeList.setVisibility(show?View.VISIBLE:View.GONE);if(show)expandedSeasons.add(group.getKey());else expandedSeasons.remove(group.getKey());seasonButton.setText((show?"▾ ":"▸ ")+label);});
-                detailPanel.addView(seasonButton);detailPanel.addView(episodeList);Ui.gap(detailPanel,8);
-            }
+        altSources.addView(Ui.button(this,"Site oynatıcısını göster",this::showBrowser));
+        Button toggleAlt=Ui.button(this,"Alternatif Kaynaklar ▾",()->{});
+        toggleAlt.setOnClickListener(v->{boolean visible=altSources.getVisibility()==View.VISIBLE;altSources.setVisibility(visible?View.GONE:View.VISIBLE);toggleAlt.setText(visible?"Alternatif Kaynaklar ▾":"Alternatif Kaynakları Gizle ▴");});
+        detailPanel.addView(toggleAlt);detailPanel.addView(altSources);
+        status.setText(hasBothLanguages?"Dil seçimi bekleniyor…":"Yayın hazırlanıyor, otomatik başlatılacak…");
+    }
+    private void showLanguageDialog(JSONObject dublajAction,JSONObject altyaziAction,TextView autoStatus){
+        new AlertDialog.Builder(this).setTitle("Dil Seçeneği")
+            .setMessage("Bu içerik hem Türkçe Dublaj hem de Türkçe Altyazı seçeneklerine sahiptir. Nasıl izlemek istersiniz?")
+            .setPositiveButton("🇹🇷 Türkçe Dublaj",(d,w)->{
+                playWhenFound=true;resolvingSource=true;status.setText("Türkçe Dublaj yayını hazırlanıyor…");
+                if(autoStatus!=null)autoStatus.setText("🎬 Türkçe Dublaj hazırlanıyor, otomatik başlatılacak…");
+                engine.action(dublajAction.optString("id"));
+            })
+            .setNegativeButton("📝 Türkçe Altyazı",(d,w)->{
+                playWhenFound=true;resolvingSource=true;status.setText("Türkçe Altyazı yayını hazırlanıyor…");
+                if(autoStatus!=null)autoStatus.setText("🎬 Türkçe Altyazı hazırlanıyor, otomatik başlatılacak…");
+                engine.action(altyaziAction.optString("id"));
+            })
+            .setCancelable(true).show();
+    }
+    private JSONObject findAction(JSONArray actions,String... keywords){
+        if(actions==null)return null;
+        for(int i=0;i<actions.length();i++){
+            JSONObject a=actions.optJSONObject(i);if(a==null)continue;
+            String label=a.optString("label","").toLowerCase(Locale.ROOT);
+            for(String kw:keywords)if(label.contains(kw.toLowerCase(Locale.ROOT)))return a;
         }
-        detailPanel.addView(Ui.button(this,"Site oynatıcısını göster",this::showBrowser));
-        status.setText(!isEpisode(selected)&&episodes!=null&&episodes.length()>0?"Sezonu açıp bir bölüm seç":"Bir oynatma kaynağı seç");
+        return null;
+    }
+    private void renderEpisodes(JSONArray episodes){
+        TreeMap<Integer,List<TitleItem>> seasons=new TreeMap<>();
+        for(int i=0;i<episodes.length();i++)try{JSONObject entry=episodes.getJSONObject(i);TitleItem episode=TitleItem.read(entry,source);if(source.owns(episode.url))seasons.computeIfAbsent(entry.optInt("season",0),k->new ArrayList<>()).add(episode);}catch(Exception ignored){}
+        seriesEpisodes.clear();for(List<TitleItem> list:seasons.values()){list.sort(Comparator.comparingInt(MainActivity::episodeNumber));seriesEpisodes.addAll(list);}
+        for(Map.Entry<Integer,List<TitleItem>> group:seasons.entrySet()){
+            String label=group.getKey()==0?"Bölüm seç":group.getKey()+". Sezon · "+group.getValue().size()+" bölüm";
+            LinearLayout episodeList=Ui.column(this);episodeList.setPadding(Ui.dp(this,20),Ui.dp(this,8),0,Ui.dp(this,8));
+            for(TitleItem episode:group.getValue()){episodeList.addView(Ui.button(this,episode.title,()->openDetail(episode)));Ui.gap(episodeList,6);}
+            boolean expanded=expandedSeasons.contains(group.getKey());episodeList.setVisibility(expanded?View.VISIBLE:View.GONE);
+            Button seasonButton=Ui.button(this,(expanded?"▾ ":"▸ ")+label,()->{});
+            seasonButton.setOnClickListener(v->{boolean show=episodeList.getVisibility()!=View.VISIBLE;episodeList.setVisibility(show?View.VISIBLE:View.GONE);if(show)expandedSeasons.add(group.getKey());else expandedSeasons.remove(group.getKey());seasonButton.setText((show?"▾ ":"▸ ")+label);});
+            detailPanel.addView(seasonButton);detailPanel.addView(episodeList);Ui.gap(detailPanel,8);
+        }
     }
     private static boolean isEpisode(TitleItem item){return item!=null&&MediaPolicy.isEpisode(item.url);}
     private static int episodeNumber(TitleItem item){java.util.regex.Matcher m=java.util.regex.Pattern.compile("-sezon-([0-9]+)-bolum").matcher(item.url);return m.find()?Integer.parseInt(m.group(1)):0;}
@@ -240,7 +372,7 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
         if(playWhenFound||isEpisode(selected)){
             if(pendingAutoPlay!=null)engine.web.removeCallbacks(pendingAutoPlay);
             pendingAutoPlay=()->{if(!streams.isEmpty()){playWhenFound=false;play(bestStream());}};
-            engine.web.postDelayed(pendingAutoPlay,500);
+            engine.web.postDelayed(pendingAutoPlay,400);
         }
     }
     private void selectSource(LinearLayout panel){
@@ -252,6 +384,28 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
     }
     private void showCategories(){
         if(selected!=null){openSource(source);status.setText("Katalog yüklenince Kategoriler düğmesine bas.");return;}
+        if(source==Source.SPORTS){
+            SportsManager.loadChannels(this,channels->{
+                Set<String> catSet=new LinkedHashSet<>();
+                catSet.add("Tüm Spor Kanalları");
+                for(SportsManager.SportChannel ch:channels){
+                    if(!ch.category.isEmpty())catSet.add(ch.category);
+                }
+                String[] cats=catSet.toArray(new String[0]);
+                new AlertDialog.Builder(this).setTitle("Spor Kategorisi Seç").setItems(cats,(d,w)->{
+                    String chosen=cats[w];
+                    heading.setText(chosen);
+                    List<TitleItem> items=new ArrayList<>();
+                    for(SportsManager.SportChannel ch:channels){
+                        if(w==0||ch.category.equalsIgnoreCase(chosen)){
+                            items.add(ch.toTitleItem());
+                        }
+                    }
+                    catalog(items,items.size()+" kanal");
+                }).show();
+            });
+            return;
+        }
         engine.categories(data->{JSONArray items=data.optJSONArray("items");if(items==null||items.length()==0){new AlertDialog.Builder(this).setMessage("Bu sayfada kategori bağlantısı bulunamadı. Katalog yüklendikten sonra tekrar dene.").setPositiveButton("Tamam",null).show();return;}String[] labels=new String[items.length()];for(int n=0;n<labels.length;n++)labels[n]=items.optJSONObject(n).optString("label");new AlertDialog.Builder(this).setTitle("Kategori seç").setItems(labels,(d,w)->{JSONObject item=items.optJSONObject(w);selected=null;section="catalog";query="";heading.setText(item.optString("label"));body.removeAllViews();loading();engine.category(item.optString("url"));}).show();});
     }
     private void returnToList(){
@@ -275,9 +429,23 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
         return fallback;
     }
     private void play(String url){
-        if(selected==null||!streams.containsKey(url))return;
-        Map<String,String> selectedHeaders=new HashMap<>(streams.get(url));
-        engine.stopPlayback();Intent i=new Intent(this,PlayerActivity.class);i.putExtra("item",selected.json().toString());i.putExtra("url",url);i.putExtra("headers",new JSONObject(selectedHeaders).toString());startActivity(i);
+        if(selected==null||url==null||url.isEmpty())return;
+        Map<String,String> selectedHeaders=streams.containsKey(url)?new HashMap<>(streams.get(url)):new HashMap<>();
+        engine.stopPlayback();
+        Intent i=new Intent(this,PlayerActivity.class);
+        i.putExtra("item",selected.json().toString());
+        i.putExtra("url",url);
+        if(!selectedHeaders.isEmpty()){
+            i.putExtra("headers",new JSONObject(selectedHeaders).toString());
+        }
+        ArrayList<String> fallbacks=new ArrayList<>();
+        for(String u:streams.keySet()){
+            if(!u.equals(url)&&MediaPolicy.isVideo(u))fallbacks.add(u);
+        }
+        if(!fallbacks.isEmpty()){
+            i.putExtra("fallbackUrls",fallbacks.toArray(new String[0]));
+        }
+        startActivity(i);
     }
     private void showBrowser(){
         if(browserVisible)return;browserVisible=true;scroll.setVisibility(View.GONE);
