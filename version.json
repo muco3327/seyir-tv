@@ -1,6 +1,6 @@
 {
-  "versionCode": 13,
-  "versionName": "0.3.0",
-  "changelog": "Tek tikla otomatik oynatma, Turkce Dublaj/Altyazi secim uyarisi ve Canli Spor (beIN Sports, S Sport, Tivibu) alani eklendi.",
-  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.3.0.apk"
+  "versionCode": 14,
+  "versionName": "0.3.1",
+  "changelog": "Dizilla bolum kaynaklari ve Pichive akis cozucu duzeltildi, reklam katmanlari temizlendi, donma sorunu giderildi.",
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.3.1.apk"
 }

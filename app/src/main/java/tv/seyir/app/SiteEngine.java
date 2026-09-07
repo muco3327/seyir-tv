@@ -30,7 +30,7 @@ public final class SiteEngine {
     private Source source=Source.FULLHD;
     private String query="",mode="catalog",requestPage="";
     private boolean searching=false,destroyed=false;
-    private String pendingAction=null;
+    private String pendingAction=null,pendingFrame=null;
     private boolean accessBlocked=false;
     private String frameHost="";
     private boolean captureActive=false;
@@ -73,14 +73,18 @@ public final class SiteEngine {
                 if(mode.equals("catalog")) {
                     if(!query.isEmpty()&&!searching) { searching=true; enterSearch(g); }
                     else scheduleRead(g,0);
-                } else if(mode.equals("detail")){if(pendingAction!=null){String id=pendingAction;pendingAction=null;web.evaluateJavascript(detailScript,ignored->action(id));}else readDetail(g);}
+                } else if(mode.equals("detail")){
+                    if(pendingAction!=null){String id=pendingAction;pendingAction=null;web.evaluateJavascript(detailScript,ignored->action(id));}
+                    else if(pendingFrame!=null){String f=pendingFrame;pendingFrame=null;frame(f);}
+                    else readDetail(g);
+                }
                 else if(mode.equals("frame")) startFrame(g,0);
             }
             @Override public void onReceivedError(WebView v,WebResourceRequest r,WebResourceError e) {
                 if(r.isForMainFrame()) listener.status("Kaynağa bağlanılamadı. Yenile veya başka kaynak seç.");
             }
             @Override public void onReceivedHttpError(WebView v,WebResourceRequest r,WebResourceResponse e) {
-                if((e.getStatusCode()==403||e.getStatusCode()==451)&&(r.isForMainFrame()||frameHost.equals(r.getUrl().getHost()))){blocked();return;}
+                if((e.getStatusCode()==403||e.getStatusCode()==451)&&r.isForMainFrame()){blocked();return;}
                 if(r.isForMainFrame()&&e.getStatusCode()>=400)
                     listener.status("Kaynak yanıtı: "+e.getStatusCode()+". Site görünümünü açarak kontrol edebilirsin.");
             }
@@ -136,6 +140,40 @@ public final class SiteEngine {
             if(!requestPage.equals(web.getUrl()))web.loadUrl(requestPage);
             else startFrame(generation,0);
             int g=generation;handler.postDelayed(()->{if(!destroyed&&g==generation&&streams.isEmpty()&&!accessBlocked)listener.status("Yayın alınamadı. Oynatıcı reklam veya kullanıcı tıklaması bekliyor olabilir. Site oynatıcısını aç.");},90000);
+            return;
+        }
+        if(source==Source.DIZILLA){
+            if(!requestPage.equals(web.getUrl())){
+                pendingFrame=url;
+                web.loadUrl(requestPage);
+                return;
+            }
+            String js="(function inject(){" +
+                "const p=document.getElementById('playerLsDizilla')||document.getElementById('cstk')||document.querySelector('.player')||document.body;" +
+                "if(p){" +
+                "  p.querySelectorAll('div[class*=\"z-[\"], .adArea, [class*=\"feather-play\"], [class*=\"pls\"], a[href*=\"youtube\"]').forEach(e=>{try{e.remove();}catch(_){}});" +
+                "  let f=document.getElementById('seyir-player-frame');" +
+                "  if(!f){" +
+                "    f=document.createElement('iframe');" +
+                "    f.id='seyir-player-frame';" +
+                "    f.style.width='100%';" +
+                "    f.style.height='100%';" +
+                "    f.style.minHeight='500px';" +
+                "    f.style.border='none';" +
+                "    f.allow='autoplay; fullscreen';" +
+                "    f.setAttribute('allowfullscreen','true');" +
+                "    p.appendChild(f);" +
+                "  }" +
+                "  if(f.src!=="+JSONObject.quote(url)+")f.src="+JSONObject.quote(url)+";" +
+                "} else if(!window.__seyirFrameRetries||window.__seyirFrameRetries<10){" +
+                "  window.__seyirFrameRetries=(window.__seyirFrameRetries||0)+1;" +
+                "  setTimeout(inject,500);" +
+                "}" +
+                "})();";
+            web.evaluateJavascript(js,null);
+            int g=generation;
+            startFrame(g,0);
+            handler.postDelayed(()->{if(!destroyed&&g==generation&&streams.isEmpty()&&!accessBlocked)listener.status("Yayın hazırlanıyor, otomatik başlatılacak… Site oynatıcısını açarak da izleyebilirsin.");},25000);
             return;
         }
         Map<String,String> headers=new HashMap<>();
@@ -195,7 +233,16 @@ public final class SiteEngine {
     }
     public void readDetail(int g) {
         if(destroyed||g!=generation||!mode.equals("detail"))return;
-        web.evaluateJavascript(detailScript,value->{if(!destroyed&&g==generation)try{JSONObject data=decode(value);listener.detail(data);if(data.optBoolean("seasonLoading"))handler.postDelayed(()->readDetail(g),1200);}catch(Exception ignored){listener.status("Detay okunamadı. Site görünümünü aç.");}});
+        web.evaluateJavascript(detailScript,value->{
+            if(!destroyed&&g==generation)try{
+                JSONObject data=decode(value);
+                if(source==Source.DIZILLA) DizillaParser.enrich(data);
+                listener.detail(data);
+                if(data.optBoolean("seasonLoading"))handler.postDelayed(()->readDetail(g),1200);
+            }catch(Exception ignored){
+                listener.status("Detay okunamadı. Site görünümünü aç.");
+            }
+        });
     }
     public void action(String id) {
         if(!id.matches("[0-9]+"))return;

@@ -258,13 +258,13 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
                 playWhenFound=true;resolvingSource=true;
                 status.setText("Türkçe Dublaj yayını hazırlanıyor…");
                 autoStatus.setText("🎬 Türkçe Dublaj hazırlanıyor, otomatik başlatılacak…");
-                engine.action(dublajAction.optString("id"));
+                triggerAction(dublajAction);
             });
             Button btnSub=Ui.button(this,"📝 Türkçe Altyazı ile Oynat",()->{
                 playWhenFound=true;resolvingSource=true;
                 status.setText("Türkçe Altyazı yayını hazırlanıyor…");
                 autoStatus.setText("🎬 Türkçe Altyazı hazırlanıyor, otomatik başlatılacak…");
-                engine.action(altyaziAction.optString("id"));
+                triggerAction(altyaziAction);
             });
             playBtnRow.addView(btnDub);space(playBtnRow);playBtnRow.addView(btnSub);
             actionCard.addView(playBtnRow);
@@ -285,17 +285,17 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
             btnPlay.requestFocus();
 
             playWhenFound=true;
-            if(dublajAction!=null){resolvingSource=true;engine.action(dublajAction.optString("id"));}
-            else if(altyaziAction!=null){resolvingSource=true;engine.action(altyaziAction.optString("id"));}
-            else if(actions!=null&&actions.length()>0){JSONObject a=actions.optJSONObject(0);if(a!=null){resolvingSource=true;engine.action(a.optString("id"));}}
+            if(dublajAction!=null){resolvingSource=true;triggerAction(dublajAction);}
+            else if(altyaziAction!=null){resolvingSource=true;triggerAction(altyaziAction);}
+            else if(actions!=null&&actions.length()>0){JSONObject a=actions.optJSONObject(0);if(a!=null){resolvingSource=true;triggerAction(a);}}
             else if(frames!=null&&frames.length()>0){String frame=frames.optString(0);if(MediaPolicy.isHttps(frame)){resolvingSource=true;engine.frame(frame);}}
         }
 
         LinearLayout altSources=Ui.column(this);altSources.setVisibility(View.GONE);
         if(actions!=null&&actions.length()>2){
             for(int i=0;i<actions.length();i++){
-                JSONObject a=actions.optJSONObject(i);if(a==null)continue;String id=a.optString("id");String lbl=a.optString("label");
-                altSources.addView(Ui.button(this,"Kaynak: "+lbl,()->{playWhenFound=true;resolvingSource=true;engine.action(id);}));Ui.gap(altSources,6);
+                JSONObject a=actions.optJSONObject(i);if(a==null)continue;String lbl=a.optString("label");
+                altSources.addView(Ui.button(this,"Kaynak: "+lbl,()->{playWhenFound=true;resolvingSource=true;triggerAction(a);}));Ui.gap(altSources,6);
             }
         } else if(frames!=null&&frames.length()>1){
             for(int i=0;i<frames.length();i++){
@@ -309,18 +309,28 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
         detailPanel.addView(toggleAlt);detailPanel.addView(altSources);
         status.setText(hasBothLanguages?"Dil seçimi bekleniyor…":"Yayın hazırlanıyor, otomatik başlatılacak…");
     }
+    private void triggerAction(JSONObject a){
+        if(a==null)return;
+        String frame=a.optString("frame","");
+        if(!frame.isEmpty()&&MediaPolicy.isHttps(frame)){
+            resolvingSource=false;
+            engine.frame(frame);
+        } else {
+            engine.action(a.optString("id"));
+        }
+    }
     private void showLanguageDialog(JSONObject dublajAction,JSONObject altyaziAction,TextView autoStatus){
         new AlertDialog.Builder(this).setTitle("Dil Seçeneği")
             .setMessage("Bu içerik hem Türkçe Dublaj hem de Türkçe Altyazı seçeneklerine sahiptir. Nasıl izlemek istersiniz?")
             .setPositiveButton("🇹🇷 Türkçe Dublaj",(d,w)->{
                 playWhenFound=true;resolvingSource=true;status.setText("Türkçe Dublaj yayını hazırlanıyor…");
                 if(autoStatus!=null)autoStatus.setText("🎬 Türkçe Dublaj hazırlanıyor, otomatik başlatılacak…");
-                engine.action(dublajAction.optString("id"));
+                triggerAction(dublajAction);
             })
             .setNegativeButton("📝 Türkçe Altyazı",(d,w)->{
                 playWhenFound=true;resolvingSource=true;status.setText("Türkçe Altyazı yayını hazırlanıyor…");
                 if(autoStatus!=null)autoStatus.setText("🎬 Türkçe Altyazı hazırlanıyor, otomatik başlatılacak…");
-                engine.action(altyaziAction.optString("id"));
+                triggerAction(altyaziAction);
             })
             .setCancelable(true).show();
     }

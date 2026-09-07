@@ -1,6 +1,7 @@
 (function(){
  try{if(window.top===window.self){Object.defineProperty(window,'top',{get:()=>window.parent&&window.parent!==window?window.parent:{},configurable:true});}}catch(_){}
  window.postMessage({seyir:'start',visible:!!window.__seyirVisible},'*');
+ document.querySelectorAll('iframe').forEach(f=>{try{f.contentWindow.postMessage({seyir:'start',visible:!!window.__seyirVisible},'*')}catch(_){}});
  const urls=new Set();const add=u=>{try{const x=new URL(u,location.href);if(x.protocol==='https:'&&/\.(m3u8|mp4)(\?|$)/i.test(x.href))urls.add(x.href)}catch(_){}};
  document.querySelectorAll('video,source').forEach(v=>{add(v.src);add(v.currentSrc);if(v.tagName==='VIDEO'){v.muted=!window.__seyirVisible;v.volume=window.__seyirVisible?1:0;v.play().catch(()=>{});}});
  performance.getEntriesByType('resource').forEach(r=>add(r.name));

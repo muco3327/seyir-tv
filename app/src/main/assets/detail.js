@@ -33,7 +33,18 @@
     document.querySelectorAll('#plx iframe').forEach(frame => addFrame(frame.getAttribute('data-src') || frame.getAttribute('src')));
   } else if (host.includes('dizilla')) {
     structuredEpisodes();
-    if (/\/dizi\//.test(location.pathname)) seasonLoading = fetchSeasonPages('a[href$="-sezon"],a[href$="-sezon/"]', (doc, base, rows) => {
+    let secureData = '';
+    const nextScript = document.getElementById('__NEXT_DATA__');
+    if (nextScript) {
+      try {
+        const j = JSON.parse(nextScript.textContent);
+        secureData = j?.props?.pageProps?.secureData || '';
+      } catch (_) {}
+    }
+    document.querySelectorAll('div[class*="z-[9999]"], .adArea, [class*="feather-play"]').forEach(e => {
+      try { e.remove(); } catch (_) {}
+    });
+    if (/\/dizi\//.test(location.pathname) && !secureData) seasonLoading = fetchSeasonPages('a[href$="-sezon"],a[href$="-sezon/"]', (doc, base, rows) => {
       doc.querySelectorAll('a.text.block[href*="-sezon-"][href*="-bolum"],a[href*="-sezon-"][href*="-bolum"]').forEach(anchor => { const url = new URL(anchor.getAttribute('href'), base).href, match = url.match(/(\d+)-sezon-(\d+)-bolum/i); if (match) rows.push({ url, label: clean(anchor.textContent), season: Number(match[1]) }); });
     });
     const playBtn = document.querySelector('.player button, .feather-play, #play-video, button[aria-label*="Play" i]');
@@ -67,5 +78,5 @@
     document.querySelectorAll('a[href*="sezon"][href*="bolum"],a[href*="/bolum/"]').forEach(anchor => addEpisode(anchor.getAttribute('href'), anchor.textContent, 0));
   }
   const description = document.querySelector('meta[name="description"]');
-  return JSON.stringify({ title: clean(document.querySelector('h1')?.textContent) || document.title, description: description ? description.content : '', episodes: episodes.slice(0, 800), frames: frames.slice(0, 12), actions, seasonLoading });
+  return JSON.stringify({ title: clean(document.querySelector('h1')?.textContent) || document.title, description: description ? description.content : '', episodes: episodes.slice(0, 800), frames: frames.slice(0, 12), actions, seasonLoading, secureData: typeof secureData !== 'undefined' ? secureData : '' });
 })()
