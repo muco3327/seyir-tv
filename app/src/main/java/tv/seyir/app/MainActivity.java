@@ -79,7 +79,7 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
             .setMessage("Sadece canl. spor yay.nlar. tek ekranda.\n\nYön tuşları: gezin\nOK: seç\nGeri: önceki ekran\n\nFavoriler ve izleme ilerlemesi bu cihazda saklanır. Kaynaklar kendi sitelerinden yüklenir.\n\nHarici hesap veya eklenti kurulumu gerekmez.")
             .setPositiveButton("Tamam",null).show()));space(top);
         top.addView(Ui.button(this,"Güncelle",()->AppUpdater.check(this,true)));space(top);
-        top.addView(Ui.button(this,"Yenile",()->{if(selected!=null)openDetail(selected);else openSource(source);}));space(top);
+        top.addView(Ui.button(this,"Yenile",()->{if(selected!=null)openDetail(selected);else openSource(source, true);}));space(top);
         top.addView(Ui.button(this,"Site görünümü",this::showBrowser));
         HorizontalScrollView toolsBar=new HorizontalScrollView(this);toolsBar.setHorizontalScrollBarEnabled(false);toolsBar.addView(top);shell.addView(toolsBar);Ui.gap(shell,14);
         LinearLayout tabs=Ui.row(this);
@@ -93,7 +93,8 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
         TextView footer=Ui.text(this,"OK  Seç     ·     Yön tuşları  Gezin     ·     Geri  Önceki ekran",12,Ui.MUTED);footer.setPadding(0,Ui.dp(this,8),0,0);shell.addView(footer);
     }
     private void space(LinearLayout l){View v=new View(this);l.addView(v,new LinearLayout.LayoutParams(Ui.dp(this,8),1));}
-    private void openSource(Source s){
+    private void openSource(Source s){ openSource(s, false); }
+    private void openSource(Source s, boolean forceRefresh){
         series=null;seriesEpisodes.clear();expandedSeasons.clear();
         returnCatalog.clear();returnHeading="";returnScrollY=0;
         resolvingSource=false;activeSourcePanel=null;
@@ -102,7 +103,7 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
         if(s==Source.SPORTS){
             status.setText("Canlı spor yayınları yükleniyor…");
             loading();
-            SportsManager.loadChannels(this, true, channels->{
+            SportsManager.loadChannels(this, forceRefresh, channels->{
                 if(source!=Source.SPORTS||selected!=null)return;
                 List<TitleItem> items=new ArrayList<>();
                 for(SportsManager.SportChannel ch:channels){
@@ -172,7 +173,7 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
                 hideBrowser();selected=null;section="catalog";query=q;heading.setText("“"+q+"”");body.removeAllViews();loading();
                 if(source==Source.SPORTS){
                     status.setText("Spor kanalları taranıyor…");
-                    SportsManager.loadChannels(this, true, channels->{
+                    SportsManager.loadChannels(this, false, channels->{
                         List<TitleItem> items=new ArrayList<>();
                         String lower=q.toLowerCase(Locale.ROOT);
                         for(SportsManager.SportChannel ch:channels){
@@ -395,7 +396,7 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
     private void showCategories(){
         if(selected!=null){openSource(source);status.setText("Katalog yüklenince Kategoriler düğmesine bas.");return;}
         if(source==Source.SPORTS){
-            SportsManager.loadChannels(this, true, channels->{
+            SportsManager.loadChannels(this, false, channels->{
                 Set<String> catSet=new LinkedHashSet<>();
                 catSet.add("Tüm Spor Kanalları");
                 for(SportsManager.SportChannel ch:channels){

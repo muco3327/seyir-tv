@@ -17,7 +17,10 @@ public class GithubScanner {
     // Reliable community-maintained IPTV lists (always available, no API limits)
     private static final String[] CURATED_LISTS = {
             "https://iptv-org.github.io/iptv/countries/tr.m3u",
-            "https://raw.githubusercontent.com/YoranYosipov/iptv-playlists/main/tr-az.m3u"
+            "https://raw.githubusercontent.com/YoranYosipov/iptv-playlists/main/tr-az.m3u",
+            "https://raw.githubusercontent.com/Lunedor/iptvTR/main/iptv_tum_kanallar.m3u",
+            "https://raw.githubusercontent.com/Lunedor/iptvTR/main/index.m3u",
+            "https://raw.githubusercontent.com/Efeisot/iptv/main/index.m3u"
     };
 
     // GitHub search queries for discovering additional playlists

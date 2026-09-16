@@ -1,6 +1,6 @@
 {
-  "versionCode": 34,
-  "versionName": "0.4.1",
-  "changelog": "IPTV topluluk listeleri eklendi. Artik A Spor, S Sport, TRT Spor Yildiz, FB TV, HT Spor ve daha fazlasi otomatik yuklenir. Olu beIN linkleri temizlendi.",
-  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.4.1.apk"
+  "versionCode": 35,
+  "versionName": "0.4.2",
+  "changelog": "1. Kategori gecislerindeki gereksiz tarama engellendi. 2. Premium beIN kanallarini iceren ozel listeler taramaya eklendi (artik iptv-org disindaki kaynaklardan da full kanallar bulunacak).",
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.4.2.apk"
 }
