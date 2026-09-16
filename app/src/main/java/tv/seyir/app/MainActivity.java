@@ -197,6 +197,9 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
         if(item.source==Source.SPORTS){
             SportsManager.SportChannel ch=SportsManager.getChannel(item.url);
             if(ch==null)ch=SportsManager.getChannel(item.title);
+            if(ch==null && item.url != null && !item.url.isEmpty() && (item.url.startsWith("http://") || item.url.startsWith("https://"))){
+                ch = new SportsManager.SportChannel("temp", item.title, item.image, item.info, java.util.Collections.singletonList(item.url), new java.util.HashMap<>());
+            }
             if(ch!=null){playSport(item,ch);return;}
         }
         if(selected==null&&!catalog.isEmpty()){
