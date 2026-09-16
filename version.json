@@ -1,6 +1,6 @@
 {
-  "versionCode": 42,
-  "versionName": "0.4.9",
-  "changelog": "Uygulamanin IPTV kaynak listesi kokten degistirildi! 'Diger uygulamamda calisiyor' dediginiz uygulamanin arka planda gizlice kullandigi 5 adet ozel ve guncel IPTV sunucusu tespit edildi ve dogrudan Seyir TV'nin tarama motoruna eklendi! Artik calisan guncel beIN kanallari bulunacak.",
-  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.4.9.apk"
+  "versionCode": 43,
+  "versionName": "0.5.0",
+  "changelog": "DEV GUNCELLEME: Olulerden Arindirma Sistemi! \n Artik uygulama acilirken 'Premium kanallar dogrulaniyor' ekraninda tum beIN, S Sport, Smart Spor vb. kanallarin yuzlerce linkini gercek zamanli test edip calismayanlari (olu sunuculari) listeden siliyor. Menuden bir kanali sectiginizde karsiniza sadece aktif, calisan linkler gelecek! Bosuna beklemek ve TIMEOUT hatasi tarihe karisti.",
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.0.apk"
 }

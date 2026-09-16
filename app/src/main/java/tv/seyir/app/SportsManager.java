@@ -13,7 +13,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.util.*;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.security.MessageDigest;
@@ -134,7 +134,9 @@ public final class SportsManager {
             }
 
             List<SportChannel> channels = new ArrayList<>(aggregated.values());
-            if (statusCallback != null) mainHandler.post(() -> statusCallback.onStatus("Toplam " + channels.size() + " tekil kanal yuklendi"));
+            verifyPremiumChannels(channels, statusCallback);
+            
+            if (statusCallback != null) mainHandler.post(() -> statusCallback.onStatus("Toplam " + channels.size() + " aktif kanal yuklendi"));
 
             if (!channels.isEmpty()) {
                 synchronized (SportsManager.class) {
@@ -362,6 +364,86 @@ public final class SportsManager {
         } catch (Exception ignored) {
         } finally {
             if (conn != null) conn.disconnect();
+        }
+    }
+    private static void verifyPremiumChannels(List<SportChannel> channels, StatusCallback statusCallback) {
+        if (statusCallback != null) mainHandler.post(() -> statusCallback.onStatus("Premium kanallar dogrulaniyor (10-20 sn surebilir)..."));
+        
+        List<SportChannel> premiumChannels = new ArrayList<>();
+        for (SportChannel ch : channels) {
+            String name = ch.name.toLowerCase(Locale.ROOT);
+            if (name.contains("bein") || name.contains("s sport") || name.contains("smart") || name.contains("tivibu")) {
+                premiumChannels.add(ch);
+            }
+        }
+        
+        if (premiumChannels.isEmpty()) return;
+        
+        ExecutorService executor = Executors.newFixedThreadPool(40);
+        CountDownLatch latch = new CountDownLatch(premiumChannels.size());
+        
+        int total = premiumChannels.size();
+        final int[] completed = {0};
+        
+        for (SportChannel ch : premiumChannels) {
+            executor.execute(() -> {
+                Iterator<String> it = ch.urls.iterator();
+                while (it.hasNext()) {
+                    String url = it.next();
+                    if (!isUrlAlive(url, ch.headers)) {
+                        it.remove();
+                    }
+                }
+                
+                synchronized (completed) {
+                    completed[0]++;
+                    if (completed[0] % 5 == 0 && statusCallback != null) {
+                        mainHandler.post(() -> statusCallback.onStatus("Premium kanallar dogrulaniyor (" + completed[0] + "/" + total + ")..."));
+                    }
+                }
+                latch.countDown();
+            });
+        }
+        
+        try {
+            latch.await();
+        } catch (InterruptedException ignored) {}
+        
+        executor.shutdown();
+        
+        Iterator<SportChannel> cit = channels.iterator();
+        while (cit.hasNext()) {
+            SportChannel ch = cit.next();
+            if (premiumChannels.contains(ch) && ch.urls.isEmpty()) {
+                cit.remove();
+            }
+        }
+    }
+
+    private static boolean isUrlAlive(String urlStr, Map<String, String> headers) {
+        HttpURLConnection conn = null;
+        try {
+            URL url = new URL(urlStr);
+            conn = (HttpURLConnection) url.openConnection();
+            conn.setConnectTimeout(4000);
+            conn.setReadTimeout(4000);
+            if (headers != null) {
+                for (Map.Entry<String, String> entry : headers.entrySet()) {
+                    conn.setRequestProperty(entry.getKey(), entry.getValue());
+                }
+            }
+            if (headers == null || !headers.containsKey("User-Agent")) {
+                conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36");
+            }
+            conn.setRequestMethod("GET");
+            int code = conn.getResponseCode();
+            return code >= 200 && code < 400;
+        } catch (Exception e) {
+            return false;
+        } finally {
+            if (conn != null) {
+                try { conn.disconnect(); } catch (Exception ignored) {}
+            }
         }
     }
 }
