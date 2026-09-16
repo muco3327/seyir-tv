@@ -1,0 +1,27 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Arka Plan: Koyu Gri / Siyah (Minimalist) -->
+    <path
+        android:pathData="M0,0h108v108h-108z"
+        android:fillColor="#141414" />
+
+    <!-- Sol Dikey Çubuk -->
+    <path
+        android:pathData="M34,28 h11 v52 h-11 z"
+        android:fillColor="#B81D24" />
+
+    <!-- Sağ Dikey Çubuk -->
+    <path
+        android:pathData="M63,28 h11 v52 h-11 z"
+        android:fillColor="#B81D24" />
+
+    <!-- Çapraz Çubuk (Ön Planda, Parlak Kırmızı) -->
+    <path
+        android:pathData="M34,28 h12 l28,52 h-12 z"
+        android:fillColor="#E50914" />
+
+</vector>

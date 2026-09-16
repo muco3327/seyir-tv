@@ -14,7 +14,7 @@ public final class Library {
         try {
             JSONArray arr=new JSONArray(prefs.getString(kind,"[]"));
             for(int i=0;i<arr.length();i++) {
-                TitleItem item=TitleItem.read(arr.getJSONObject(i),Source.FULLHD);
+                TitleItem item=TitleItem.read(arr.getJSONObject(i),Source.SPORTS);
                 if(item.source.owns(item.url)) result.add(item);
             }
         } catch(Exception ignored) { }

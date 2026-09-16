@@ -1,0 +1,3 @@
+User-Agent: *
+Allow: /
+Sitemap: https://diziwatch.ac/sitemap-index.xml

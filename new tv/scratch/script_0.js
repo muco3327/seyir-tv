@@ -1,0 +1,1 @@
+window.SPG_A={"acik":true,"hedef":"/engel.html","sp":"b42d5f27ca0c5d8c8e8cc804c5d0d231","spT":1788959208};

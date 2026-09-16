@@ -1,0 +1,243 @@
+[
+  {
+    "id": "bein1",
+    "name": "beIN Sports 1",
+    "logo": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/bein-sports-1-tr.png",
+    "category": "beIN Sports",
+    "urls": [
+      "https://andro.2385437.xyz/checklist/androstreamlivebs1.m3u8",
+      "https://andro.226503.xyz/checklist/androstreamlivebs1.m3u8",
+      "https://biraz.1386503.xyz/checklist/androstreamlivebs1.m3u8"
+    ],
+    "headers": {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "Referer": "https://taraftarium24.xyz/",
+      "Origin": "https://taraftarium24.xyz"
+    }
+  },
+  {
+    "id": "bein2",
+    "name": "beIN Sports 2",
+    "logo": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/bein-sports-2-tr.png",
+    "category": "beIN Sports",
+    "urls": [
+      "https://andro.2385437.xyz/checklist/androstreamlivebs2.m3u8",
+      "https://andro.226503.xyz/checklist/androstreamlivebs2.m3u8"
+    ],
+    "headers": {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "Referer": "https://taraftarium24.xyz/",
+      "Origin": "https://taraftarium24.xyz"
+    }
+  },
+  {
+    "id": "bein3",
+    "name": "beIN Sports 3",
+    "logo": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/bein-sports-3-tr.png",
+    "category": "beIN Sports",
+    "urls": [
+      "https://andro.2385437.xyz/checklist/androstreamlivebs3.m3u8",
+      "https://andro.226503.xyz/checklist/androstreamlivebs3.m3u8",
+      "https://biraz.1386503.xyz/checklist/androstreamlivebs3.m3u8"
+    ],
+    "headers": {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "Referer": "https://taraftarium24.xyz/",
+      "Origin": "https://taraftarium24.xyz"
+    }
+  },
+  {
+    "id": "bein4",
+    "name": "beIN Sports 4",
+    "logo": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/bein-sports-4-tr.png",
+    "category": "beIN Sports",
+    "urls": [
+      "https://andro.2385437.xyz/checklist/androstreamlivebs4.m3u8",
+      "https://andro.226503.xyz/checklist/androstreamlivebs4.m3u8"
+    ],
+    "headers": {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "Referer": "https://taraftarium24.xyz/",
+      "Origin": "https://taraftarium24.xyz"
+    }
+  },
+  {
+    "id": "bein5",
+    "name": "beIN Sports 5",
+    "logo": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/bein-sports-max-1-tr.png",
+    "category": "beIN Sports",
+    "urls": [
+      "https://andro.2385437.xyz/checklist/androstreamlivebs5.m3u8",
+      "https://andro.2385437.xyz/checklist/androstreamlivebsm1.m3u8"
+    ],
+    "headers": {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "Referer": "https://taraftarium24.xyz/",
+      "Origin": "https://taraftarium24.xyz"
+    }
+  },
+  {
+    "id": "beinhaber",
+    "name": "beIN Sports Haber",
+    "logo": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/bein-sports-haber-tr.png",
+    "category": "beIN Sports",
+    "urls": [
+      "https://bein-esp-xumo.amagi.tv/playlistR1080p.m3u8",
+      "https://andro.2385437.xyz/checklist/androstreamlivebshaber.m3u8"
+    ],
+    "headers": {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "Referer": "https://taraftarium24.xyz/",
+      "Origin": "https://taraftarium24.xyz"
+    }
+  },
+  {
+    "id": "ssport1",
+    "name": "S Sport 1 HD",
+    "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/S_Sport_logo.svg/512px-S_Sport_logo.svg.png",
+    "category": "S Sport",
+    "urls": [
+      "https://andro.2385437.xyz/checklist/androstreamlivess1.m3u8",
+      "https://andro.226503.xyz/checklist/androstreamlivess1.m3u8"
+    ],
+    "headers": {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "Referer": "https://taraftarium24.xyz/",
+      "Origin": "https://taraftarium24.xyz"
+    }
+  },
+  {
+    "id": "ssport2",
+    "name": "S Sport 2 HD",
+    "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/S_Sport_2_logo.svg/512px-S_Sport_2_logo.svg.png",
+    "category": "S Sport",
+    "urls": [
+      "https://andro.2385437.xyz/checklist/androstreamlivess2.m3u8",
+      "https://andro.226503.xyz/checklist/androstreamlivessplus1.m3u8"
+    ],
+    "headers": {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "Referer": "https://taraftarium24.xyz/",
+      "Origin": "https://taraftarium24.xyz"
+    }
+  },
+  {
+    "id": "tivibu1",
+    "name": "Tivibu Spor 1",
+    "logo": "https://upload.wikimedia.org/wikipedia/tr/3/36/Tivibu_spor_logosu.jpg",
+    "category": "Tivibu Spor",
+    "urls": [
+      "https://andro.2385437.xyz/checklist/androstreamlivets1.m3u8",
+      "https://andro.2385437.xyz/checklist/androstreamlivets.m3u8"
+    ],
+    "headers": {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "Referer": "https://taraftarium24.xyz/",
+      "Origin": "https://taraftarium24.xyz"
+    }
+  },
+  {
+    "id": "tivibu2",
+    "name": "Tivibu Spor 2",
+    "logo": "https://upload.wikimedia.org/wikipedia/tr/3/36/Tivibu_spor_logosu.jpg",
+    "category": "Tivibu Spor",
+    "urls": [
+      "https://andro.2385437.xyz/checklist/androstreamlivets2.m3u8"
+    ],
+    "headers": {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "Referer": "https://taraftarium24.xyz/",
+      "Origin": "https://taraftarium24.xyz"
+    }
+  },
+  {
+    "id": "tivibu3",
+    "name": "Tivibu Spor 3",
+    "logo": "https://upload.wikimedia.org/wikipedia/tr/3/36/Tivibu_spor_logosu.jpg",
+    "category": "Tivibu Spor",
+    "urls": [
+      "https://andro.2385437.xyz/checklist/androstreamlivets3.m3u8"
+    ],
+    "headers": {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36",
+      "Referer": "https://taraftarium24.xyz/",
+      "Origin": "https://taraftarium24.xyz"
+    }
+  },
+  {
+    "id": "trtspor",
+    "name": "TRT Spor HD",
+    "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/TRT_Spor_logo.svg/512px-TRT_Spor_logo.svg.png",
+    "category": "Ulusal Spor",
+    "urls": [
+      "https://trt.daioncdn.net/trtspor/master.m3u8?app=web&platform=trtspor",
+      "https://tv-trtspor2.medya.trt.com.tr/master_720.m3u8"
+    ],
+    "headers": {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+    }
+  },
+  {
+    "id": "trtsporyildiz",
+    "name": "TRT Spor Yıldız",
+    "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/TRT_Spor_Y%C4%B1ld%C4%B1z_Logo.svg/512px-TRT_Spor_Y%C4%B1ld%C4%B1z_Logo.svg.png",
+    "category": "Ulusal Spor",
+    "urls": [
+      "https://trt.daioncdn.net/trtspor-yildiz/master.m3u8?app=web&platform=trtspor",
+      "https://tv-trtspor2.medya.trt.com.tr/master_720.m3u8"
+    ],
+    "headers": {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+    }
+  },
+  {
+    "id": "aspor",
+    "name": "A Spor HD",
+    "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/A_Spor_logo.svg/512px-A_Spor_logo.svg.png",
+    "category": "Ulusal Spor",
+    "urls": [
+      "https://rnttwmjcin.turknet.ercdn.net/lcpmvefbyo/aspor/aspor_1080p.m3u8",
+      "https://rnttwmjcin.turknet.ercdn.net/lcpmvefbyo/aspor/aspor.m3u8"
+    ],
+    "headers": {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+    }
+  },
+  {
+    "id": "htspor",
+    "name": "HT Spor HD",
+    "logo": "https://www.htspor.com/images/manifest/social-share-logo.png",
+    "category": "Ulusal Spor",
+    "urls": [
+      "https://ciner.daioncdn.net/ht-spor/ht-spor.m3u8?app=web"
+    ],
+    "headers": {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+    }
+  },
+  {
+    "id": "tjktv",
+    "name": "TJK TV (Yarış)",
+    "logo": "https://cdn.technettv.com/channel/20826/logo_256_1699966834.png",
+    "category": "Yarış",
+    "urls": [
+      "http://tjktv.ercdn.net/tjktv.m3u8",
+      "https://tjktv-live.tjk.org/tjktv2/tjktv2_1080p.m3u8"
+    ],
+    "headers": {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+    }
+  },
+  {
+    "id": "ekolsport",
+    "name": "Ekol Sports HD",
+    "logo": "https://feo.kablowebtv.com/resize/168A635D265A4328C2883FB4CD8FF/0/0/Vod/HLS/c4ca1fe1-e4ef-496a-9e97-b41a55910e43.png",
+    "category": "Ulusal Spor",
+    "urls": [
+      "https://ekoltv-live.ercdn.net/ekolsport/ekolsport_1080p.m3u8?autoplay=1"
+    ],
+    "headers": {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+    }
+  }
+]

@@ -22,7 +22,7 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
     private ScrollView scroll;
     private SiteEngine engine;
     private Library library;
-    private Source source=Source.FULLHD;
+    private Source source=Source.SPORTS;
     private TitleItem selected;
     private TitleItem series;
     private final List<TitleItem> seriesEpisodes=new ArrayList<>();
@@ -63,7 +63,7 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
             @Override public void onHideCustomView(){hideFullscreen();}
         });
         createShell();
-        if(state!=null)try{source=Source.valueOf(state.getString("source",Source.FULLHD.name()));}catch(Exception ignored){}
+        if(state!=null)try{source=Source.valueOf(state.getString("source",Source.SPORTS.name()));}catch(Exception ignored){}
         openSource(source);
         AppUpdater.check(this, false);
     }
@@ -76,7 +76,7 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
         top.addView(Ui.button(this,"Favoriler",()->showLibrary("favorites")));space(top);
         top.addView(Ui.button(this,"Devam et",()->showLibrary("history")));space(top);
         top.addView(Ui.button(this,"Bilgi",()->new AlertDialog.Builder(this).setTitle("Seyir TV · 0.3.0")
-            .setMessage("Film, dizi ve canlı spor yayınları tek ekranda.\n\nYön tuşları: gezin\nOK: seç\nGeri: önceki ekran\n\nFavoriler ve izleme ilerlemesi bu cihazda saklanır. Kaynaklar kendi sitelerinden yüklenir.\n\nHarici hesap veya eklenti kurulumu gerekmez.")
+            .setMessage("Sadece canl. spor yay.nlar. tek ekranda.\n\nYön tuşları: gezin\nOK: seç\nGeri: önceki ekran\n\nFavoriler ve izleme ilerlemesi bu cihazda saklanır. Kaynaklar kendi sitelerinden yüklenir.\n\nHarici hesap veya eklenti kurulumu gerekmez.")
             .setPositiveButton("Tamam",null).show()));space(top);
         top.addView(Ui.button(this,"Güncelle",()->AppUpdater.check(this,true)));space(top);
         top.addView(Ui.button(this,"Yenile",()->{if(selected!=null)openDetail(selected);else openSource(source);}));space(top);
@@ -102,14 +102,14 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
         if(s==Source.SPORTS){
             status.setText("Canlı spor yayınları yükleniyor…");
             loading();
-            SportsManager.loadChannels(this,channels->{
+            SportsManager.loadChannels(this, true, channels->{
                 if(source!=Source.SPORTS||selected!=null)return;
                 List<TitleItem> items=new ArrayList<>();
                 for(SportsManager.SportChannel ch:channels){
                     items.add(ch.toTitleItem());
                 }
                 catalog(items,items.size()+" kanal");
-            });
+            }, msg -> { if(status!=null) status.setText(msg); });
             return;
         }
         status.setText("Güncel içerikler yükleniyor…");loading();engine.catalog(s,"");
@@ -165,14 +165,14 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
         });
     }
     private void search(){
-        EditText input=new EditText(this);input.setSingleLine();input.setHint("Film, dizi veya kanal adı");input.setText(query);
+        EditText input=new EditText(this);input.setSingleLine();input.setHint("Kanal adı");input.setText(query);
         new AlertDialog.Builder(this).setTitle(source.title+" içinde ara").setView(input)
             .setPositiveButton("Ara",(d,w)->{
                 String q=input.getText().toString().trim();if(q.isEmpty())return;
                 hideBrowser();selected=null;section="catalog";query=q;heading.setText("“"+q+"”");body.removeAllViews();loading();
                 if(source==Source.SPORTS){
                     status.setText("Spor kanalları taranıyor…");
-                    SportsManager.loadChannels(this,channels->{
+                    SportsManager.loadChannels(this, true, channels->{
                         List<TitleItem> items=new ArrayList<>();
                         String lower=q.toLowerCase(Locale.ROOT);
                         for(SportsManager.SportChannel ch:channels){
@@ -181,7 +181,7 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
                             }
                         }
                         catalog(items,items.size()+" kanal");
-                    });
+                    }, msg -> { if(status!=null) status.setText(msg); });
                 } else {
                     status.setText("Kaynakta aranıyor…");engine.catalog(source,q);
                 }
@@ -206,7 +206,7 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
         resolvingSource=false;activeSourcePanel=null;
         boolean isEp=isEpisode(item);
         hideBrowser();playWhenFound=true;selected=item;source=item.source;streams.clear();imageGeneration++;heading.setText(item.title);
-        status.setText(isEp?"Bölüm yayını aranıyor ve hazırlanıyor…":"Film yayını aranıyor ve hazırlanıyor…");
+        status.setText("Yayın aranıyor ve hazırlanıyor...");
         body.removeAllViews();detailPanel=Ui.column(this);body.addView(detailPanel);
         LinearLayout controls=Ui.row(this);controls.addView(Ui.button(this,"‹ Listeye dön",this::returnToList));space(controls);
         Button favorite=Ui.button(this,library.contains("favorites",item)?"★ Favorilerde":"☆ Favorilere ekle",()->{});
@@ -395,7 +395,7 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
     private void showCategories(){
         if(selected!=null){openSource(source);status.setText("Katalog yüklenince Kategoriler düğmesine bas.");return;}
         if(source==Source.SPORTS){
-            SportsManager.loadChannels(this,channels->{
+            SportsManager.loadChannels(this, true, channels->{
                 Set<String> catSet=new LinkedHashSet<>();
                 catSet.add("Tüm Spor Kanalları");
                 for(SportsManager.SportChannel ch:channels){
@@ -413,7 +413,7 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
                     }
                     catalog(items,items.size()+" kanal");
                 }).show();
-            });
+            }, msg -> { if(status!=null) status.setText(msg); });
             return;
         }
         engine.categories(data->{JSONArray items=data.optJSONArray("items");if(items==null||items.length()==0){new AlertDialog.Builder(this).setMessage("Bu sayfada kategori bağlantısı bulunamadı. Katalog yüklendikten sonra tekrar dene.").setPositiveButton("Tamam",null).show();return;}String[] labels=new String[items.length()];for(int n=0;n<labels.length;n++)labels[n]=items.optJSONObject(n).optString("label");new AlertDialog.Builder(this).setTitle("Kategori seç").setItems(labels,(d,w)->{JSONObject item=items.optJSONObject(w);selected=null;section="catalog";query="";heading.setText(item.optString("label"));body.removeAllViews();loading();engine.category(item.optString("url"));}).show();});

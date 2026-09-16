@@ -27,7 +27,7 @@ public final class SiteEngine {
     private final Handler handler=new Handler(Looper.getMainLooper());
     private final String catalogScript, detailScript, resolveScript;
     private int generation=0;
-    private Source source=Source.FULLHD;
+    private Source source=Source.SPORTS;
     private String query="",mode="catalog",requestPage="";
     private boolean searching=false,destroyed=false;
     private String pendingAction=null,pendingFrame=null;
@@ -138,14 +138,14 @@ public final class SiteEngine {
         accessBlocked=false;frameHost=Uri.parse(url).getHost();
         String ref=web.getUrl(); mode="frame";generation++;
         handler.removeCallbacksAndMessages(null);streams.clear();
-        if(source==Source.FULLHD){
+        if(source==Source.SPORTS){
             // Keep the embed in its original parent page for FullHD
             if(!requestPage.equals(web.getUrl()))web.loadUrl(requestPage);
             else startFrame(generation,0);
             int g=generation;handler.postDelayed(()->{if(!destroyed&&g==generation&&streams.isEmpty()&&!accessBlocked)listener.status("Yayın alınamadı. Oynatıcı reklam veya kullanıcı tıklaması bekliyor olabilir. Site oynatıcısını aç.");},90000);
             return;
         }
-        if(source==Source.DIZILLA){
+        if(source==Source.SPORTS){
             if(!requestPage.equals(web.getUrl())){
                 pendingFrame=url;
                 web.loadUrl(requestPage);
@@ -189,7 +189,7 @@ public final class SiteEngine {
     }
     private void blocked(){accessBlocked=true;listener.status("Yayın sunucusu erişimi engelledi. Bu, videonun olmadığı anlamına gelmez. Bölüm sayfasını tarayıcıda açabilirsin.");}
     public void showOriginalPage(){
-        if((source==Source.DIZILLA||source==Source.FULLHD||source==Source.DIZIBOX)&&!requestPage.equals(web.getUrl())){generation++;handler.removeCallbacksAndMessages(null);accessBlocked=false;mode="frame";web.loadUrl(requestPage);}
+        if((source==Source.SPORTS||source==Source.SPORTS||source==Source.SPORTS)&&!requestPage.equals(web.getUrl())){generation++;handler.removeCallbacksAndMessages(null);accessBlocked=false;mode="frame";web.loadUrl(requestPage);}
     }
     public void category(String url){
         if(!source.owns(url))return;
@@ -239,7 +239,7 @@ public final class SiteEngine {
         web.evaluateJavascript(detailScript,value->{
             if(!destroyed&&g==generation)try{
                 JSONObject data=decode(value);
-                if(source==Source.DIZILLA) DizillaParser.enrich(data);
+
                 listener.detail(data);
                 if(data.optBoolean("seasonLoading"))handler.postDelayed(()->readDetail(g),1200);
             }catch(Exception ignored){
@@ -252,7 +252,7 @@ public final class SiteEngine {
         captureActive=true;web.onResume();
         if(!mode.equals("detail")){mode="detail";generation++;handler.removeCallbacksAndMessages(null);streams.clear();pendingAction=id;web.loadUrl(requestPage);return;}
         streams.clear();
-        String followUp=source==Source.FULLHD?";setTimeout(()=>document.querySelector('#play-video,.video-play-button')?.click(),350)":"";
+        String followUp=source==Source.SPORTS?";setTimeout(()=>document.querySelector('#play-video,.video-play-button')?.click(),350)":"";
         web.evaluateJavascript("document.querySelector('[data-seyir-action=\""+id+"\"]')?.click()"+followUp,null);
         int g=generation;handler.postDelayed(()->readDetail(g),1200);handler.postDelayed(()->readDetail(g),3000);handler.postDelayed(()->readDetail(g),6000);handler.postDelayed(()->readDetail(g),10000);
     }

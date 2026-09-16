@@ -1,0 +1,40 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="320dp"
+    android:height="180dp"
+    android:viewportWidth="320"
+    android:viewportHeight="180">
+
+    <!-- Arka Plan: Koyu Gri / Siyah (Minimalist) -->
+    <path
+        android:pathData="M0,0h320v180h-320z"
+        android:fillColor="#141414" />
+
+    <!-- N Logosu (Ortalanmış) -->
+    <group
+        android:translateX="138"
+        android:translateY="64">
+        
+        <!-- Sol Dikey Çubuk -->
+        <path
+            android:pathData="M0,0 h11 v52 h-11 z"
+            android:fillColor="#B81D24" />
+
+        <!-- Sağ Dikey Çubuk -->
+        <path
+            android:pathData="M29,0 h11 v52 h-11 z"
+            android:fillColor="#B81D24" />
+
+        <!-- Çapraz Çubuk (Ön Planda, Parlak Kırmızı) -->
+        <path
+            android:pathData="M0,0 h12 l28,52 h-12 z"
+            android:fillColor="#E50914" />
+    </group>
+
+    <!-- NEW TV Yazısı (N'nin Altında) -->
+    <path
+        android:pathData="M138,130 L182,130"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.5"
+        android:strokeAlpha="0.8" />
+    
+</vector>

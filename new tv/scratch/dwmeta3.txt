@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+    <html lang="tr">
+    <head>
+        <meta charset=UTF-8><meta content="IE=edge" http-equiv=X-UA-Compatible><meta content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" name=viewport><link href="https://diziwatch.ac/assets/css/diziwatch.css?ver=1.4.9" rel=stylesheet><link href="https://diziwatch.ac/assets/css-dist/style.mins.css?ver=1.4.9" rel=stylesheet><script async src="https://www.googletagmanager.com/gtag/js?id=G-F10P1YP5T8"></script><script>window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+
+                gtag('config', 'G-F10P1YP5T8');</script><style>.topnvactive {
+                    overflow: auto;
+                    flex-direction: column;
+                    height: auto;
+                    align-items: flex-start !important;
+                    padding: 10px 10px 10px 15px;
+                }
+                @font-face {
+                    font-family: proxima nova gremots;
+                    src: local('Proxima Nova Regular'), local('ProximaNova-Regular'), url(/assets/fonts/r.woff) format('woff');
+                    font-style: normal;
+                    font-weight: 400;
+                    font-display: swap
+                }
+
+                @font-face {
+                    font-family: proxima nova gremots;
+                    src: local('Proxima Nova Light'), local('ProximaNova-Light'), url(/assets/fonts/l.woff) format('woff');
+                    font-style: normal;
+                    font-weight: 300;
+                    font-display: swap
+                }
+
+                @font-face {
+                    font-family: proxima nova gremots;
+                    src: local('Proxima Nova Regular'), local('ProximaNova-Regular'), url(/assets/fonts/r.woff) format('woff');
+                    font-style: normal;
+                    font-weight: 500;
+                    font-display: swap
+                }
+
+                @font-face {
+                    font-family: proxima nova gremots;
+                    src: local('Proxima Nova Semibold'), local('ProximaNova-Semibold'), url(/assets/fonts/s.woff) format('woff');
+                    font-style: normal;
+                    font-weight: 700;
+                    font-display: swap
+                }
+
+                @font-face {
+                    font-family: proxima nova gremots;
+                    src: local('Proxima Nova Bold'), local('ProximaNova-Bold'), url(/assets/fonts/b.woff) format('woff');
+                    font-style: normal;
+                    font-weight: 900;
+                    font-display: swap
+                }
+                button, html, input, select, textarea {
+                    font-family: proxima nova gremots, helvetica neue, sans-serif !important;
+                }
+                body {
+                    font-family: proxima nova gremots, helvetica neue, sans-serif !important;
+                }
+                @media only screen and (max-width: 1000px) {
+                    .container-bolumler {
+                        width: 100% !important;
+                        margin: 0 auto !important;
+                    }
+                }
+                .container-bolumler {
+                    overflow-y: auto;
+                    scrollbar-color: #e4e4e4 #cdc2ff1a;
+                    scrollbar-width: thin;
+                    max-height: 312px;
+                    width: 100%;
+                    margin-top: 0;
+                    margin-bottom: 0;
+                }
+                @media (min-width: 640px) {
+                    .sm\:px-0 {
+                        padding-left: 0px;
+                        padding-right: 0px;
+                    }
+                }
+                #wrap {
+                    width: 1000px;
+                    padding: 0;
+                    margin: 20px auto 0;
+                }
+
+                @media only screen and (max-width: 1000px) {
+                    .mobile-round-image {
+                        aspect-ratio: 50 / 50 !important;
+                        height:auto !important
+                    }
+                    body {
+                        background: #3d3d3d !important;
+                    }
+                    #wrap {
+                        width: 100%;
+                        overflow-x: hidden;
+                        margin-top: -5px;
+                    }
+                }
+                @media screen and (min-width: 1000px) {
+                    #wrap {
+                        position: relative;
+                    }
+                }
+                @media only screen and (min-width: 1439px) {
+                    #wrap {
+                        width: 1243px;
+                    }
+                }
+                #wrap, #header, #footer {
+                    box-shadow: 0 0 6px 3px rgb(0 0 0 / 50%);
+                }
+                .x_comment_form .x_comment_container{
+                    box-shadow: none !important;
+                }
+                .loader .bg {
+                    opacity: .3;
+                    width: 102%;
+                    height: 104%;
+                    margin-left: -1%;
+                    margin-top: -1%;
+                    border-radius: 10px;
+                    left: 0;
+                    top: 0;
+                    position: absolute;
+                    z-index: 999999999 !important;
+                    text-align: center;
+                    overflow: hidden;
+                }
+                .loader i {
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    margin-top: -20px;
+                    margin-left: -20px;
+                    z-index: 9999;
+                }
+                .pagination {
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    gap: 10px;
+                    list-style: none;
+                    padding: 0;
+                    margin: 0;
+                    margin-top:20px
+                }
+
+                .pagination li {
+                    background-color: rgba(0, 0, 0, .3);
+                    border-radius: 5px;
+                    overflow: hidden;
+                }
+
+                .pagination li a {
+                    display: block;
+                    padding: 10px 15px;
+                    color: #fff;
+                    text-decoration: none;
+                    font-size: 14px;
+                    transition: background-color 0.3s ease, color 0.3s ease;
+                }
+
+                .pagination li a:hover {
+                    background-color: rgba(0, 0, 0, .6);
+                    color: #ffcc00;
+                }
+
+                .pagination-active {
+                    background-color: rgba(0, 0, 0, .6) !important;
+                }
+
+
+                .pagination .active {
+                    background-color: rgba(0, 0, 0, .6) !important;
+                }
+
+                .pagination-active a {
+                    color: #2c2c2c; /* Aktif sayfa yazı rengi */
+                    font-weight: bold;
+                }
+
+                .pagination li:last-child a {
+                    font-weight: bold; /* "Sonraki" linkini belirginleştirme */
+                }
+
+                .max-h-poster {
+                    max-height:140px;
+
+                }
+
+                .grid-cols-4 {
+                    grid-template-columns: repeat(4, minmax(0, 1fr));
+                }
+                .filtrelebtn {
+                    color: #000;
+                    background-color: #ffd500;
+                    padding: 6px 11px;
+                    display: inline-block;
+                    border: 0 solid transparent;
+                    box-shadow: none;
+                    border-radius: 3px;
+                    vertical-align: middle;
+                    box-sizing: border-box;
+                    cursor: pointer;
+                }
+
+                @media (min-width: 640px) {
+                    .sm\:top-5 {
+                        top: 1.25rem;
+                    }
+                }
+
+                .topnav {
+                    background-color:rgba(0,0,0,.5) !important;
+                }
+                .mob-expl {    max-height: 200px;
+                    overflow: auto;}
+                @media (max-width: 640px) {
+                    #psContainer {
+                        height:154px !important;
+                    }
+                    .mbb {
+                        margin-bottom:8px
+                    }
+                    .mbimdb {
+                        position: absolute;
+                        margin-left: -40px;
+                        margin-top: -40px;
+                    }
+                    .mob-expl {
+                        max-height: 187px;
+                        overflow: auto;
+                        max-width: 213px;
+                    }
+                    .mob-expl .mbtxt {
+                        font-size:12px
+                    }
+                }
+
+                .comment-top {
+                    display: flex !important;
+                    width: 100%;
+                    height: 100%;
+                    background: rgb(0 0 0 / 25%);
+                    border-bottom: 1px solid rgba(0, 0, 0, .45);
+                    padding: 7px;
+                    padding-bottom: 0;
+                }
+                .x_comment_container {
+                    font-weight: 400;
+                    margin: 10px 0 20px;
+                    padding: 0px;
+                    list-style: none;
+                    background: rgba(0, 0, 0, .1);
+                    box-shadow: 0 0 2px 1px rgba(0, 0, 0, .75);
+                }
+
+                .x_comment_buttons {
+                    display: flex !important;
+                    align-items: center;
+                    justify-content: end;
+                    background: rgb(0 0 0 / 25%);
+                }
+                .x_comment_content {
+                    padding-left:10px !important;
+                }
+                .x_comment_icon_link svg {
+                    fill:white !important
+                }
+                .x_avatar_inner img {
+                    width: 35px !important;
+                    height: 35px !important;
+                    margin-bottom: 8px;
+                    margin-left:5px
+                }
+                .x_avatar {
+                    margin-right:4px !important
+                }
+
+                .x_comment_seperator {
+                    display:none !important
+                }
+                button.x_comment_text_button{
+                    padding: 4px 20px;
+                    line-height: 24px;
+                    border-radius: 3px;
+                    display: block;
+                    cursor: pointer;
+                    font-size: 13px;
+                    color: rgba(255, 255, 255, .9);
+                    background-color: rgba(0, 0, 0, .2) !important;
+                    margin: 0 auto !important;
+                    border: 0;
+                    outline: 0;
+                }
+                :root, :host {
+                    --font-sans: ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+                    'Noto Color Emoji';
+                    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+                    monospace;
+                    --color-gray-400: oklch(0.707 0.022 261.325);
+                    --color-white: #fff;
+                    --spacing: 0.25rem;
+                    --text-sm: 0.875rem;
+                    --text-sm--line-height: calc(1.25 / 0.875);
+                    --text-base: 1rem;
+                    --text-base--line-height: calc(1.5 / 1);
+                    --text-xl: 1.25rem;
+                    --text-xl--line-height: calc(1.75 / 1.25);
+                    --text-2xl: 1.5rem;
+                    --text-2xl--line-height: calc(2 / 1.5);
+                    --text-3xl: 1.875rem;
+                    --text-3xl--line-height: calc(2.25 / 1.875);
+                    --font-weight-semibold: 600;
+                    --font-weight-bold: 700;
+                    --default-transition-duration: 150ms;
+                    --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+                    --default-font-family: var(--font-sans);
+                    --default-mono-font-family: var(--font-mono);
+                }
+                .mt-1 {
+                    margin-top: calc(var(--spacing) * 1);
+                }
+                .mt-3 {
+                    margin-top: calc(var(--spacing) * 3);
+                }
+                .grid-cols-2 {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                }
+                .grid-cols-\[1fr_auto\] {
+                    grid-template-columns: 1fr auto;
+                }
+                .gap-1 {
+                    gap: calc(var(--spacing) * 1);
+                }
+                .gap-2 {
+                    gap: calc(var(--spacing) * 2);
+                }
+                .gap-3 {
+                    gap: calc(var(--spacing) * 3);
+                }
+                .gap-4 {
+                    gap: calc(var(--spacing) * 4);
+                }
+                .overflow-hidden {
+                    overflow: hidden;
+                }
+                .bg-gray-400 {
+                    background-color: var(--color-gray-400);
+                }
+                .p-3 {
+                    padding: calc(var(--spacing) * 3);
+                }
+                .px-1 {
+                    padding-inline: calc(var(--spacing) * 1);
+                }
+                .px-4 {
+                    padding-inline: calc(var(--spacing) * 4);
+                }
+                .py-4 {
+                    padding-block: calc(var(--spacing) * 4);
+                }
+                .bg-\[rgba\(0\,0\,0\,0\.4\)\] {
+                    background-color: rgba(0,0,0,0.4);
+                }
+                .py-3\.5 {
+                    padding-block: calc(var(--spacing) * 3.5);
+                }
+
+                .text-2xl {
+                    font-size: var(--text-2xl);
+                    line-height: var(--tw-leading, var(--text-2xl--line-height));
+                }
+                .text-sm {
+                    font-size: var(--text-sm);
+                    line-height: var(--tw-leading, var(--text-sm--line-height));
+                }
+                .text-xl {
+                    font-size: var(--text-xl);
+                    line-height: var(--tw-leading, var(--text-xl--line-height));
+                }
+                .font-bold {
+                    --tw-font-weight: var(--font-weight-bold);
+                    font-weight: var(--font-weight-bold);
+                }
+                .font-semibold {
+                    --tw-font-weight: var(--font-weight-semibold);
+                    font-weight: var(--font-weight-semibold);
+                }
+                .text-gray-400 {
+                    color: var(--color-gray-400);
+                }
+                .text-white {
+                    color: var(--color-white);
+                }
+                .uppercase {
+                    text-transform: uppercase;
+                }
+                .transition-colors {
+                    transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to;
+                    transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
+                    transition-duration: var(--tw-duration, var(--default-transition-duration));
+                }
+
+                .mt-3 {
+                    margin-top: calc(var(--spacing) * 3);
+                }
+                .text-2xl {
+                    font-size:24px;
+                    line-height: var(--tw-leading, var(--text-2xl--line-height));
+                }</style><link href=https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css rel=stylesheet><link href=/assets/favicons/favicon-96x96.png rel=icon sizes=96x96 type=image/png><link href=/assets/favicons/favicon.svg rel=icon type=image/svg+xml><link href=/assets/favicons/favicon.ico rel="shortcut icon"><link href=/assets/favicons/apple-touch-icon.png rel=apple-touch-icon sizes=180x180><link href=/assets/favicons/site.webmanifest rel=manifest><script>window.jquerySyncQueue=[],window.jQuerySyncQueueHandler=function(){if(window.jQuery)for(;jquerySyncQueue.length;){jquerySyncQueue.shift()(window.jQuery)}else setTimeout(function(){window.jQuerySyncQueueHandler()},50)},window.jquerySync=function(e){window.jQuery?e(window.jQuery):(window.jquerySyncQueue.push(e),setTimeout(function(){window.jQuerySyncQueueHandler()},50))};</script><script>window.appDomain = 'https://diziwatch.ac';</script><script>window.appCKey = 'MTc4ODg5NjQwMDVkNjExMjhlZWU1MGY3OWZmMjBjZjA5OGRkNjFiOTljZWY1YTJhYmI5ZGJiZTQ4ODg0ZDQ3MjRhMmJkM2VlYWQzNjlmOGFjNw==';</script><script>window.appLanguages  = {"Home":"Ana Sayfa","Search":"Arama Yap...","MobileApp":"Dizimia Mobil","PopularMovieTypes":"Pop\u00fcler Film T\u00fcrleri","SpecialCategories":"\u00d6zel Kategoriler","BestOfWeek":"Haftan\u0131n En \u0130yileri","WatchMovie":"Film izle","RecentlyAddedMovies":"Son Eklenen Filmler","RecentlyAddedSeries":"\u0130zlemeye De\u011fer Yeni Diziler","NewSeriesWorthWatching":"\u0130zlemeye De\u011fer Yeni Diziler","SearchSeriesOrMovie":"Dizi veya film ara","FutureMovies":"Yak\u0131nda Gelecek Filmler","FutureMovieFragmans":"Gelecek Film Fragmanlar\u0131","AddMyCollection":"Koleksiyonuma Ekle","MyCollections":"Koleksiyonlar\u0131m","Follow":"Takip Et","OverView":"Genel Bak\u0131\u015f","GoodNight":"\u0130yi geceler!","WelcomeAgain":"Tekrar ho\u015fgeldin.","UsernameOrMail":"Kullan\u0131c\u0131 Ad\u0131n veya Mail Adresin","Username":"Kullan\u0131c\u0131 Ad\u0131n","Email":"E-posta adresin","GeneratePassword":"\u015eifre olu\u015ftur","Password":"\u015eifren","RePassword":"Tekrar \u015eifreniz","ForgotPassword":"\u015eifremi unuttum?","Login":"Giri\u015f","LoginText":"Giri\u015f yaparak, kaliteli i\u00e7eriklere eri\u015f","SingIn":"Giri\u015f Yap","Or":"veya","Register":"Kay\u0131t ol","RegisterText":"Kay\u0131t olarak kaliteli i\u00e7eriklere eri\u015f","DontHaveAccount":"Hesab\u0131n yok mu?","AlreadyMember":"Zaten \u00fcye misin?","FreeGenerateAccount":"\u00dccretsiz \u00dcyeli\u011fimi Olu\u015ftur","Show":"G\u00f6ster","FreeSignUp":"\u00dccretsiz \u00fcye ol!","Name":"\u0130sim","Surname":"Soyisim","FutureSeries":"Beklenen & Yay\u0131nlanan Diziler","FeaturedArtists":"\u00d6ne \u00c7\u0131kan Oyuncular","PopularArtistsBySeries":"Serinin Pop\u00fcler Oyuncular\u0131","SuggestionsForViews":"Adl\u0131 Yap\u0131m\u0131 \u0130zleyenlere \u00d6neriler","AllSequencesByAlphabet":"Alfabeye G\u00f6re T\u00fcm Diziler","ByAlphabet":"Alfabeye G\u00f6re","YabanciDiziler":"Yabanc\u0131 Diziler","SeeMore":"Daha Fazla G\u00f6ster","BirthDay":"Do\u011fum Tarihi","PlaceOfBirth":"Do\u011fum Yeri","PlayedMoviesCount":"Oynad\u0131\u011f\u0131 Dizi \/ Film Say\u0131s\u0131","Following":"Takiptesin","Casting":"Oyunculuk","Followers":"Takip Edenler","Watch":"izle","CinemaMode":"Sinema Modu","PerivousEpisode":"\u00d6nceki B\u00f6l\u00fcm","NextEpisode":"Sonraki B\u00f6l\u00fcm","Watching":"izlenme","Report":"Bildir","Send":"G\u00f6nder","Description":"A\u00e7\u0131klama","ReportSuccess":"\u015eikayetin bize ula\u015ft\u0131, en k\u0131sa s\u00fcrede ilgilenip seni bilgilendirece\u011fiz.","ContinueToWatched":"Kald\u0131\u011f\u0131n yerden izlemeye devam ediyorsun :)","ContinueToWatch":"\u0130zlemeye Devam Et","New":"Yeni","FreeContinueToWatch":"\u00dccretsiz \u00fcye olarak izledi\u011fin dizi ve filmlere kald\u0131\u011f\u0131n yerden devam edebilirsin.","Type":"T\u00fcr\u00fc","Country":"\u00dclke","ImdbPoint":"IMDb Puan\u0131","FollowersCount":"Takip\u00e7i","NotKnow":"Bilinmiyor","Year":"Y\u0131l","Duration":"S\u00fcre","Minute":"dk","ReportEpisodeText":"Sorunu anlamam\u0131za yard\u0131m et. Bu b\u00f6l\u00fcm\u00fc hangi sorundan dolay\u0131 bildiriyorsun?","LastAddedSeriesEpisodes":"Son Eklenen Dizi B\u00f6l\u00fcmleri","NewAddedSeries":"Yeni \u00c7\u0131kan Yabanc\u0131 Diziler","ContinuesSeries":"Devam Eden Pop\u00fcler Diziler","NewNetflixSeries":"Yeni Netflix Dizileri","FinalSeries":"Final Yapm\u0131\u015f Efsane Diziler","DontLookingFor":"Arad\u0131\u011f\u0131n diziyi bulamad\u0131n m\u0131?","Movies":"Filmler","Series":"Diziler","BySeries":"Dizileri","Episodes":"B\u00f6l\u00fcmler","Users":"Kullan\u0131c\u0131lar","MostOfWeek":"Haftan\u0131n En \u0130yileri","MostOfWeekSeries":"Haftan\u0131n Trend Dizileri","MostOfWeekMovies":"Haftan\u0131n Trend Filmleri","MostOfWeekUsers":"Haftan\u0131n Trend \u00dcyeleri","ExploreSeries":"G\u00fcndemdeki En \u0130yi Yabanc\u0131 Diziler","ExploreMovies":"G\u00fcndemdeki En \u0130yi Filmler","Detail":"Detaylar","SitePoint":"Sinefy Puan\u0131","Point":"Puan","Homepage":"Anasayfa","Forums":"Forumlar","NewThread":"Yeni Konu","NewThreads":"Yeni Konular","GoDiscussionForum":"Tart\u0131\u015fmalar forumuna git","DiscussionForum":"Tart\u0131\u015fma forumu","Discussions":"Tart\u0131\u015fmalar","RateIt":"Puan Ver","Comment":"yorum","OpenForCategory":"kategorisinde a\u00e7\u0131ld\u0131.","SimilarThreads":"Benzer Konular","DiscussionForumText":" ile ilgili d\u00fc\u015f\u00fcncelerini belirtip, sorular\u0131n\u0131 sorabilece\u011fin tart\u0131\u015fma forumlar\u0131.","MostPopularThreads":"En Pop\u00fcler Tart\u0131\u015fmalar\u0131","SelectCategory":"Kategori Se\u00e7","EnterThreadTitle":"Konu Ba\u015fl\u0131\u011f\u0131 Gir","EnterMessage":"Mesaj\u0131n\u0131 Gir","YourMessage":"Mesaj\u0131n","Select":"Se\u00e7im Yap","TheyFollow":"Takip Ettikleri","FollowedBySeries":"Takip Etti\u011fi Diziler","FollowedByMovies":"Takip Etti\u011fi Filmler","ViewedEpisodes":"\u0130zlenen B\u00f6l\u00fcmler","SendingComment":"Yapt\u0131\u011f\u0131 Yorum","AccountDate":"\u00dcyelik Tarihi","Casts":"Oyuncular","AccountFollowing":"Takip Edilenler","IveWatched":"\u0130zlediklerim","WhatToWatch":"\u0130zleyeceklerim","EmptyListSeries":"diziler listesi bo\u015f g\u00f6r\u00fcn\u00fcyor.","EmptyListMovies":"filmler listesi bo\u015f g\u00f6r\u00fcn\u00fcyor.","EmptyCastsList":"Kullan\u0131c\u0131n\u0131n oyuncu takip listesi bo\u015f g\u00f6r\u00fcn\u00fcyor.","ThisUser":"Kullan\u0131c\u0131n\u0131n","AccountSettings":"Hesap Ayarlar\u0131m","AccountSettingsText":"Burada profil foto\u011fraf\u0131n\u0131 y\u00fckleyebilir, ki\u015fisel bilgilerini d\u00fczenleyebilir, istersen de \u015fifreni de\u011fi\u015ftirebilirsin.","GoBackProfile":"Profile D\u00f6n","GoBack":"Geri D\u00f6n","ReTry":"Tekrar Dene","PersonalInformation":"Ki\u015fisel Bilgiler","ChangePassword":"\u015eifre De\u011fi\u015ftir","SocialMedia":"Sosyal Medya","Close":"Kapat","WatchSerie":"Diziyi \u0130zle","MarkRead":"Okundu Say","DeleteAll":"T\u00fcm\u00fcn\u00fc Sil","NotificationBoxEmpty":"Bildirim kutusu bo\u015f g\u00f6r\u00fcn\u00fcyor!","Final":"Final","SeasonFinal":"Sezon Final","Continue":"Devam Ediyor","Cancelled":"\u0130ptal Edildi","Vote":"oy","Season":"Sezon","Episode":"B\u00f6l\u00fcm","MarkAllViewed":"T\u00fcm\u00fcn\u00fc \u0130zlendi \u0130\u015faretle","ProfileImage":"Profil Foto\u011fraf\u0131","UploadPhoto":"Foto\u011fraf Y\u00fckle","UploadPhotoTypes":"Foto\u011fraf\u0131n\u0131 JPG, GIF veya PNG olarak y\u00fckleyebilirsin.","Place":"Yer&Mekan","About":"Hakk\u0131nda","Information":"Bilgi","ChangePasswordInformationText":"\u015eifren en az 4 karakterden olu\u015fmal\u0131d\u0131r.","EnterCurrentPassword":"Mevcut \u015eifreni Gir","EnterNewPassword":"Yeni \u015eifreni Olu\u015ftur","UpdatePassword":"\u015eifreyi G\u00fcncelle","SocialMediaInformationText":"Sosyal medya hesaplar\u0131n varsa, burada kullan\u0131c\u0131 ad\u0131n\u0131 girerek di\u011fer kullan\u0131c\u0131lar\u0131n seni bulmalar\u0131n\u0131 sa\u011flayabilirsin.","YourSocialMediaAccounts":"Sosyal Medya Hesaplar\u0131n","UpdateInformation":"Bilgileri G\u00fcncelle","UploadPhotoSuccess":"Tebrikler, profil foto\u011fraf\u0131n\u0131z g\u00fcncellendi.","ResetPasswordText":"\u015eifreni buradan s\u0131f\u0131rlayabilirsin.","ResetPassword":"\u015eifreni S\u0131f\u0131rlar","Content":"i\u00e7erik","Serie":"Dizi","AddedBy":"taraf\u0131nda eklendi.","RemoveWatchList":"Ge\u00e7mi\u015fimden kald\u0131r","SoSee":"\u0130zledim say","IWatched":"\u0130zledim","IWatchedByEpisode":"Bu b\u00f6l\u00fcm\u00fc izledim","MovieCount":"Film Say\u0131s\u0131","MovieSeries":"Seri Filmler","ShortCuts":"K\u0131sayollar","ByMovies":"Filmleri","Movie":"Film","BestResults":"En \u0130yi Sonu\u00e7lar","Seasons":"Sezonlar","ReleaseYear":"Yap\u0131m Y\u0131l\u0131","503PageTitle":"\u00dczg\u00fcn\u00fcz, Arad\u0131\u011f\u0131n\u0131z sayfa bulunamad\u0131!","503PageText":"Sunucu \u015fu anda sunucunun ge\u00e7ici olarak a\u015f\u0131r\u0131 y\u00fcklenmesi veya bak\u0131m\u0131 nedeniyle iste\u011fi i\u015fleyemiyor.","404PageTitleJS":"\u00dczg\u00fcn\u00fcz, Arad\u0131\u011f\u0131n\u0131z sayfa bulunamad\u0131!","404PageTitle":"\u00dczg\u00fcn\u00fcz, Arad\u0131\u011f\u0131n\u0131z sayfa bulunamad\u0131!","404PageText":"Ama \u00fcz\u00fclmeyin size hala yard\u0131mc\u0131 olabiliriz.","403PageTitle":"\u00dczg\u00fcn\u00fcz, Arad\u0131\u011f\u0131n\u0131z sayfa bulunamad\u0131!","403PageText":"Sunucu kaynakl\u0131 bir sorun olu\u015ftu, l\u00fctfen daha sonra tekrar deneyiniz.","401PageTitle":"\u00dczg\u00fcn\u00fcz, Arad\u0131\u011f\u0131n\u0131z sayfa bulunamad\u0131!","401PageText":"\u0130stek, kullan\u0131c\u0131 kimlik do\u011frulamas\u0131 gerektirir.","204PageTitle":"\u00dczg\u00fcn\u00fcz, Arad\u0131\u011f\u0131n\u0131z sayfa bulunamad\u0131!","204PageText":"Herhangi bir i\u00e7eri\u011fe ula\u015f\u0131lamad\u0131.","201PageTitle":"\u00dczg\u00fcn\u00fcz, Arad\u0131\u011f\u0131n\u0131z sayfa bulunamad\u0131!","201PageText":"\u0130stek, kullan\u0131c\u0131 kimlik do\u011frulamas\u0131 gerektirir.","VideoSourceEmpty":"Bu i\u00e7erikte videoya ula\u015f\u0131lamad\u0131.","SignIn":"Giri\u015f Yap","NewSelectionAlert":"Yeni bir se\u00e7im yapabilmek i\u00e7in mevcut se\u00e7imizini kald\u0131r\u0131n\u0131z.","NoResult":"Belirtti\u011fin kriterlere uygun hi\u00e7 sonu\u00e7 bulamad\u0131k.","NoResultMessage":"Uygun hi\u00e7 sonu\u00e7 bulamad\u0131k.","NoResultText":"Daha az veya farkl\u0131 kriterler belirterek tekrar arama yapabilirsin.","CallbackErrorText":"\u00dczg\u00fcn\u00fcz, bir istek hatas\u0131 olu\u015ftu. L\u00fctfen daha sonra tekrar deneyiniz.","ErrorMessage":"Bir hata olu\u015ftu l\u00fctfen daha sonra tekrar deneyiniz.","503Text":"\u00dczg\u00fcn\u00fcz, anl\u0131k bir hata olu\u015ftu.","503FullText":"Bir hata olu\u015ftu, hemen tekrar deneyebilirsiniz.","AlphabetNoResult":"Bu harf ile ba\u015flayan i\u00e7erik bulunamad\u0131.","FutureSeriesFramgman":"Gelecek Dizi Fragmanlar\u0131","Favorites":"Favoriler","TurkishSubtitle":"T\u00fcrk\u00e7e Altyaz\u0131l\u0131","TurkishDublaj":"T\u00fcrk\u00e7e Dublaj","RecentlyEpisodes":"G\u00fcncel B\u00f6l\u00fcmler","ByList":"Listesi","DublajSeries":"Dublaj Diziler","DublajMovies":"Dublaj Filmler","SubtitleSeries":"Altyaz\u0131l\u0131 Diziler","SubtitleMovies":"Altyaz\u0131l\u0131 Filmler","WhatIsYourHelp":"Size nas\u0131l yard\u0131mc\u0131 olabiliriz?","FilterByType":"T\u00fcrlere G\u00f6re Filtrele","FilterByYear":"Y\u0131llara G\u00f6re Filtrele","FilterByImdb":"IMDB Puan\u0131na G\u00f6re Filtrele","FilterResults":"Filtreleme Sonu\u00e7lar\u0131","GoVersion":"Versiyonuna Git","CheckAndRetry":"Bilgileriniz kontrol edip tekrar deneyiz.","MovieSeriesPageText":"Sizin i\u00e7in haz\u0131rlad\u0131\u011f\u0131m\u0131z en pop\u00fcler seri film listelerine buradan ula\u015fabilirsin.","AllChannels":"T\u00fcm Kanallar","Channels":"Kanallar","CastListText":"Sevdi\u011fin oyuncular\u0131 hemen takip etmeye ba\u015fla.","UpdateSuccessMessage":"Tebrikler, bilgileriniz g\u00fcncellendi.","SuccessChangePassword":"Tebrikler, \u015fifre s\u0131f\u0131rlama iste\u011finiz i\u00e7in size bir e posta g\u00f6nderdik.","ErrorChangePassword":"L\u00fctfen girdi\u011finiz eposta adresini kontrol ediniz.","SeriesCleander":"Dizi Takvimi","EmptySeriesDay":"Malesef bug\u00fcn dizi yok. Biraz d\u0131\u015far\u0131 \u00e7\u0131k\u0131p dola\u015fmaya ne dersin ?","WatchSerieFirstEpisode":"Dizinin \u0130lk B\u00f6l\u00fcm\u00fcn\u00fc \u0130zle","WatchSerieLastEpisode":"Dizinin Son B\u00f6l\u00fcm\u00fcn\u00fc \u0130zle","AllEpisodeBySeries":"Dizisinin T\u00fcm Sezon ve B\u00f6l\u00fcmleri","SeriesByYear":"Y\u0131l\u0131 Dizileri","MoviesByYear":"Y\u0131l\u0131 Filmleri","GoSeriesPage":"Dizi sayfas\u0131na git","AllMovies":"T\u00fcm Filmler","CinemaMovies":"Sinema Filmleri"};</script><script>window.twitterAccount  = 'dizihit';</script><script>window.AppMiniSidebar  = '1';</script><script>window.comments_Bar_comment_ajax = {}; window.comments_Bar_comment_ajax.ajaxurl = 'https://diziwatch.ac/CommentsBar/Ajax'; window.comments_Bar_comment_ajax.loading = "YÜKLENİYOR.."; window.comments_Bar_comment_ajax.fixcommentprompt = "Lütfen sabitleme sırasını giriniz. (Küçükten büyüğe)";</script><script>window.wpsaCountry = 'TR';</script><script>var ct = ""</script><script>window.wpsaData = {"state":true,"result":{"html_t":0,"html":{"e2939882f62f2b6831ef4b9f7035f0db":"<a class=\"new-da-banner-wrap\" href=\"https:\/\/t.ly\/CupGiris\" target=\"_blank\" rel=\"nofollow noopener\"><img src=\"https:\/\/olfs.macellan.online\/allads\/bndbetcup728x90.gif\" loading=\"lazy\" alt=\"\" class=\"new-da-banner\" \/><\/a>"},"f":{"t":0,"k":null,"h":""},"ps":{"s":"main-wrapper","i":"","l":"","t":0,"mt":0},"pp":[],"vo":{"t":0,"s":"cstk","l":[{"i":0,"ty":6,"l":"","ht":""},{"i":7,"ty":3,"l":"https:\/\/t.ly\/zalo6ya","ht":"https:\/\/olfs.macellan.online\/allads\/slotbarvd.png"},{"i":7,"ty":3,"l":"https:\/\/rebrand.ly\/dizipalnewmax","ht":"https:\/\/olfs.macellan.online\/allads\/maxwinvideo.mp4"}]}},"raw":null};</script><script>window.x_comment_ajax = {}; window.x_comment_ajax.ajaxurl = 'https://diziwatch.ac/XComments/Ajax'; window.x_comment_ajax.loading = "YÜKLENİYOR.."; window.x_comment_ajax.fixcommentprompt = "Lütfen sabitleme sırasını giriniz. (Küçükten büyüğe)";</script><link href="https://diziwatch.ac/plugins/x-comments/assets/css/style.css?ver=1.4.9" lazyload="" rel=stylesheet><style>.mobile-ad-image{aspect-ratio:auto !important;height:auto !important}.new-da-banner{display:block;max-width:100%;height:auto;margin:0 auto}.new-da-banner-wrap{display:block;line-height:0;text-align:center;max-width:100%}.new-da-banner-wrap img{display:block;max-width:100%;height:auto;margin:0 auto}#footerFixedDivInner{display:inline-block;line-height:0;vertical-align:bottom}#footerFixedDivInner .new-da-banner-wrap{display:inline-block;max-width:100%;line-height:0;vertical-align:bottom}#footerFixedDivInner .new-da-banner{display:block;max-width:100%;height:auto;margin:0;vertical-align:bottom}</style><meta content=yes name=mobile-web-app-capable><meta content=yes name=apple-mobile-web-app-capable><meta content=Diziwatch name=apple-mobile-web-app-title><meta content=black name=apple-mobile-web-app-status-bar-style><link crossorigin=use-credentials href=https://diziwatch.ac/manifest.json rel=manifest><meta content=#1e212b name=theme-color><link href=/assets/favicons/favicon-96x96.png rel=apple-touch-icon sizes=36x36><link href=/assets/favicons/favicon-96x96.png rel=icon sizes=36x36 type=image/png><link href=/assets/favicons/favicon-96x96.png rel=apple-touch-icon sizes=48x48><link href=/assets/favicons/favicon-96x96.png rel=icon sizes=48x48 type=image/png><link href=/assets/favicons/favicon-96x96.png rel=apple-touch-icon sizes=72x72><link href=/assets/favicons/favicon-96x96.png rel=icon sizes=72x72 type=image/png><link href=/assets/favicons/favicon-96x96.png rel=apple-touch-icon sizes=96x96><link href=/assets/favicons/favicon-96x96.png rel=icon sizes=96x96 type=image/png><link href=/assets/favicons/favicon-96x96.png rel=apple-touch-icon sizes=144x144><link href=/assets/favicons/favicon-96x96.png rel=icon sizes=144x144 type=image/png>    </head>
+    <body class="bg-gray-900 text-white" data-logged="false">
+        <div id="request_ref" data-value=""></div>
+        <div class="flex items-center w-full"><div class="block mx-auto overflow-hidden relative rounded-md shadow-xl sm:my-5 w-full" id=wrap style=z-index:9999;position:relative;background:#2b2b2b><header class="header px-5 py-4 shadow-md" id=header style=box-shadow:none><div class="container flex items-center justify-between mx-auto"><a href=/><img alt=diziwatch class=h-10 src=/assets/images/logo-n.png style=height:3rem;> </a> <div class="flex space-x-2"><a class="border-[2px] border-[rgba(255,255,255,0.2)] flex gap-2 items-center px-3 py-2 rounded-full text-base text-gray-300" href=https://diziwatch.ac/auth/login/single><svg xmlns=http://www.w3.org/2000/svg class="fill-white h-4" viewbox="0 0 640 512"><path d="M96 128a128 128 0 1 1 256 0A128 128 0 1 1 96 128zM0 482.3C0 383.8 79.8 304 178.3 304l91.4 0C368.2 304 448 383.8 448 482.3c0 16.4-13.3 29.7-29.7 29.7L29.7 512C13.3 512 0 498.7 0 482.3zM504 312l0-64-64 0c-13.3 0-24-10.7-24-24s10.7-24 24-24l64 0 0-64c0-13.3 10.7-24 24-24s24 10.7 24 24l0 64 64 0c13.3 0 24 10.7 24 24s-10.7 24-24 24l-64 0 0 64c0 13.3-10.7 24-24 24s-24-10.7-24-24z"></path> </svg> <span class="hidden sm:block">Üye Ol</span></a> <a class="border-[2px] border-[rgba(255,255,255,0.2)] flex gap-2 items-center px-3 py-2 rounded-full text-base text-gray-300" href=https://diziwatch.ac/auth/login/single><svg xmlns=http://www.w3.org/2000/svg class="fill-white h-4" viewbox="0 0 512 512"><path d="M217.9 105.9L340.7 228.7c7.2 7.2 11.3 17.1 11.3 27.3s-4.1 20.1-11.3 27.3L217.9 406.1c-6.4 6.4-15 9.9-24 9.9c-18.7 0-33.9-15.2-33.9-33.9l0-62.1L32 320c-17.7 0-32-14.3-32-32l0-64c0-17.7 14.3-32 32-32l128 0 0-62.1c0-18.7 15.2-33.9 33.9-33.9c9 0 17.6 3.6 24 9.9zM352 416l64 0c17.7 0 32-14.3 32-32l0-256c0-17.7-14.3-32-32-32l-64 0c-17.7 0-32-14.3-32-32s14.3-32 32-32l64 0c53 0 96 43 96 96l0 256c0 53-43 96-96 96l-64 0c-17.7 0-32-14.3-32-32s14.3-32 32-32z"></path></svg> <span class="hidden sm:block">Üye Girişi</span></a></div></div> </header> <div class="flex gap-3 items-center menustop overflow-auto px-4 py-1 topnav w-full" style=overflow:auto><a class="min-w-fit text-base text-white" href=/> Anasayfa </a> <a class="min-w-fit text-base text-white" href=/calendar> Takvim </a> <a class="min-w-fit text-base text-white" href=/anime-arsivi> Arşiv </a> <a class="min-w-fit text-base text-white" href=https://asyawatch.com target=_blank> Asya Dizileri </a> <a class="hidden min-w-fit sm:block text-base text-white" href=/dizi-arsivi> Dizi Arşivi </a> <a class="hidden min-w-fit sm:block text-base text-white" href=/episodes> Yeni Bölümler </a> <a class="hidden min-w-fit sm:block text-base text-white" href=/iletisim> İletişim </a> <a class="hidden min-w-fit sm:block text-base text-white" href=https://www.instagram.com/diziwatchofficial/ target=_blank> @diziwatchofficial </a></div> <script>document.addEventListener("DOMContentLoaded", function () {
+        const toggleButton = document.querySelector(".mobiltopnavbtn");
+        const menu = document.querySelector(".menustop");
+
+        toggleButton.addEventListener("click", function () {
+            const isActive = menu.classList.toggle("topnvactive");
+
+            const links = menu.querySelectorAll("a.sm\\:block");
+
+            links.forEach(link => {
+                if (isActive) {
+                    link.classList.remove("hidden");
+                } else {
+                    link.classList.add("hidden");
+                }
+            });
+        });
+    });</script> <div class="bg-trs gap-2 items-center mx-auto px-3 sm.flex sm:-translate-x-2/4 sm:absolute sm:left-[50%] sm:top-5 sm:transform" style=z-index:999999><div class="flex gap-2 items-center"><svg xmlns=http://www.w3.org/2000/svg class="fill-white opacity-80 w-4" viewbox="0 0 512 512"><path d="M416 208c0 45.9-14.9 88.3-40 122.7L502.6 457.4c12.5 12.5 12.5 32.8 0 45.3s-32.8 12.5-45.3 0L330.7 376c-34.4 25.2-76.8 40-122.7 40C93.1 416 0 322.9 0 208S93.1 0 208 0S416 93.1 416 208zM208 352a144 144 0 1 0 0-288 144 144 0 1 0 0 288z"></path> </svg> <form class="bg-[rgba(255,255,255,.15)] flex items-center justify-start m-auto overflow-hidden rounded-md" data-action=/bg/searchcontent data-ajax-form=true data-ajax-loader=buttonText data-callback=searchAjaxCallback data-method=POST style=" width: 100%; margin: revert; min-width: 302px; margin: auto; "><input name=cKey type=hidden value=ca1d4a53d0f4761a949b85e51e18f096> <input name=cValue type=hidden value="MTc4ODg5NjQwMDVkNjExMjhlZWU1MGY3OWZmMjBjZjA5OGRkNjFiOTljZWY1YTJhYmJjMWQzMzliNzY5NzFlZmViMzRhMGVmNjgwODU3MGIyZA=="> <input class="!bg-transparent bg-transparent focus:outline-none min-w-[250px] px-2 py-2 text-gray-300 text-sm" id=searchInp name=searchterm onkeyup=searchsend() placeholder="dizi veya anime arayın..." style=background:transparent> <button class=searchbtn hidden type=submit>gönder</button></form></div> <div class="flex-1 sm:absolute w-full" style="    margin-top: 0px;z-index:99999999;top:36px;margin-left:-10px"><div class="max-h-[400px] overflow-y-auto w-full" id=searchAjaxCallback style="background:#404040;  z-index: 99999999;border-radius: 6px;"></div> </div></div> <div class="gap-5 grid px-5 py-4 sm:grid-cols-2 sm:px-10"><div class=banner-slot><a class=w-full href=https://t.ly/CupGiris rel=sponsored,nofollow target=_blank><img class="ad-banner-reserve lazyload p-0 rounded-lg st-bg w-full" data-src=https://olfs.macellan.online/allads/bndbetcup728x90.gif src="data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='728'%20height='90'%3E%3C/svg%3E"></a> </div> </div> <style>.my-5 {
+        margin-block: calc(var(--spacing) * 5);
+    }
+    .px-4 {
+        padding-inline: calc(var(--spacing) * 4);
+    }
+    .sm\:grid-cols-2 {
+        @media (width >= 40rem) {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+    .sm\:px-8 {
+        @media (width >= 40rem) {
+            padding-inline: calc(var(--spacing) * 8);
+        }
+    }
+
+    .absolute {
+        position: absolute;
+    }
+    .max-h-\[400px\] {
+        max-height: 400px;
+    }
+    .w-full {
+        width: 100%;
+    }
+    .flex-1 {
+        flex: 1 1 0%;
+    }
+    .overflow-y-auto {
+        overflow-y: auto;
+    }
+
+    .mr-2 {
+        margin-right: 0.5rem;
+    }
+    .flex {
+        display: flex;
+    }
+    .h-14 {
+        height: 3.5rem;
+    }
+    .w-10 {
+        width: 2.5rem;
+    }
+    .w-full {
+        width: 100%;
+    }
+    .cursor-pointer {
+        cursor: pointer;
+    }
+    .items-center {
+        align-items: center;
+    }
+    .gap-2 {
+        gap: 0.5rem;
+    }
+    .rounded-lg {
+        border-radius: 0.5rem;
+    }
+    .bg-transparent {
+        background-color: transparent;
+    }
+    .object-cover {
+        object-fit: cover;
+    }
+    .p-2 {
+        padding: 0.5rem;
+    }
+    .text-sm {
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+    }
+    .text-\[\#BEBEBE\] {
+        --tw-text-opacity: 1;
+        color: rgb(190 190 190 / var(--tw-text-opacity, 1));
+    }
+    .text-white {
+        --tw-text-opacity: 1;
+        color: rgb(255 255 255 / var(--tw-text-opacity, 1));
+    }
+    .opacity-60 {
+        opacity: 0.6;
+    }
+    .hover\:bg-\[\#232323\]:hover {
+        --tw-bg-opacity: 1;
+        background-color: rgb(35 35 35 / var(--tw-bg-opacity, 1));
+    }
+    .hover\:text-\[\#BEBEBE\]:hover {
+        --tw-text-opacity: 1;
+        color: rgb(190 190 190 / var(--tw-text-opacity, 1));
+    }</style> <script>let timeout;
+
+        function searchsend() {
+            const searchInput = $("#searchInp").val();
+            const $target = $("#searchAjaxCallback");
+            const searchButton = $(".searchbtn");
+            const searchClean = $(".search-clean");
+
+            if (searchInput.length > 1) {
+                if (timeout) {
+                    clearTimeout(timeout);
+                }
+
+                timeout = setTimeout(function () {
+                    searchButton.click();
+                }, 100);
+
+            } else {
+                $target.hide();
+            }
+        }
+
+        function searchAjaxCallback(data) {
+            var $target = $("#searchAjaxCallback");
+            $target.show();
+            if (!data.data.state) {
+                $target.html("<li><a datayabancidizi-pageloader class='bg-popup2 text-black text-xsmall bg-orange2-hover' href='#'>" + data.message + "<\/a><\/li>");
+            } else {
+                $target.html(data.data.html);
+
+            }
+            lazyload();
+        }
+
+        function neZamanEklenir() {
+            let stringNezaman = prompt("Lütfen filmin orijinal adını giriniz. ÖR: Guardians of the Galaxy 2");
+
+            if (stringNezaman != null) {
+                window.open('https://www.google.com.tr/search?q=' + stringNezaman + '%20site%3Awww.dvdsreleasedates.com', '_blank');
+            }
+        }
+
+        function loginCallback(resp, $form) {
+            if (resp == null || resp.data == null) {
+                getNotification("error", "Üzgünüz, bir istek hatası oluştu. Lütfen daha sonra tekrar deneyiniz.");
+            } else if (resp != null && resp.data != null && resp.data.state) {
+                window.location = "/";
+            } else {
+                getNotification('error', resp.data.message ? resp.data.message : 'Bir hata oluştu lütfen daha sonra tekrar deneyiniz.');
+            }
+        }</script> <div class=content-inner id=router-view></div></div> </div> <div data-homepage=https://diziwatch.ac data-meth="" data-page=index id=router></div> <script async src=https://cdn.jsdelivr.net/npm/navigator.sendbeacon></script> <script async src=https://www.youtube.com/iframe_api></script> <script async src="https://diziwatch.ac/assets/js-dist/script.min.js?ver=1.4.9"></script> <script crossorigin=anonymous integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" src=https://code.jquery.com/jquery-3.7.1.min.js></script> <script src=https://cdn.jsdelivr.net/npm/lazyload@2.0.0-rc.2/lazyload.js></script> <script src=https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js></script> <script>document.querySelectorAll("[data-swiper-selector]").forEach(function(ts){
+                    var swname = ts.getAttribute("data-swiper-selector");
+                    var perView = ts.getAttribute("data-swiper-per-sw");
+                    var perViewMob = ts.getAttribute("data-swiper-per-sw-mobile");
+
+                    const swiper = new Swiper('.'+swname, {
+
+                        loop: true,
+                        slidesPerView: Number(perViewMob),
+                        spaceBetween: 10,
+                        grabCursor: true,
+
+                        navigation: {
+                            nextEl: '.'+swname+'-button-next',
+                            prevEl: '.'+swname+'-button-prev',
+                        },
+                        breakpoints: {
+                            640: {
+                                slidesPerView: Number(perView),
+                                spaceBetween: 10
+                            }
+                        }
+                    });
+                });</script> <script>lazyload();</script> <div id=footer></div> <script async src="https://diziwatch.ac/plugins/new-da-manager/static/new-da-helper.js?ts=1788895931&ver=1.4.9"></script> <script async src="https://diziwatch.ac/plugins/comments-bar/assets/js/script.js?v=37&ver=1.4.9"></script> <script async src="https://diziwatch.ac/plugins/x-comments/assets/js/script.js?ver=1.4.9"></script> 
+        <script  defer src="https://diziwatch.ac/assets/js/pop.js?ver=1.4.9"></script>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function(event) {
+                var sites = [ 
+                    "https://dizilla.now/",
+                    "https://yabanci-dizi.now/",
+                    "https://wodache.com/", 
+                    "https://tellmeproject.com/",
+                    "https://dizigomv1.com/",
+                    "https://hdfilmcehennemiv1.com/",
+                    "https://wallrose.com/",
+                    "https://meiguoyoushi.com/",
+                    "https://dizipal2220.com/"
+
+                ];
+
+                var randomChoice = sites[Math.floor(Math.random() * sites.length)];
+
+                initPop(randomChoice, "popPlst2");
+            });
+        </script>
+
+        <div class="loaderContainer" style="display:none">
+            <div class="loader">
+                <div class="bg"></div>
+                <i class="fa fa-2x fa-spin fa-circle-o-notch">
+                    <img alt="loading icon" src="/assets/images/loadingicon.svg">
+                </i>
+            </div>
+        </div>
+
+    </body>
+</html>

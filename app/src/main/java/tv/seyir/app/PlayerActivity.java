@@ -78,7 +78,7 @@ public final class PlayerActivity extends Activity {
         super.onCreate(state);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         try {
-            title = TitleItem.read(new JSONObject(getIntent().getStringExtra("item")), Source.FULLHD);
+            title = TitleItem.read(new JSONObject(getIntent().getStringExtra("item")), Source.SPORTS);
             url = getIntent().getStringExtra("url");
             if (!MediaPolicy.isVideo(url)) { finish(); return; }
             String[] fallbacks = getIntent().getStringArrayExtra("fallbackUrls");
