@@ -101,7 +101,7 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
         hideBrowser();playWhenFound=false;source=s;selected=null;section="catalog";query="";streams.clear();catalog.clear();body.removeAllViews();imageGeneration++;
         heading.setText(s.title);
         if(s==Source.SPORTS){
-            status.setText("Canlı spor yayınları yükleniyor…");
+            status.setText("Canlı TV kanalları yükleniyor...");
             loading();
             SportsManager.loadChannels(this, forceRefresh, channels->{
                 if(source!=Source.SPORTS||selected!=null)return;
@@ -398,12 +398,12 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
         if(source==Source.SPORTS){
             SportsManager.loadChannels(this, false, channels->{
                 Set<String> catSet=new LinkedHashSet<>();
-                catSet.add("Tüm Spor Kanalları");
+                catSet.add("Tüm Kanallar");
                 for(SportsManager.SportChannel ch:channels){
                     if(!ch.category.isEmpty())catSet.add(ch.category);
                 }
                 String[] cats=catSet.toArray(new String[0]);
-                new AlertDialog.Builder(this).setTitle("Spor Kategorisi Seç").setItems(cats,(d,w)->{
+                new AlertDialog.Builder(this).setTitle("Kategori Seç").setItems(cats,(d,w)->{
                     String chosen=cats[w];
                     heading.setText(chosen);
                     List<TitleItem> items=new ArrayList<>();

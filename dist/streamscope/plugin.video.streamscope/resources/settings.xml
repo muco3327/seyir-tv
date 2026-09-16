@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<settings>
+  <!-- Kategori 1: M3U Çalma Listeleri -->
+  <category label="M3U Kaynakları">
+    <setting id="src1_enabled" type="bool" label="Kaynak 1 Etkin" default="true"/>
+    <setting id="src1_name" type="text" label="Kaynak 1 Adı" default="LİSTE 1"/>
+    <setting id="src1_url" type="text" label="Kaynak 1 URL / Dosya" default="https://raw.githubusercontent.com/kadirsener1/mahsun/main/playlist.m3u"/>
+
+    <setting id="src2_enabled" type="bool" label="Kaynak 2 Etkin" default="true"/>
+    <setting id="src2_name" type="text" label="Kaynak 2 Adı" default="LİSTE 2"/>
+    <setting id="src2_url" type="text" label="Kaynak 2 URL / Dosya" default="https://raw.githubusercontent.com/omerdenizhan/IPTV-M3U/refs/heads/main/m3u/turkiye.m3u"/>
+
+    <setting id="src3_enabled" type="bool" label="Kaynak 3 Etkin" default="true"/>
+    <setting id="src3_name" type="text" label="Kaynak 3 Adı" default="LİSTE 3"/>
+    <setting id="src3_url" type="text" label="Kaynak 3 URL / Dosya" default="https://raw.githubusercontent.com/omerdenizhan/IPTV-M3U/refs/heads/main/m3u/turkiye-iptv-org.m3u"/>
+
+    <setting id="src4_enabled" type="bool" label="Kaynak 4 Etkin" default="true"/>
+    <setting id="src4_name" type="text" label="Kaynak 4 Adı" default="LİSTE 4"/>
+    <setting id="src4_url" type="text" label="Kaynak 4 URL / Dosya" default="https://raw.githubusercontent.com/myiptv2/iptv-playlist/main/kanallar.m3u"/>
+
+    <setting id="src5_enabled" type="bool" label="Kaynak 5 Etkin" default="true"/>
+    <setting id="src5_name" type="text" label="Kaynak 5 Adı" default="LİSTE 5"/>
+    <setting id="src5_url" type="text" label="Kaynak 5 URL / Dosya" default="https://iptv-org.github.io/iptv/countries/tr.m3u"/>
+  </category>
+
+  <!-- Kategori 2: Kopma Kurtarma (Failover) -->
+  <category label="Kopma Kurtarma (Failover)">
+    <setting id="auto_failover" type="bool" label="Otomatik Yedek Kaynağa Geçiş" default="true"/>
+    <setting id="show_notification" type="bool" label="Kaynak Değişiminde Bildirim Göster" default="true"/>
+    <setting id="max_retries" type="number" label="Maksimum Deneme Sayısı" default="3"/>
+    <setting id="connection_timeout" type="number" label="Bağlantı Zaman Aşımı (sn)" default="8"/>
+    <setting id="prefer_hd" type="bool" label="FHD / HD Yayınlara Öncelik Ver" default="true"/>
+  </category>
+
+  <!-- Kategori 3: Ağ & Önbellek -->
+  <category label="Ağ ve Önbellek">
+    <setting id="cache_hours" type="number" label="M3U Önbellek Süresi (Saat)" default="12"/>
+    <setting id="default_user_agent" type="text" label="Özel User-Agent" default="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"/>
+    <setting id="use_inputstream" type="bool" label="InputStream.Adaptive Kullan (HLS/DASH)" default="true"/>
+  </category>
+</settings>

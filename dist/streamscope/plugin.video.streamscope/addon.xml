@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<addon id="plugin.video.streamscope"
+       name="StreamScope"
+       version="1.0.0"
+       provider-name="StreamScope Team">
+  <requires>
+    <import addon="xbmc.python" version="3.0.0"/>
+  </requires>
+  <extension point="xbmc.python.pluginsource" library="addon.py">
+    <provides>video</provides>
+  </extension>
+  <extension point="xbmc.addon.metadata">
+    <summary lang="tr_TR">Çok kaynaklı ve kesintisiz IPTV oynatıcı</summary>
+    <summary lang="en_GB">Multi-source failover IPTV player</summary>
+    <description lang="tr_TR">StreamScope, birden fazla M3U çalma listesini birleştirir, kanal kopyalarını tek kanalda yedek kaynaklar olarak toplar ve yayın koptuğunda otomatik olarak sonraki kaynağa geçer.</description>
+    <description lang="en_GB">StreamScope combines multiple M3U playlists, groups identical channels as backup sources, and automatically fails over to the next source if playback drops.</description>
+    <platform>all</platform>
+    <license>MIT</license>
+    <assets>
+      <icon>icon.png</icon>
+      <fanart>fanart.jpg</fanart>
+    </assets>
+  </extension>
+</addon>

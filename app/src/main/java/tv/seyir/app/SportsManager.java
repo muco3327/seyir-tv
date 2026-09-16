@@ -11,8 +11,12 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLDecoder;
 import java.util.*;
 import java.util.concurrent.Executors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.security.MessageDigest;
 
 public final class SportsManager {
     public static final String REMOTE_SPORTS_URL = "https://raw.githubusercontent.com/muco3327/seyir-tv/main/sports.json";
@@ -54,6 +58,32 @@ public final class SportsManager {
         void onStatus(String status);
     }
 
+    private static String md5(String s) {
+        try {
+            MessageDigest digest = java.security.MessageDigest.getInstance("MD5");
+            digest.update(s.getBytes("UTF-8"));
+            byte[] messageDigest = digest.digest();
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : messageDigest) {
+                String h = Integer.toHexString(0xFF & b);
+                while (h.length() < 2) h = "0" + h;
+                hexString.append(h);
+            }
+            return hexString.toString();
+        } catch (Exception e) {
+            return UUID.randomUUID().toString().substring(0, 8);
+        }
+    }
+
+    private static String cleanChannelName(String name) {
+        if (name == null) return "";
+        String cleaned = name.replaceAll("(?i)^[A-Z0-9]{1,4}[:|\\\\-]\\\\s*", "");
+        cleaned = cleaned.replaceAll("\\[.*?\\]|\\\\(.*?\\\\)", "");
+        cleaned = cleaned.replaceAll("(?i)\\\\b(FHD|UHD|4K|HD|SD|HEVC|H\\\\.265|1080p|720p)\\\\b", "");
+        cleaned = cleaned.replaceAll("[^a-zA-Z0-9\\u00C0-\\u017F]+", "");
+        return cleaned.toLowerCase(Locale.ROOT).trim();
+    }
+
     public static void loadChannels(Context context, boolean forceRefresh, Callback callback, StatusCallback statusCallback) {
         if (!forceRefresh && cachedList != null && !cachedList.isEmpty()) {
             callback.onLoaded(new ArrayList<>(cachedList));
@@ -65,41 +95,40 @@ public final class SportsManager {
         }
 
         Executors.newSingleThreadExecutor().execute(() -> {
+            Map<String, SportChannel> aggregated = new LinkedHashMap<>();
+            Set<String> seenUrls = new HashSet<>();
+
+            // 1. Yerel / JSON Yükle
             if (statusCallback != null) mainHandler.post(() -> statusCallback.onStatus("Yerel liste yukleniyor..."));
             String json = fetchRemoteJson();
             if (json == null || json.trim().isEmpty()) {
                 json = loadAssetJson(context);
             }
 
-            List<SportChannel> channels = parseJson(json);
-
-            // Collect existing stream URLs for dedup
-            Set<String> existingUrls = new HashSet<>();
-            for (SportChannel ch : channels) {
-                for (String u : ch.urls) {
-                    existingUrls.add(u);
-                }
+            List<SportChannel> baseChannels = parseJson(json);
+            for (SportChannel ch : baseChannels) {
+                String cleanKey = cleanChannelName(ch.name);
+                if (cleanKey.isEmpty()) cleanKey = md5(ch.name);
+                aggregated.put(cleanKey, ch);
+                seenUrls.addAll(ch.urls);
             }
 
-            if (statusCallback != null) mainHandler.post(() -> statusCallback.onStatus("IPTV listeleri taranyor..."));
+            // 2. Github Tarama
+            if (statusCallback != null) mainHandler.post(() -> statusCallback.onStatus("IPTV listeleri taraniyor..."));
             List<String> m3uUrls = GithubScanner.scanPlaylists(msg -> {
                 if (statusCallback != null) mainHandler.post(() -> statusCallback.onStatus(msg));
             });
 
+            // 3. M3U İndirme ve Birleştirme
             for (String m3uUrl : m3uUrls) {
                 String shortName = m3uUrl.substring(m3uUrl.lastIndexOf('/') + 1);
-                if (statusCallback != null) mainHandler.post(() -> statusCallback.onStatus("Liste indiriliyor: " + shortName));
-                List<SportChannel> m3uChannels = fetchAndParseM3u(m3uUrl);
-                for (SportChannel ch : m3uChannels) {
-                    String primaryUrl = ch.getPrimaryUrl();
-                    if (!existingUrls.contains(primaryUrl)) {
-                        existingUrls.add(primaryUrl);
-                        channels.add(ch);
-                    }
-                }
+                if (statusCallback != null) mainHandler.post(() -> statusCallback.onStatus("Liste ayrıştırılıyor: " + shortName));
+                
+                parseM3uToAggregator(m3uUrl, aggregated, seenUrls);
             }
 
-            if (statusCallback != null) mainHandler.post(() -> statusCallback.onStatus("Toplam " + channels.size() + " kanal yuklendi"));
+            List<SportChannel> channels = new ArrayList<>(aggregated.values());
+            if (statusCallback != null) mainHandler.post(() -> statusCallback.onStatus("Toplam " + channels.size() + " tekil kanal yuklendi"));
 
             if (!channels.isEmpty()) {
                 synchronized (SportsManager.class) {
@@ -205,31 +234,7 @@ public final class SportsManager {
         return list;
     }
 
-    private static final String[] SPORT_KEYWORDS = {
-            "spor", "sport", "bein", "s sport", "ssport", "trt spor",
-            "a spor", "aspor", "tivibu", "exxen", "smart spor",
-            "ht spor", "htspor", "fb tv", "gs tv", "bjk tv",
-            "tjk", "nba", "euro", "lig tv", "cbc sport",
-            "ekol sport", "tv8"
-    };
-
-    private static boolean isSportChannel(String name, String group) {
-        String lName = name.toLowerCase(Locale.ROOT);
-        String lGroup = group.toLowerCase(Locale.ROOT);
-
-        // Match by group containing "sport"
-        if (lGroup.contains("sport")) return true;
-
-        // Match by channel name keywords
-        for (String kw : SPORT_KEYWORDS) {
-            if (lName.contains(kw)) return true;
-        }
-        return false;
-    }
-
-    private static List<SportChannel> fetchAndParseM3u(String m3uUrl) {
-        List<SportChannel> list = new ArrayList<>();
-        Set<String> seenStreamUrls = new HashSet<>();
+    private static void parseM3uToAggregator(String m3uUrl, Map<String, SportChannel> aggregated, Set<String> seenUrls) {
         HttpURLConnection conn = null;
         try {
             URL url = new URL(m3uUrl);
@@ -243,35 +248,85 @@ public final class SportsManager {
                     String line;
                     String currentName = null;
                     String currentLogo = "";
-                    String currentGroup = "Canli Spor";
+                    String currentGroup = "Diger";
+                    Map<String, String> currentHeaders = new HashMap<>();
+                    
                     while ((line = reader.readLine()) != null) {
                         line = line.trim();
                         if (line.isEmpty()) continue;
+
                         if (line.startsWith("#EXTINF:")) {
+                            currentHeaders.clear();
                             int comma = line.indexOf(',');
                             if (comma != -1) currentName = line.substring(comma + 1).trim();
 
-                            if (line.contains("tvg-logo=\"")) {
-                                int start = line.indexOf("tvg-logo=\"") + 10;
-                                int end = line.indexOf("\"", start);
-                                if (end > start) currentLogo = line.substring(start, end);
+                            
+                            int logoStart = line.indexOf("tvg-logo=\"");
+                            if(logoStart != -1){
+                                int logoEnd = line.indexOf("\"", logoStart + 10);
+                                if(logoEnd > logoStart) currentLogo = line.substring(logoStart + 10, logoEnd);
                             }
-                            if (line.contains("group-title=\"")) {
-                                int start = line.indexOf("group-title=\"") + 13;
-                                int end = line.indexOf("\"", start);
-                                if (end > start) currentGroup = line.substring(start, end);
+
+                            int groupStart = line.indexOf("group-title=\"");
+                            if(groupStart != -1){
+                                int groupEnd = line.indexOf("\"", groupStart + 13);
+                                if(groupEnd > groupStart) currentGroup = line.substring(groupStart + 13, groupEnd);
+                            }
+
+                        } else if (line.startsWith("#EXTVLCOPT:")) {
+                            if (line.contains("http-user-agent=")) {
+                                currentHeaders.put("User-Agent", line.substring(line.indexOf("=") + 1).trim());
+                            } else if (line.contains("http-referrer=")) {
+                                currentHeaders.put("Referer", line.substring(line.indexOf("=") + 1).trim());
                             }
                         } else if (!line.startsWith("#")) {
                             if (currentName != null && (line.startsWith("http://") || line.startsWith("https://"))) {
-                                if (!seenStreamUrls.contains(line) && isSportChannel(currentName, currentGroup)) {
-                                    seenStreamUrls.add(line);
-                                    String id = "gh_" + UUID.randomUUID().toString().substring(0, 8);
-                                    list.add(new SportChannel(id, currentName, currentLogo, currentGroup, Collections.singletonList(line), new HashMap<>()));
+                                String streamUrl = line;
+                                
+                                // Pipe syntax handling
+                                if (streamUrl.contains("|")) {
+                                    String[] parts = streamUrl.split("\\\\|", 2);
+                                    streamUrl = parts[0];
+                                    String[] params = parts[1].split("&");
+                                    for(String p : params){
+                                        if(p.toLowerCase().startsWith("user-agent=")){
+                                            currentHeaders.put("User-Agent", p.substring(11));
+                                        } else if(p.toLowerCase().startsWith("referer=")){
+                                            currentHeaders.put("Referer", p.substring(8));
+                                        }
+                                    }
+                                }
+
+                                if (!seenUrls.contains(streamUrl)) {
+                                    seenUrls.add(streamUrl);
+                                    
+                                    // Adult/XXX filtresi
+                                    String lGroup = currentGroup.toLowerCase(Locale.ROOT);
+                                    String lName = currentName.toLowerCase(Locale.ROOT);
+                                    if(!lGroup.contains("adult") && !lGroup.contains("xxx") && !lGroup.contains("+18") && !lName.contains("xxx")) {
+                                        
+                                        String cleanKey = cleanChannelName(currentName);
+                                        if(cleanKey.isEmpty()) cleanKey = md5(currentName);
+
+                                        if (aggregated.containsKey(cleanKey)) {
+                                            SportChannel existing = aggregated.get(cleanKey);
+                                            existing.urls.add(streamUrl);
+                                            if (existing.logo.isEmpty() && !currentLogo.isEmpty()) {
+                                                // cannot modify final logo, that's fine
+                                            }
+                                        } else {
+                                            String id = "gh_" + md5(cleanKey + streamUrl).substring(0, 8);
+                                            List<String> urls = new ArrayList<>();
+                                            urls.add(streamUrl);
+                                            aggregated.put(cleanKey, new SportChannel(id, currentName, currentLogo, currentGroup, urls, new HashMap<>(currentHeaders)));
+                                        }
+                                    }
                                 }
                             }
                             currentName = null;
                             currentLogo = "";
-                            currentGroup = "Canli Spor";
+                            currentGroup = "Diger";
+                            currentHeaders.clear();
                         }
                     }
                 }
@@ -280,6 +335,5 @@ public final class SportsManager {
         } finally {
             if (conn != null) conn.disconnect();
         }
-        return list;
     }
 }
