@@ -1,6 +1,6 @@
 {
-  "versionCode": 43,
-  "versionName": "0.5.0",
-  "changelog": "DEV GUNCELLEME: Olulerden Arindirma Sistemi! \n Artik uygulama acilirken 'Premium kanallar dogrulaniyor' ekraninda tum beIN, S Sport, Smart Spor vb. kanallarin yuzlerce linkini gercek zamanli test edip calismayanlari (olu sunuculari) listeden siliyor. Menuden bir kanali sectiginizde karsiniza sadece aktif, calisan linkler gelecek! Bosuna beklemek ve TIMEOUT hatasi tarihe karisti.",
-  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.0.apk"
+  "versionCode": 44,
+  "versionName": "0.5.1",
+  "changelog": "Gelismiş Kaynak Degistirme Butonu!\nIPTV sunucularinin bazilarinda yasanan goruntu ve sesin uyumsuz olma (senkron kaymasi) sorununa karsi manuel 'Sonraki Kaynak' butonu eklendi. Artik eger izlediginiz kanalda ses veya goruntu bozuksa, video uzerindeki Oynat/Duraklat butonunun yanindaki yeni '🔄 Sonraki Kaynak' butonuna tiklayarak aninda ayni kanalin diger calisan sunucusuna gecis yapabilirsiniz.",
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.1.apk"
 }

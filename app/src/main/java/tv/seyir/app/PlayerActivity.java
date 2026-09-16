@@ -23,7 +23,7 @@ public final class PlayerActivity extends Activity {
     private LinearLayout topPanel, bottomPanel;
     private TextView playerTitle, playerStatusBadge, tvCurrentTime, tvTotalTime;
     private SeekBar playerProgress;
-    private Button btnTopBack, btnRewind, btnPlayPause, btnForward, btnResize, btnQuality, btnAudio, btnSubtitle, btnSpeed;
+    private Button btnTopBack, btnRewind, btnPlayPause, btnNextSource, btnForward, btnResize, btnQuality, btnAudio, btnSubtitle, btnSpeed;
     private String url;
     private final Map<String,String> headers = new HashMap<>();
     private final List<String> fallbackList = new ArrayList<>();
@@ -84,7 +84,9 @@ public final class PlayerActivity extends Activity {
             String[] fallbacks = getIntent().getStringArrayExtra("fallbackUrls");
             if (fallbacks != null) {
                 for (String fb : fallbacks) {
-                    if (fb != null && !fb.isEmpty() && !fallbackList.contains(fb)) fallbackList.add(fb);
+                    if (fb != null && !fb.isEmpty() && !fallbackList.contains(fb)) {
+                        fallbackList.add(fb);
+                    }
                 }
             }
             String rawHeaders = getIntent().getStringExtra("headers");
@@ -121,6 +123,8 @@ public final class PlayerActivity extends Activity {
         btnRewind = findViewById(R.id.btn_rewind);
         btnPlayPause = findViewById(R.id.btn_play_pause);
         btnForward = findViewById(R.id.btn_forward);
+        btnNextSource = findViewById(R.id.btn_next_source);
+        updateNextSourceButton();
         btnResize = findViewById(R.id.btn_resize);
         btnQuality = findViewById(R.id.btn_quality);
         btnAudio = findViewById(R.id.btn_audio);
@@ -129,7 +133,7 @@ public final class PlayerActivity extends Activity {
 
         playerTitle.setText(title != null ? title.title : "Seyir TV");
 
-        Button[] allButtons = {btnTopBack, btnRewind, btnPlayPause, btnForward, btnResize, btnQuality, btnAudio, btnSubtitle, btnSpeed};
+        Button[] allButtons = {btnTopBack, btnRewind, btnPlayPause, btnNextSource, btnForward, btnResize, btnQuality, btnAudio, btnSubtitle, btnSpeed};
         for (Button b : allButtons) {
             Ui.focus(b);
         }
@@ -138,6 +142,7 @@ public final class PlayerActivity extends Activity {
         btnRewind.setOnClickListener(v -> seek(-10000));
         btnPlayPause.setOnClickListener(v -> togglePlay());
         btnForward.setOnClickListener(v -> seek(10000));
+        btnNextSource.setOnClickListener(v -> nextSource());
         btnResize.setOnClickListener(v -> cycleResizeMode());
         btnQuality.setOnClickListener(v -> selectQuality());
         btnAudio.setOnClickListener(v -> selectTracks(C.TRACK_TYPE_AUDIO));
@@ -228,6 +233,7 @@ public final class PlayerActivity extends Activity {
                             playerStatusBadge.setText("Yedek sunucu deneniyor…");
                             release();
                             initialize();
+                updateNextSourceButton();
                             return;
                         }
                     }
@@ -361,6 +367,27 @@ public final class PlayerActivity extends Activity {
             }).show();
     }
 
+    private void updateNextSourceButton() {
+        if (btnNextSource != null) {
+            btnNextSource.setVisibility(fallbackList.isEmpty() ? android.view.View.GONE : android.view.View.VISIBLE);
+        }
+    }
+
+    private void nextSource() {
+        if (!fallbackList.isEmpty()) {
+            String nextUrl = fallbackList.remove(0);
+            if (!nextUrl.equals(url)) {
+                url = nextUrl;
+                playerStatusBadge.setText("Yedek sunucu (Ses/Goruntu senkronu icin)... ");
+                release();
+                initialize();
+                updateNextSourceButton();
+            } else {
+                nextSource();
+            }
+        }
+    }
+
     private void cycleResizeMode() {
         resizeModeIndex = (resizeModeIndex + 1) % RESIZE_MODES.length;
         video.setResizeMode(RESIZE_MODES[resizeModeIndex]);
@@ -453,8 +480,13 @@ public final class PlayerActivity extends Activity {
             .setMessage("Hata kodu: " + code + "\nFarklı bir oynatma kaynağı deneyebilirsiniz.")
             .setPositiveButton("Kaynağa dön", (d, w) -> closePlayer())
             .setNegativeButton("Tekrar dene", (d, w) -> {
-                if (player == null) initialize();
-                else { player.prepare(); player.play(); }
+                if (player == null) {
+                    initialize();
+                    updateNextSourceButton();
+                } else {
+                    player.prepare();
+                    player.play();
+                }
             }).show();
     }
 
@@ -536,7 +568,8 @@ public final class PlayerActivity extends Activity {
         if (focus) hideBars();
     }
 
-    @Override protected void onStart() { super.onStart(); initialize(); }
+    @Override protected void onStart() { super.onStart(); initialize();
+                updateNextSourceButton(); }
     @Override protected void onStop() { release(); super.onStop(); }
     @Override protected void onDestroy() { release(); super.onDestroy(); }
     @Override protected void onSaveInstanceState(Bundle state) {
