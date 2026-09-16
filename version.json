@@ -1,6 +1,6 @@
 {
-  "versionCode": 46,
-  "versionName": "0.5.3",
-  "changelog": "Gelismiş Hizlandirma ve Hata Giderme!\nUygulama acilisindaki 'Premium kanallar dogrulaniyor' testi tamamen IPTAL EDILDI! Çünkü bazi sunucular (Cloudflare vs.) sahte yanitlar vererek calisan asil linklerin silinmesine, calismayanlarin ise listede kalmasina neden oluyordu. Bu islemin iptaliyle hem uygulamanin acilisi asiri hizlandi hem de eldeki 30-40 adet alternatif linkin SİLİNMESİ engellendi! Artik karsiniza uyumsuz/hatali link gelse bile ExoPlayer bunu saniyesinde atlayip bir sonrakine gececek ve 'Sonraki Kaynak' butonu icinde sinirsiz alternatifiniz olacak.",
-  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.3.apk"
+  "versionCode": 47,
+  "versionName": "0.5.4",
+  "changelog": "HTTP Origin Desteği Eklendi!\nBedava IPTV havuzlarındaki yayınların sunucuları, bağlantının nereden geldiğini teyit etmek için kılık değiştirme (Referer, User-Agent, Origin) talep eder. Seyir TV'de eksik olan 'Origin' kimlik belirleme protokolü tarama motoruna eklendi! Bu sayede Origin başlığı isteyen (cdnlivetv gibi) sunucuların yayınlarına anında bağlanılabilecek.",
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.4.apk"
 }

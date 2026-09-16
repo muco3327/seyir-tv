@@ -297,6 +297,8 @@ public final class SportsManager {
                                 currentHeaders.put("User-Agent", line.substring(line.indexOf("=") + 1).trim());
                             } else if (line.contains("http-referrer=")) {
                                 currentHeaders.put("Referer", line.substring(line.indexOf("=") + 1).trim());
+                            } else if (line.contains("http-origin=")) {
+                                currentHeaders.put("Origin", line.substring(line.indexOf("=") + 1).trim());
                             }
                         } else if (!line.startsWith("#")) {
                             if (currentName != null && (line.startsWith("http://") || line.startsWith("https://"))) {
