@@ -77,16 +77,29 @@ public final class SportsManager {
 
     private static String cleanChannelName(String name) {
         if (name == null) return "";
-        String cleaned = name.replaceAll("(?i)^[A-Z0-9]{1,4}\\s*[:|\\-]\\s*", "");
+        String cleaned = name;
+        
+        String lower = cleaned.toLowerCase(Locale.ROOT);
+        if (lower.contains("bein") || lower.contains("sport")) {
+            int dashIndex = cleaned.lastIndexOf('-');
+            if (dashIndex > 3) {
+                String suffix = cleaned.substring(dashIndex + 1).trim();
+                if (!suffix.matches("\\d+")) {
+                    cleaned = cleaned.substring(0, dashIndex);
+                }
+            }
+        }
+        
+        cleaned = cleaned.replaceAll("(?i)^[A-Z0-9]{1,4}\\s*[:|\\-]\\s*", "");
         cleaned = cleaned.replaceAll("\\[.*?\\]|\\(.*?\\)", "");
-        cleaned = cleaned.replaceAll("(?i)\\b(FHD|UHD|4K|HD|SD|HEVC|H\\.265|1080p|720p)\\b", "");
+        cleaned = cleaned.replaceAll("(?i)\\b(Turkey|FHD|UHD|4K|HD|SD|HEVC|H\\.265|1080p|720p|VIP|Premium)\\b", "");
         cleaned = cleaned.replaceAll("(?i)bein\\s*sports?", "beinsports");
         cleaned = cleaned.replaceAll("(?i)s\\s*sports?", "ssport");
         cleaned = cleaned.replaceAll("(?i)trt\\s*sports?", "trtspor");
         cleaned = cleaned.replaceAll("(?i)tivibu\\s*sports?", "tivibuspor");
         cleaned = cleaned.replaceAll("(?i)smart\\s*sports?", "smartspor");
         cleaned = cleaned.replaceAll("(?i)a\\s*sports?", "aspor");
-        cleaned = cleaned.replaceAll("[^a-zA-Z0-9\\u00C0-\\u017F]+", "");
+        cleaned = cleaned.replaceAll("[^a-zA-Z0-9]+", "");
         return cleaned.toLowerCase(Locale.ROOT).trim();
     }
 

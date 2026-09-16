@@ -1,6 +1,6 @@
 {
-  "versionCode": 44,
-  "versionName": "0.5.1",
-  "changelog": "Gelismiş Kaynak Degistirme Butonu!\nIPTV sunucularinin bazilarinda yasanan goruntu ve sesin uyumsuz olma (senkron kaymasi) sorununa karsi manuel 'Sonraki Kaynak' butonu eklendi. Artik eger izlediginiz kanalda ses veya goruntu bozuksa, video uzerindeki Oynat/Duraklat butonunun yanindaki yeni '🔄 Sonraki Kaynak' butonuna tiklayarak aninda ayni kanalin diger calisan sunucusuna gecis yapabilirsiniz.",
-  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.1.apk"
+  "versionCode": 45,
+  "versionName": "0.5.2",
+  "changelog": "Kanal Birlestirme Hatasi Giderildi!\nBazi yayinlarin (orn: beIN SPORTS 1 Turkey-TV247, -CDN, -ZEUS) sonlarina eklenen gereksiz sunucu ekleri yuzunden sistem bunlari ayni kanal olarak algilayamiyordu. Bu yuzden linkler birlestirilemiyor ve yedekleme (Sonraki Kaynak) butonu gizli kaliyordu. Isimlendirme algoritmasi yenilendi, artik tum sunucu varyasyonlari tek bir 'beIN SPORTS 1' kanali altinda kusursuz sekilde birlesiyor ve Sonraki Kaynak butonu tamamen aktif!",
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.2.apk"
 }
