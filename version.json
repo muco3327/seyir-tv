@@ -1,6 +1,6 @@
 {
-  "versionCode": 39,
-  "versionName": "0.4.6",
-  "changelog": "'Hic tepki yok' sorununun KESIN cozumudur! Uygulama onceden sadece .m3u8, .mp4 gibi uzantisi olan linkleri guvenlik gerekcesiyle aciyor, uzantisi olmayan linklere tiklandiginda ise kendini hissettirmeden 0.001 saniyede sessizce kapatiyordu. Bu kisitlama Spor/IPTV kanallari icin tamamen kaldirildi.",
-  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.4.6.apk"
+  "versionCode": 40,
+  "versionName": "0.4.7",
+  "changelog": "Android Cleartext HTTP engeli kaldirildi! (ERROR_CODE_IO_CLEARTEXT_NOT_PERMITTED hatasi %100 cozuldu).\nIPTV linklerinin buyuk bir kismi https degil http (cleartext) üzerinden yayin yaptigi icin Android tarafindan guvenlik gerekcesiyle otomatik engelleniyordu. Bu engel tamamen iptal edildi.",
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.4.7.apk"
 }
