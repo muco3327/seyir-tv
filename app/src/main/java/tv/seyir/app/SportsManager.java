@@ -103,6 +103,8 @@ public final class SportsManager {
         return cleaned.toLowerCase(Locale.ROOT).trim();
     }
 
+    private static String appendHeadersToUrl(String url, Map<String, String> headers) { if (headers == null || headers.isEmpty() || url.contains("|")) return url; StringBuilder sb = new StringBuilder(url).append("|"); for (Map.Entry<String, String> e : headers.entrySet()) { sb.append(e.getKey()).append("=").append(e.getValue()).append("&"); } return sb.toString(); }
+
     public static void loadChannels(Context context, boolean forceRefresh, Callback callback, StatusCallback statusCallback) {
         if (!forceRefresh && cachedList != null && !cachedList.isEmpty()) {
             callback.onLoaded(new ArrayList<>(cachedList));
@@ -353,14 +355,14 @@ public final class SportsManager {
 
                                         if (aggregated.containsKey(cleanKey)) {
                                             SportChannel existing = aggregated.get(cleanKey);
-                                            existing.urls.add(streamUrl);
+                                            existing.urls.add(appendHeadersToUrl(streamUrl, currentHeaders));
                                             if (existing.logo.isEmpty() && !currentLogo.isEmpty()) {
                                                 // cannot modify final logo, that's fine
                                             }
                                         } else {
                                             String id = "gh_" + md5(cleanKey + streamUrl).substring(0, 8);
                                             List<String> urls = new ArrayList<>();
-                                            urls.add(streamUrl);
+                                            urls.add(appendHeadersToUrl(streamUrl, currentHeaders));
                                             aggregated.put(cleanKey, new SportChannel(id, currentName, currentLogo, currentGroup, urls, new HashMap<>(currentHeaders)));
                                         }
                                     }

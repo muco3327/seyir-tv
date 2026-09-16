@@ -1,6 +1,6 @@
 {
-  "versionCode": 47,
-  "versionName": "0.5.4",
-  "changelog": "HTTP Origin Desteği Eklendi!\nBedava IPTV havuzlarındaki yayınların sunucuları, bağlantının nereden geldiğini teyit etmek için kılık değiştirme (Referer, User-Agent, Origin) talep eder. Seyir TV'de eksik olan 'Origin' kimlik belirleme protokolü tarama motoruna eklendi! Bu sayede Origin başlığı isteyen (cdnlivetv gibi) sunucuların yayınlarına anında bağlanılabilecek.",
-  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.4.apk"
+  "versionCode": 48,
+  "versionName": "0.5.5",
+  "changelog": "Coklu Kılık Değiştirme (Header) Mimari Hatasi Giderildi!\nMimari cok buyuk bir hata tespit edildi ve onarildi! Seyir TV, ayni kanalin linklerini (orn. beIN SPORTS 1) bir araya getirirken sadece ILK buldugu linkin kılık değiştirme kodlarini (User-Agent, Referer) aliyordu. Bu yuzden sonraki linklere ('Sonraki Kaynak' ile gecilen) sahte/bos kimlikler gidiyor ve VLC'de acilan linkler Seyir TV'de 403 Forbidden hatasi veriyordu. Artik her yedek link kendi basina ozgun kimligiyle Oynatici'ya aktariliyor!",
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.5.apk"
 }
