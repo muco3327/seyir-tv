@@ -171,7 +171,7 @@ public final class PlayerActivity extends Activity {
         try {
             String ua = headers.containsKey("User-Agent") ? headers.get("User-Agent") : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36";
             DefaultHttpDataSource.Factory http = new DefaultHttpDataSource.Factory().setUserAgent(ua).setDefaultRequestProperties(headers)
-                .setConnectTimeoutMs(15000).setReadTimeoutMs(20000).setAllowCrossProtocolRedirects(true);
+                .setConnectTimeoutMs(8000).setReadTimeoutMs(10000).setAllowCrossProtocolRedirects(true);
             ResolvingDataSource.Factory data = new ResolvingDataSource.Factory(http, spec -> {
                 String reqCookie = CookieManager.getInstance().getCookie(spec.uri.toString());
                 return reqCookie != null ? spec.withAdditionalHeaders(Collections.singletonMap("Cookie", reqCookie)) : spec;

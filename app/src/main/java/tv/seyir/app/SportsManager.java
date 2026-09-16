@@ -80,6 +80,12 @@ public final class SportsManager {
         String cleaned = name.replaceAll("(?i)^[A-Z0-9]{1,4}\\s*[:|\\-]\\s*", "");
         cleaned = cleaned.replaceAll("\\[.*?\\]|\\(.*?\\)", "");
         cleaned = cleaned.replaceAll("(?i)\\b(FHD|UHD|4K|HD|SD|HEVC|H\\.265|1080p|720p)\\b", "");
+        cleaned = cleaned.replaceAll("(?i)bein\\s*sports?", "beinsports");
+        cleaned = cleaned.replaceAll("(?i)s\\s*sports?", "ssport");
+        cleaned = cleaned.replaceAll("(?i)trt\\s*sports?", "trtspor");
+        cleaned = cleaned.replaceAll("(?i)tivibu\\s*sports?", "tivibuspor");
+        cleaned = cleaned.replaceAll("(?i)smart\\s*sports?", "smartspor");
+        cleaned = cleaned.replaceAll("(?i)a\\s*sports?", "aspor");
         cleaned = cleaned.replaceAll("[^a-zA-Z0-9\\u00C0-\\u017F]+", "");
         return cleaned.toLowerCase(Locale.ROOT).trim();
     }

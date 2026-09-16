@@ -1,6 +1,6 @@
 {
-  "versionCode": 40,
-  "versionName": "0.4.7",
-  "changelog": "Android Cleartext HTTP engeli kaldirildi! (ERROR_CODE_IO_CLEARTEXT_NOT_PERMITTED hatasi %100 cozuldu).\nIPTV linklerinin buyuk bir kismi https degil http (cleartext) üzerinden yayin yaptigi icin Android tarafindan guvenlik gerekcesiyle otomatik engelleniyordu. Bu engel tamamen iptal edildi.",
-  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.4.7.apk"
+  "versionCode": 41,
+  "versionName": "0.4.8",
+  "changelog": "Gelismiş Kanal Birlestirme (Kırık Link Atlama) ve Hizlandirilmis Zaman Asimi Eklendi.\nIPTV listelerinde 'SPORT' ile 'SPORTS' farkli yazildigi icin ayni kanallarin yedekleri birlestirilemiyordu. Bu 'brand normalization' ile cozuldu. Ayrica ölü linkleri beklerken yasanan 'uzun sure bekliyor' sorunu, zaman asimi suresi yari yariya (15 saniyeden 8 saniyeye) dusurulerek hizlandirildi.",
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.4.8.apk"
 }
