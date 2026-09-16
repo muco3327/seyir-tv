@@ -14,18 +14,19 @@ import java.util.*;
 
 public class GithubScanner {
 
+    // Reliable community-maintained IPTV lists (always available, no API limits)
+    private static final String[] CURATED_LISTS = {
+            "https://iptv-org.github.io/iptv/countries/tr.m3u",
+            "https://raw.githubusercontent.com/YoranYosipov/iptv-playlists/main/tr-az.m3u"
+    };
+
+    // GitHub search queries for discovering additional playlists
     private static final String[] SEARCH_QUERIES = {
-            "iptv spor m3u",
             "iptv turkey m3u"
     };
 
-    private static final String[] RELEVANT_KEYWORDS = {
-            "tr", "turk", "turkey", "turkiye", "ulusal", "kanallar",
-            "playlist", "channels", "tv", "live", "spor", "sport", "bein"
-    };
-
     private static final String[] EXCLUDE_KEYWORDS = {"adult", "xxx", "nsfw"};
-    
+
     private static List<String> cachedUrls = null;
     private static long lastScanTime = 0;
 
@@ -35,34 +36,42 @@ public class GithubScanner {
 
     public static List<String> scanPlaylists(ProgressCallback callback) {
         if (cachedUrls != null && (System.currentTimeMillis() - lastScanTime < 15 * 60 * 1000)) {
-            if (callback != null) callback.onProgress("GitHub nceki tarama sonular kullanlyor...");
-            return cachedUrls;
+            if (callback != null) callback.onProgress("Onceki tarama sonuclari kullaniliyor...");
+            return new ArrayList<>(cachedUrls);
         }
 
         List<String> discoveredUrls = new ArrayList<>();
-        Set<String> seenRepos = new HashSet<>();
         Set<String> seenUrls = new HashSet<>();
 
+        // Phase 1: Add curated community lists (these are always up-to-date)
+        if (callback != null) callback.onProgress("Topluluk IPTV listeleri kontrol ediliyor...");
+        for (String listUrl : CURATED_LISTS) {
+            if (isUrlAccessible(listUrl)) {
+                discoveredUrls.add(listUrl);
+                seenUrls.add(listUrl);
+                if (callback != null) callback.onProgress("Liste bulundu: " + listUrl.substring(listUrl.lastIndexOf('/') + 1));
+            }
+        }
+
+        // Phase 2: GitHub search for additional playlists
+        Set<String> seenRepos = new HashSet<>();
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.DAY_OF_YEAR, -180);
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
         String sinceDate = dateFormat.format(cal.getTime());
 
-        for (int qIndex = 0; qIndex < SEARCH_QUERIES.length; qIndex++) {
-            String q = SEARCH_QUERIES[qIndex];
+        for (String q : SEARCH_QUERIES) {
             try {
+                if (callback != null) callback.onProgress("GitHub taranyor: " + q);
                 String encodedQuery = URLEncoder.encode(q + " pushed:>" + sinceDate, "UTF-8");
                 String searchUrl = "https://api.github.com/search/repositories?q=" + encodedQuery + "&sort=updated&order=desc&per_page=5";
 
-                if (callback != null) callback.onProgress("GitHub Taranyor: " + q);
-
                 List<JSONObject> repos = fetchGithubSearchRepos(searchUrl);
                 if (repos == null) {
-                    if (callback != null) callback.onProgress("GitHub Hata (API Limiti Ald). Bekleniyor...");
-                    Thread.sleep(2000);
-                    continue; // 403 yedik, devam et
+                    if (callback != null) callback.onProgress("GitHub API limiti, atlanyor...");
+                    continue;
                 }
-                
+
                 for (JSONObject repo : repos) {
                     String repoFullName = repo.optString("full_name");
                     if (repoFullName.isEmpty() || seenRepos.contains(repoFullName)) continue;
@@ -73,10 +82,7 @@ public class GithubScanner {
 
                     String treeUrl = "https://api.github.com/repos/" + repoFullName + "/git/trees/" + branch + "?recursive=1";
                     List<JSONObject> treeFiles = fetchGithubTree(treeUrl);
-                    if (treeFiles == null) {
-                        Thread.sleep(1000);
-                        continue;
-                    }
+                    if (treeFiles == null) continue;
 
                     for (JSONObject fileItem : treeFiles) {
                         String path = fileItem.optString("path", "");
@@ -90,65 +96,73 @@ public class GithubScanner {
                             }
                             if (exclude) continue;
 
-                            boolean relevant = false;
-                            for (String kw : RELEVANT_KEYWORDS) {
-                                if (pathLower.contains(kw)) { relevant = true; break; }
-                            }
+                            // Only include files that look Turkish-related
+                            boolean relevant = pathLower.contains("tr") || pathLower.contains("turk")
+                                    || pathLower.contains("turkey") || pathLower.contains("turkiye")
+                                    || pathLower.contains("playlist") || pathLower.contains("channels")
+                                    || pathLower.contains("live");
                             if (!relevant) continue;
 
                             String rawUrl = "https://raw.githubusercontent.com/" + repoFullName + "/" + branch + "/" + path;
                             if (seenUrls.contains(rawUrl)) continue;
                             seenUrls.add(rawUrl);
 
-                            if (validateM3uUrl(rawUrl)) {
+                            if (isUrlAccessible(rawUrl)) {
                                 discoveredUrls.add(rawUrl);
                             }
                         }
                     }
-                    Thread.sleep(1000); // 1 saniye bekle
+                    try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
                 }
-            } catch (Exception e) {
-                // Ignore
-            }
+            } catch (Exception ignored) {}
         }
-        
+
         cachedUrls = discoveredUrls;
         lastScanTime = System.currentTimeMillis();
-        return discoveredUrls;
+
+        if (callback != null) callback.onProgress("Tarama tamamlandi: " + discoveredUrls.size() + " liste bulundu");
+        return new ArrayList<>(discoveredUrls);
+    }
+
+    public static void clearCache() {
+        cachedUrls = null;
+        lastScanTime = 0;
     }
 
     private static List<JSONObject> fetchGithubSearchRepos(String urlStr) {
-        List<JSONObject> list = new ArrayList<>();
         try {
             String bodyStr = fetch(urlStr);
             if (bodyStr == null) return null;
             JSONObject json = new JSONObject(bodyStr);
             JSONArray items = json.optJSONArray("items");
+            List<JSONObject> list = new ArrayList<>();
             if (items != null) {
                 for (int i = 0; i < items.length(); i++) {
                     JSONObject it = items.optJSONObject(i);
                     if (it != null) list.add(it);
                 }
             }
+            return list;
         } catch (Exception ignored) {}
-        return list;
+        return null;
     }
 
     private static List<JSONObject> fetchGithubTree(String urlStr) {
-        List<JSONObject> list = new ArrayList<>();
         try {
             String bodyStr = fetch(urlStr);
             if (bodyStr == null) return null;
             JSONObject json = new JSONObject(bodyStr);
             JSONArray tree = json.optJSONArray("tree");
+            List<JSONObject> list = new ArrayList<>();
             if (tree != null) {
                 for (int i = 0; i < tree.length(); i++) {
                     JSONObject it = tree.optJSONObject(i);
                     if (it != null) list.add(it);
                 }
             }
+            return list;
         } catch (Exception ignored) {}
-        return list;
+        return null;
     }
 
     private static String fetch(String urlStr) {
@@ -156,8 +170,8 @@ public class GithubScanner {
         try {
             URL url = new URL(urlStr);
             conn = (HttpURLConnection) url.openConnection();
-            conn.setConnectTimeout(5000);
-            conn.setReadTimeout(5000);
+            conn.setConnectTimeout(8000);
+            conn.setReadTimeout(8000);
             conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/124.0.0.0");
             conn.setRequestProperty("Accept", "application/vnd.github.v3+json");
             if (conn.getResponseCode() == 200) {
@@ -176,29 +190,17 @@ public class GithubScanner {
         return null;
     }
 
-    private static boolean validateM3uUrl(String rawUrl) {
+    private static boolean isUrlAccessible(String urlStr) {
         HttpURLConnection conn = null;
         try {
-            URL url = new URL(rawUrl);
+            URL url = new URL(urlStr);
             conn = (HttpURLConnection) url.openConnection();
             conn.setConnectTimeout(5000);
             conn.setReadTimeout(5000);
+            conn.setRequestMethod("HEAD");
             conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
-            conn.setRequestProperty("Range", "bytes=0-8192");
             int code = conn.getResponseCode();
-            if (code == 200 || code == 206) {
-                try (InputStream in = conn.getInputStream()) {
-                    byte[] buffer = new byte[8192];
-                    int read = in.read(buffer);
-                    if (read > 0) {
-                        String chunk = new String(buffer, 0, read).toLowerCase(Locale.ROOT);
-                        if (!chunk.contains("#extm3u") && !chunk.contains("#extinf")) return false;
-                        if (chunk.contains("trt") || chunk.contains("atv") || chunk.contains("bein") || chunk.contains("spor") || rawUrl.toLowerCase(Locale.ROOT).contains("tr")) {
-                            return true;
-                        }
-                    }
-                }
-            }
+            return code == 200;
         } catch (Exception ignored) {
         } finally {
             if (conn != null) conn.disconnect();

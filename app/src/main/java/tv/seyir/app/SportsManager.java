@@ -60,25 +60,46 @@ public final class SportsManager {
             return;
         }
 
+        if (forceRefresh) {
+            GithubScanner.clearCache();
+        }
+
         Executors.newSingleThreadExecutor().execute(() -> {
-            if (statusCallback != null) mainHandler.post(() -> statusCallback.onStatus("Yerel liste ykleniyor..."));
+            if (statusCallback != null) mainHandler.post(() -> statusCallback.onStatus("Yerel liste yukleniyor..."));
             String json = fetchRemoteJson();
             if (json == null || json.trim().isEmpty()) {
                 json = loadAssetJson(context);
             }
 
             List<SportChannel> channels = parseJson(json);
-            
-            if (statusCallback != null) mainHandler.post(() -> statusCallback.onStatus("GitHub taranyor..."));
+
+            // Collect existing stream URLs for dedup
+            Set<String> existingUrls = new HashSet<>();
+            for (SportChannel ch : channels) {
+                for (String u : ch.urls) {
+                    existingUrls.add(u);
+                }
+            }
+
+            if (statusCallback != null) mainHandler.post(() -> statusCallback.onStatus("IPTV listeleri taranyor..."));
             List<String> m3uUrls = GithubScanner.scanPlaylists(msg -> {
                 if (statusCallback != null) mainHandler.post(() -> statusCallback.onStatus(msg));
             });
 
             for (String m3uUrl : m3uUrls) {
-                if (statusCallback != null) mainHandler.post(() -> statusCallback.onStatus("Liste indiriliyor: " + m3uUrl));
+                String shortName = m3uUrl.substring(m3uUrl.lastIndexOf('/') + 1);
+                if (statusCallback != null) mainHandler.post(() -> statusCallback.onStatus("Liste indiriliyor: " + shortName));
                 List<SportChannel> m3uChannels = fetchAndParseM3u(m3uUrl);
-                channels.addAll(m3uChannels);
+                for (SportChannel ch : m3uChannels) {
+                    String primaryUrl = ch.getPrimaryUrl();
+                    if (!existingUrls.contains(primaryUrl)) {
+                        existingUrls.add(primaryUrl);
+                        channels.add(ch);
+                    }
+                }
             }
+
+            if (statusCallback != null) mainHandler.post(() -> statusCallback.onStatus("Toplam " + channels.size() + " kanal yuklendi"));
 
             if (!channels.isEmpty()) {
                 synchronized (SportsManager.class) {
@@ -184,14 +205,37 @@ public final class SportsManager {
         return list;
     }
 
+    private static final String[] SPORT_KEYWORDS = {
+            "spor", "sport", "bein", "s sport", "ssport", "trt spor",
+            "a spor", "aspor", "tivibu", "exxen", "smart spor",
+            "ht spor", "htspor", "fb tv", "gs tv", "bjk tv",
+            "tjk", "nba", "euro", "lig tv", "cbc sport",
+            "ekol sport", "tv8"
+    };
+
+    private static boolean isSportChannel(String name, String group) {
+        String lName = name.toLowerCase(Locale.ROOT);
+        String lGroup = group.toLowerCase(Locale.ROOT);
+
+        // Match by group containing "sport"
+        if (lGroup.contains("sport")) return true;
+
+        // Match by channel name keywords
+        for (String kw : SPORT_KEYWORDS) {
+            if (lName.contains(kw)) return true;
+        }
+        return false;
+    }
+
     private static List<SportChannel> fetchAndParseM3u(String m3uUrl) {
         List<SportChannel> list = new ArrayList<>();
+        Set<String> seenStreamUrls = new HashSet<>();
         HttpURLConnection conn = null;
         try {
             URL url = new URL(m3uUrl);
             conn = (HttpURLConnection) url.openConnection();
-            conn.setConnectTimeout(8000);
-            conn.setReadTimeout(8000);
+            conn.setConnectTimeout(10000);
+            conn.setReadTimeout(15000);
             conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
             if (conn.getResponseCode() == 200) {
                 try (InputStream in = conn.getInputStream();
@@ -199,14 +243,14 @@ public final class SportsManager {
                     String line;
                     String currentName = null;
                     String currentLogo = "";
-                    String currentGroup = "GitHub (Otomatik)";
+                    String currentGroup = "Canli Spor";
                     while ((line = reader.readLine()) != null) {
                         line = line.trim();
                         if (line.isEmpty()) continue;
                         if (line.startsWith("#EXTINF:")) {
                             int comma = line.indexOf(',');
                             if (comma != -1) currentName = line.substring(comma + 1).trim();
-                            
+
                             if (line.contains("tvg-logo=\"")) {
                                 int start = line.indexOf("tvg-logo=\"") + 10;
                                 int end = line.indexOf("\"", start);
@@ -219,14 +263,15 @@ public final class SportsManager {
                             }
                         } else if (!line.startsWith("#")) {
                             if (currentName != null && (line.startsWith("http://") || line.startsWith("https://"))) {
-                                String lName = currentName.toLowerCase(Locale.ROOT);
-                                if (lName.contains("bein") || lName.contains("spor") || lName.contains("trt") || lName.contains("atv") || lName.contains("ssport") || lName.contains("exxen") || lName.contains("tivibu") || lName.contains("smart") || lName.contains("tv8")) {
+                                if (!seenStreamUrls.contains(line) && isSportChannel(currentName, currentGroup)) {
+                                    seenStreamUrls.add(line);
                                     String id = "gh_" + UUID.randomUUID().toString().substring(0, 8);
                                     list.add(new SportChannel(id, currentName, currentLogo, currentGroup, Collections.singletonList(line), new HashMap<>()));
                                 }
                             }
                             currentName = null;
                             currentLogo = "";
+                            currentGroup = "Canli Spor";
                         }
                     }
                 }
