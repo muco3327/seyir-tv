@@ -1,6 +1,6 @@
 {
-  "versionCode": 33,
-  "versionName": "0.4.0",
-  "changelog": "Uygulama tam spor modu! GitHub tarayici artik hizli ve limitsiz calisiyor. Yenile tusu ile 6 aylik tarama yapilir. Gereksiz film ve dizi kodlari temizlendi.",
-  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-Spor-Edition-0.4.0.apk"
+  "versionCode": 34,
+  "versionName": "0.4.1",
+  "changelog": "IPTV topluluk listeleri eklendi. Artik A Spor, S Sport, TRT Spor Yildiz, FB TV, HT Spor ve daha fazlasi otomatik yuklenir. Olu beIN linkleri temizlendi.",
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.4.1.apk"
 }
