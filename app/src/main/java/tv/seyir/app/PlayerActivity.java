@@ -80,7 +80,7 @@ public final class PlayerActivity extends Activity {
         try {
             title = TitleItem.read(new JSONObject(getIntent().getStringExtra("item")), Source.SPORTS);
             url = getIntent().getStringExtra("url");
-            if (!MediaPolicy.isVideo(url)) { finish(); return; }
+            if (title.source != Source.SPORTS && !MediaPolicy.isVideo(url)) { finish(); return; }
             String[] fallbacks = getIntent().getStringArrayExtra("fallbackUrls");
             if (fallbacks != null) {
                 for (String fb : fallbacks) {

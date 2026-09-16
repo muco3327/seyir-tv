@@ -1,6 +1,6 @@
 {
-  "versionCode": 38,
-  "versionName": "0.4.5",
-  "changelog": "Oynatici ve Kanal Birlestirme Hatalari Giderildi!\n- Bazi kanallarda cikan 'Video acilamadi / ERROR_CODE_IO_NETWORK_CONNECTION_FAILED' hatasi %90 oraninda cozuldu (Oynaticiya ozel User-Agent eklendi).\n- Bazi kanallara tiklandiginda hic tepki vermemesi sorunu (ozellikle gecmisten acarken) cozuldu.\n- beIN Sports 3 gibi kanallarin HD ve FHD versiyonlarinin ayri ayri gorunmesi sorunu giderilerek tek kanalda birlestirildi.",
-  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.4.5.apk"
+  "versionCode": 39,
+  "versionName": "0.4.6",
+  "changelog": "'Hic tepki yok' sorununun KESIN cozumudur! Uygulama onceden sadece .m3u8, .mp4 gibi uzantisi olan linkleri guvenlik gerekcesiyle aciyor, uzantisi olmayan linklere tiklandiginda ise kendini hissettirmeden 0.001 saniyede sessizce kapatiyordu. Bu kisitlama Spor/IPTV kanallari icin tamamen kaldirildi.",
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.4.6.apk"
 }
