@@ -303,6 +303,28 @@ public final class SportsManager {
                                     // Adult/XXX filtresi
                                     String lGroup = currentGroup.toLowerCase(Locale.ROOT);
                                     String lName = currentName.toLowerCase(Locale.ROOT);
+                                    
+                                    // Kategori Normalizasyonu
+                                    if (lName.contains("bein") && !lName.contains("gurme") && !lName.contains("movies") && !lName.contains("series") && !lName.contains("iz") && !lName.contains("h&e")) {
+                                        currentGroup = "beIN Sports";
+                                    } else if (lName.contains("s sport") || lName.contains("ssport")) {
+                                        currentGroup = "S Sport";
+                                    } else if (lName.contains("trt spor") || lName.contains("trtspor")) {
+                                        currentGroup = "TRT Spor";
+                                    } else if (lName.contains("tivibu spor") || lName.contains("tivibuspor")) {
+                                        currentGroup = "Tivibu Spor";
+                                    } else if (lName.contains("smart spor") || lName.contains("smartspor")) {
+                                        currentGroup = "Smart Spor";
+                                    } else if (lName.contains("a spor") || lName.contains("aspor") || lName.contains("a sport")) {
+                                        currentGroup = "A Spor";
+                                    } else if (lName.contains("exxen")) {
+                                        currentGroup = "Exxen";
+                                    } else if (lName.contains("bein movies") || lName.contains("bein series")) {
+                                        currentGroup = "beIN Sinema & Dizi";
+                                    } else if (lGroup.contains("spor") || lGroup.contains("sport")) {
+                                        currentGroup = "Spor";
+                                    }
+
                                     if(!lGroup.contains("adult") && !lGroup.contains("xxx") && !lGroup.contains("+18") && !lName.contains("xxx")) {
                                         
                                         String cleanKey = cleanChannelName(currentName);

@@ -1,6 +1,6 @@
 {
-  "versionCode": 36,
-  "versionName": "0.4.3",
-  "changelog": "StreamScope motoru eklendi! M3U listelerindeki TUM KANALLAR (spor, sinema, belgesel, ulusal vs) yuklenecek ve otomatik kategorilendirilecek. Ayni kanalin farkli linkleri (yedekleri) tek bir kanalda birlestirildi.",
-  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.4.3.apk"
+  "versionCode": 37,
+  "versionName": "0.4.4",
+  "changelog": "Akilli Kategori Motoru Eklendi! 'beIN Sports', 'S Sport', 'TRT Spor', 'Exxen' gibi ayni kanallarin liste hazirlayicilari tarafindan farkli ve daginik kategorilere atilmasi sorunu cozuldu. Artik icinde bein gecen tum spor kanallari otomatik olarak tek bir 'beIN Sports' kategorisinde toplanacak.",
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.4.4.apk"
 }
