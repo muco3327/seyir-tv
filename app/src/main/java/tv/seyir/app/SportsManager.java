@@ -147,8 +147,6 @@ public final class SportsManager {
             }
 
             List<SportChannel> channels = new ArrayList<>(aggregated.values());
-            verifyPremiumChannels(channels, statusCallback);
-            
             if (statusCallback != null) mainHandler.post(() -> statusCallback.onStatus("Toplam " + channels.size() + " aktif kanal yuklendi"));
 
             if (!channels.isEmpty()) {

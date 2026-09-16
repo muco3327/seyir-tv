@@ -1,6 +1,6 @@
 {
-  "versionCode": 45,
-  "versionName": "0.5.2",
-  "changelog": "Kanal Birlestirme Hatasi Giderildi!\nBazi yayinlarin (orn: beIN SPORTS 1 Turkey-TV247, -CDN, -ZEUS) sonlarina eklenen gereksiz sunucu ekleri yuzunden sistem bunlari ayni kanal olarak algilayamiyordu. Bu yuzden linkler birlestirilemiyor ve yedekleme (Sonraki Kaynak) butonu gizli kaliyordu. Isimlendirme algoritmasi yenilendi, artik tum sunucu varyasyonlari tek bir 'beIN SPORTS 1' kanali altinda kusursuz sekilde birlesiyor ve Sonraki Kaynak butonu tamamen aktif!",
-  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.2.apk"
+  "versionCode": 46,
+  "versionName": "0.5.3",
+  "changelog": "Gelismiş Hizlandirma ve Hata Giderme!\nUygulama acilisindaki 'Premium kanallar dogrulaniyor' testi tamamen IPTAL EDILDI! Çünkü bazi sunucular (Cloudflare vs.) sahte yanitlar vererek calisan asil linklerin silinmesine, calismayanlarin ise listede kalmasina neden oluyordu. Bu islemin iptaliyle hem uygulamanin acilisi asiri hizlandi hem de eldeki 30-40 adet alternatif linkin SİLİNMESİ engellendi! Artik karsiniza uyumsuz/hatali link gelse bile ExoPlayer bunu saniyesinde atlayip bir sonrakine gececek ve 'Sonraki Kaynak' butonu icinde sinirsiz alternatifiniz olacak.",
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.3.apk"
 }
