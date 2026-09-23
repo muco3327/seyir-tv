@@ -1,5 +1,11 @@
 # Seyir TV — 2026-09-23 düzeltmeleri
 
+## 0.5.12 — GitHub API üzerinden güncel sürüm bilgisi
+
+- 0.5.11 yayınından hemen sonra raw dosya adresi benzersiz query ile bile eski 0.5.10 bilgisini döndürdü. Aynı anda contents API, raw+json Accept başlığıyla 0.5.11 bilgisini doğru döndürdü.
+- AppUpdater sürüm bilgisini artık GitHub contents API üzerinden ister. APK indirmesi sürüme özel raw bağlantısını kullanmaya devam eder. API hatası/rate-limit, güncel diye gizlenmek yerine manuel kontrolde hata olarak gösterilir.
+- Son sürüm 0.5.12 / 55. Kurulu eski uygulamanın bu kodu alabilmesi için bir defalık elle kurulum gerekebilir.
+
 ## 0.5.11 — uygulama içi güncelleme önbelleği
 
 - Kullanıcı 0.5.9'un güncel gösterildiğini bildirdi. GitHub yanıtında max-age=300 ve cache HIT gözlendi; cihazdaki yanıt görülmediği için CDN önbelleği olası nedendir.

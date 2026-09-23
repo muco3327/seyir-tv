@@ -33,7 +33,7 @@ import java.util.concurrent.Executors;
 public final class AppUpdater {
     public static final String GITHUB_OWNER = "muco3327";
     public static final String GITHUB_REPO = "seyir-tv";
-    public static final String VERSION_URL = "https://raw.githubusercontent.com/" + GITHUB_OWNER + "/" + GITHUB_REPO + "/main/version.json";
+    public static final String VERSION_URL = "https://api.github.com/repos/" + GITHUB_OWNER + "/" + GITHUB_REPO + "/contents/version.json?ref=main";
     public static final String DEFAULT_APK_URL = "https://raw.githubusercontent.com/" + GITHUB_OWNER + "/" + GITHUB_REPO + "/main/dist/Seyir-TV.apk";
 
     private static final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -46,11 +46,12 @@ public final class AppUpdater {
         if (activity == null || activity.isFinishing()) return;
         updateChecks.execute(() -> {
             try {
-                URL url = new URL(VERSION_URL + "?check=" + java.util.UUID.randomUUID());
+                URL url = new URL(VERSION_URL + "&check=" + java.util.UUID.randomUUID());
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setConnectTimeout(8000);
                 conn.setReadTimeout(8000);
                 conn.setRequestProperty("User-Agent", "SeyirTV-Updater");
+                conn.setRequestProperty("Accept", "application/vnd.github.raw+json");
                 conn.setUseCaches(false);
                 conn.setRequestProperty("Cache-Control", "no-cache, no-store");
                 conn.setRequestProperty("Pragma", "no-cache");

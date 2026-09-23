@@ -1,6 +1,6 @@
 {
-  "versionCode": 54,
-  "versionName": "0.5.11",
+  "versionCode": 55,
+  "versionName": "0.5.12",
   "changelog": "Uygulama içi güncelleme kontrolünde GitHub önbelleğinin eski sürümü güncel göstermesi giderildi. Canlı TV oynatma akışı korunmuştur.",
-  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.11.apk"
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.12.apk"
 }
