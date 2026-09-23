@@ -74,19 +74,15 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
         TextView brand=Ui.text(this,"▶ SEYİR TV",20,Ui.MINT);Ui.bold(brand);shell.addView(brand);Ui.gap(shell,8);
         Button searchButton=Ui.button(this,"Ara",this::search);top.addView(searchButton);defaultFocus=searchButton;space(top);
         top.addView(Ui.button(this,"Favoriler",()->showLibrary("favorites")));space(top);
-        top.addView(Ui.button(this,"Devam et",()->showLibrary("history")));space(top);
-        top.addView(Ui.button(this,"Bilgi",()->new AlertDialog.Builder(this).setTitle("Seyir TV · 0.3.0")
-            .setMessage("Sadece canl. spor yay.nlar. tek ekranda.\n\nYön tuşları: gezin\nOK: seç\nGeri: önceki ekran\n\nFavoriler ve izleme ilerlemesi bu cihazda saklanır. Kaynaklar kendi sitelerinden yüklenir.\n\nHarici hesap veya eklenti kurulumu gerekmez.")
+        top.addView(Ui.button(this,"Tüm kanallar",()->openSource(Source.SPORTS)));space(top);
+        top.addView(Ui.button(this,"Bilgi",()->new AlertDialog.Builder(this).setTitle("Seyir TV · 0.5.10")
+            .setMessage("Canlı TV kanalları tek ekranda.\n\nYön tuşları: gezin\nOK: kanalı aç\nOK uzun bas: favorilere ekle veya çıkar\nGeri: önceki ekran\n\nFavoriler bu cihazda saklanır. Yayınların kullanılabilirliği kaynak sunucularına bağlıdır.")
             .setPositiveButton("Tamam",null).show()));space(top);
         top.addView(Ui.button(this,"Güncelle",()->AppUpdater.check(this,true)));space(top);
         top.addView(Ui.button(this,"Yenile",()->{if(selected!=null)openDetail(selected);else openSource(source, true);}));space(top);
-        top.addView(Ui.button(this,"Site görünümü",this::showBrowser));
         HorizontalScrollView toolsBar=new HorizontalScrollView(this);toolsBar.setHorizontalScrollBarEnabled(false);toolsBar.addView(top);shell.addView(toolsBar);Ui.gap(shell,14);
-        LinearLayout tabs=Ui.row(this);
-        for(Source s:Source.values()){Button b=Ui.button(this,s.title,()->openSource(s));LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,Ui.dp(this,46),1);lp.setMargins(0,0,Ui.dp(this,8),0);tabs.addView(b,lp);}
-        shell.addView(tabs);Ui.gap(shell,14);
         shell.post(()->{if(!browserVisible&&getCurrentFocus()==null)defaultFocus.requestFocus();});
-        LinearLayout label=Ui.row(this);heading=Ui.text(this,"Keşfet",22,Ui.WHITE);Ui.bold(heading);label.addView(heading,new LinearLayout.LayoutParams(0,-2,1));
+        LinearLayout label=Ui.row(this);heading=Ui.text(this,"Canlı TV",22,Ui.WHITE);Ui.bold(heading);label.addView(heading,new LinearLayout.LayoutParams(0,-2,1));
         label.addView(Ui.button(this,"Kategoriler",this::showCategories));shell.addView(label);Ui.gap(shell,6);
         status=Ui.text(this,"Kaynak yükleniyor…",13,Ui.MUTED);shell.addView(status);Ui.gap(shell,12);
         body=Ui.column(this);shell.addView(body,new LinearLayout.LayoutParams(-1,-2));
@@ -110,19 +106,19 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
                     items.add(ch.toTitleItem());
                 }
                 catalog(items,items.size()+" kanal");
-            }, msg -> { if(status!=null) status.setText(msg); });
+            }, msg -> { if(status!=null && source==Source.SPORTS && selected==null && section.equals("catalog") && query.isEmpty()) status.setText(msg); });
             return;
         }
         status.setText("Güncel içerikler yükleniyor…");loading();engine.catalog(s,"");
     }
-    private void loading(){TextView t=Ui.text(this,"İzleyeceğin bir sonraki hikâyeyi buluyoruz…",18,Ui.MUTED);t.setPadding(12,Ui.dp(this,48),12,12);body.addView(t);}
+    private void loading(){TextView t=Ui.text(this,"Kanallar yükleniyor…",18,Ui.MUTED);t.setPadding(12,Ui.dp(this,48),12,12);body.addView(t);}
     @Override public void catalog(List<TitleItem> items,String message){
         if(selected!=null||!section.equals("catalog"))return;
         catalog.clear();catalog.addAll(items);status.setText(source.kind+"  ·  "+message);renderCatalog(items);
     }
     private void renderCatalog(List<TitleItem> items){
         body.removeAllViews();imageGeneration++;int g=imageGeneration;
-        if(items.isEmpty()){body.addView(Ui.text(this,"İçerik bulunamadı",20,Ui.WHITE));Ui.gap(body,12);body.addView(Ui.button(this,"Siteyi uygulama içinde aç",this::showBrowser));return;}
+        if(items.isEmpty()){body.addView(Ui.text(this,section.equals("favorites")?"Henüz favori kanalın yok. Kanal üzerinde OK tuşuna uzun basarak ekleyebilirsin.":"Kanal bulunamadı",20,Ui.WHITE));Ui.gap(body,12);body.addView(Ui.button(this,"Tüm kanalları göster",()->openSource(Source.SPORTS)));return;}
         int width=getResources().getDisplayMetrics().widthPixels;float density=getResources().getDisplayMetrics().density;
         int columns=Math.max(3,Math.min(6,(int)(width/density/155)));int cardWidth=(int)(width/density-48)/columns-12;
         GridLayout grid=new GridLayout(this);grid.setColumnCount(columns);
@@ -137,11 +133,12 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
                 poster.setScaleType(ImageView.ScaleType.CENTER_CROP);
             }
             poster.setBackground(Ui.shape(Ui.PANEL,0,this));poster.setContentDescription(item.title);
-            card.addView(poster,new LinearLayout.LayoutParams(-1,Ui.dp(this,cardWidth*1.30f)));loadPoster(poster,item.image,item.source,g);
+            card.addView(poster,new LinearLayout.LayoutParams(-1,Ui.dp(this,cardWidth*0.65f)));loadPoster(poster,item.image,item.source,g);
             TextView name=Ui.text(this,item.title,14,Ui.WHITE);Ui.bold(name);name.setMaxLines(2);name.setMinLines(2);name.setEllipsize(TextUtils.TruncateAt.END);name.setPadding(5,8,5,2);card.addView(name);
             String info=item.info;if(section.equals("history")){long p=library.position(item)/60000;info=p>0?p+". dakikadan devam":"İzlemeye devam et";}
             TextView meta=Ui.text(this,info.isEmpty()?item.source.kind:info,11,Ui.MUTED);meta.setSingleLine();meta.setEllipsize(TextUtils.TruncateAt.END);meta.setPadding(5,0,5,0);card.addView(meta);
             card.setOnClickListener(v->openDetail(item));GridLayout.LayoutParams lp=new GridLayout.LayoutParams();lp.width=Ui.dp(this,cardWidth);lp.setMargins(0,0,Ui.dp(this,12),Ui.dp(this,14));grid.addView(card,lp);
+            card.setOnLongClickListener(v->{boolean remove=library.contains("favorites",item);library.save("favorites",item,remove);Toast.makeText(this,remove?"Favorilerden çıkarıldı":"Favorilere eklendi",Toast.LENGTH_SHORT).show();if(section.equals("favorites"))showLibrary("favorites");return true;});
             if(firstCard==null)firstCard=card;
         }
         body.addView(grid);if(section.equals("catalog")&&query.isEmpty()&&source!=Source.SPORTS)body.addView(Ui.button(this,"Sonraki sayfa →",()->{status.setText("Sonraki sayfa yükleniyor…");engine.nextPage();}));
@@ -224,7 +221,6 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
         i.putExtra("item",item.json().toString());
         i.putExtra("url",ch.getPrimaryUrl());
         if(ch.urls.size()>1)i.putExtra("fallbackUrls",ch.urls.toArray(new String[0]));
-        if(ch.headers!=null&&!ch.headers.isEmpty())i.putExtra("headers",new JSONObject(ch.headers).toString());
         startActivity(i);
     }
     @Override public void detail(JSONObject data){

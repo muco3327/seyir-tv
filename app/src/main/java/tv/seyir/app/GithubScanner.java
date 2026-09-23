@@ -200,10 +200,21 @@ public class GithubScanner {
             conn = (HttpURLConnection) url.openConnection();
             conn.setConnectTimeout(5000);
             conn.setReadTimeout(5000);
-            conn.setRequestMethod("HEAD");
+            conn.setRequestMethod("GET");
             conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
             int code = conn.getResponseCode();
-            return code == 200;
+            if (code != 200) return false;
+            // Validate the playlist itself; HTTP success alone also accepts HTML error pages.
+            try (java.io.Reader reader = new java.io.InputStreamReader(conn.getInputStream(), java.nio.charset.StandardCharsets.UTF_8)) {
+                StringBuilder prefix = new StringBuilder();
+                for (int i = 0; i < 256; i++) {
+                    int next = reader.read();
+                    if (next < 0 || next == '\n' || next == '\r') break;
+                    prefix.append((char) next);
+                }
+                return prefix.toString().replace("\uFEFF", "").trim().equals("#EXTM3U")
+                    || prefix.toString().replace("\uFEFF", "").trim().startsWith("#EXTM3U ");
+            }
         } catch (Exception ignored) {
         } finally {
             if (conn != null) conn.disconnect();

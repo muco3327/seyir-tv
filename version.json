@@ -1,6 +1,6 @@
 {
-  "versionCode": 48,
-  "versionName": "0.5.5",
-  "changelog": "Coklu Kılık Değiştirme (Header) Mimari Hatasi Giderildi!\nMimari cok buyuk bir hata tespit edildi ve onarildi! Seyir TV, ayni kanalin linklerini (orn. beIN SPORTS 1) bir araya getirirken sadece ILK buldugu linkin kılık değiştirme kodlarini (User-Agent, Referer) aliyordu. Bu yuzden sonraki linklere ('Sonraki Kaynak' ile gecilen) sahte/bos kimlikler gidiyor ve VLC'de acilan linkler Seyir TV'de 403 Forbidden hatasi veriyordu. Artik her yedek link kendi basina ozgun kimligiyle Oynatici'ya aktariliyor!",
-  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.5.apk"
+  "versionCode": 53,
+  "versionName": "0.5.10",
+  "changelog": "Canlı TV arayüzü sadeleştirildi. Film/dizi gezinme öğeleri kaldırıldı. Kanal kartları ve favorilere uzun basarak ekleme düzenlendi. Önceki yayın listesi yenileme ve bağlantı toparlanma düzeltmeleri dahildir.",
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.10.apk"
 }

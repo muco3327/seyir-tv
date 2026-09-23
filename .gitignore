@@ -4,9 +4,10 @@ local.properties
 research/
 tools/local-*
 *.jks
-!app/release.jks
 *.keystore
 .local/
 backup_*/
 __pycache__/
 *.py[cod]
+.build/
+.vscode/

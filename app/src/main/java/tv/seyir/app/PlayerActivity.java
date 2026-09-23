@@ -26,6 +26,15 @@ public final class PlayerActivity extends Activity {
     private Button btnTopBack, btnRewind, btnPlayPause, btnNextSource, btnForward, btnResize, btnQuality, btnAudio, btnSubtitle, btnSpeed;
     private String url;
     private final Map<String,String> headers = new HashMap<>();
+    private final Map<String,String> initialHeaders = new HashMap<>();
+    private String initialUrl;
+    private final java.util.concurrent.ExecutorService probeExecutor = java.util.concurrent.Executors.newSingleThreadExecutor();
+    private java.util.concurrent.Future<?> pendingProbe;
+    private String probedUrl, probedMime;
+    private int probeGeneration;
+    private boolean probing;
+    private final LiveRecovery liveRecovery = new LiveRecovery();
+    private Runnable pendingRecovery;
     private final List<String> fallbackList = new ArrayList<>();
     private long position;
     private boolean shouldPlay = true, closing = false, userScrubbing = false;
@@ -51,6 +60,7 @@ public final class PlayerActivity extends Activity {
     private final Runnable updateProgressTask = new Runnable() {
         @Override public void run() {
             if (player != null && !closing) {
+                liveRecovery.playing(player.isPlaying(), SystemClock.elapsedRealtime());
                 boolean isLive = player.isCurrentMediaItemLive() || player.getDuration() <= 0;
                 if (isLive) {
                     tvCurrentTime.setText("CANLI YAYIN");
@@ -102,6 +112,9 @@ public final class PlayerActivity extends Activity {
             }
         } catch (Exception e) { finish(); return; }
 
+        initialUrl = url;
+        initialHeaders.putAll(headers);
+        fallbackList.remove(url);
         library = new Library(this);
         position = state == null ? library.position(title) : state.getLong("position", 0);
         setContentView(R.layout.activity_player);
@@ -174,27 +187,59 @@ public final class PlayerActivity extends Activity {
     private void initialize() {
         if (player != null || url == null || closing || isFinishing() || video == null) return;
         try {
-            if (url.contains("|")) {
-                String[] parts = url.split("\\|", 2);
-                url = parts[0];
-                String[] params = parts[1].split("&");
-                for (String p : params) {
-                    if (p.toLowerCase().startsWith("user-agent=")) headers.put("User-Agent", p.substring(11));
-                    else if (p.toLowerCase().startsWith("referer=")) headers.put("Referer", p.substring(8));
-                    else if (p.toLowerCase().startsWith("origin=")) headers.put("Origin", p.substring(7));
-                }
+            StreamRequest request = new StreamRequest(url, url.equals(initialUrl) ? initialHeaders : null);
+            headers.clear();
+            headers.putAll(request.headers);
+            if (url != null && url.contains("cdnlivetv.tv")) {
+                if (!headers.containsKey("Origin")) headers.put("Origin", "https://cdnlivetv.tv");
+                if (!headers.containsKey("Referer")) headers.put("Referer", "https://cdnlivetv.tv/");
             }
             
             String ua = headers.containsKey("User-Agent") ? headers.get("User-Agent") : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36";
+            if (title.source == Source.SPORTS && !url.equals(probedUrl)) {
+                if (probing) return;
+                probing = true;
+                int generation = ++probeGeneration;
+                String candidate = url;
+                Map<String, String> probeHeaders = new HashMap<>(headers);
+                probeHeaders.put("User-Agent", ua);
+                String cookie = CookieManager.getInstance().getCookie(request.url);
+                if (cookie != null) probeHeaders.put("Cookie", cookie);
+                playerStatusBadge.setText("Yayın bağlantısı kontrol ediliyor…");
+                pendingProbe = probeExecutor.submit(() -> {
+                    try {
+                        String mime = StreamProbe.inspect(request, probeHeaders);
+                        progressHandler.post(() -> {
+                            if (generation != probeGeneration || closing || isFinishing() || isDestroyed()) return;
+                            probing = false;
+                            probedUrl = candidate;
+                            probedMime = mime;
+                            initialize();
+                        });
+                    } catch (Exception error) {
+                        progressHandler.post(() -> {
+                            if (generation != probeGeneration || closing || isFinishing() || isDestroyed()) return;
+                            probing = false;
+                            tryNextSource(error.getMessage() == null ? "Yayın sunucusuna ulaşılamadı." : error.getMessage());
+                        });
+                    }
+                });
+                return;
+            }
             DefaultHttpDataSource.Factory http = new DefaultHttpDataSource.Factory().setUserAgent(ua).setDefaultRequestProperties(headers)
                 .setConnectTimeoutMs(8000).setReadTimeoutMs(10000).setAllowCrossProtocolRedirects(true);
             ResolvingDataSource.Factory data = new ResolvingDataSource.Factory(http, spec -> {
                 String reqCookie = CookieManager.getInstance().getCookie(spec.uri.toString());
                 return reqCookie != null ? spec.withAdditionalHeaders(Collections.singletonMap("Cookie", reqCookie)) : spec;
             });
+            DataSource.Factory playbackData = data;
+            if (title.source == Source.SPORTS && StreamProbe.HLS.equals(probedMime)) {
+                PlaylistRoute route = new PlaylistRoute(request.url);
+                playbackData = () -> new RefreshingPlaylistDataSource(data.createDataSource(), route);
+            }
 
             player = new ExoPlayer.Builder(this, new DefaultRenderersFactory(this).setEnableDecoderFallback(true))
-                .setMediaSourceFactory(new DefaultMediaSourceFactory(data))
+                .setMediaSourceFactory(new DefaultMediaSourceFactory(playbackData))
                 .setSeekBackIncrementMs(10000)
                 .setSeekForwardIncrementMs(10000)
                 .build();
@@ -208,6 +253,7 @@ public final class PlayerActivity extends Activity {
             video.setPlayer(player);
             player.addListener(new Player.Listener() {
                 @Override public void onIsPlayingChanged(boolean playing) {
+                    liveRecovery.playing(playing, SystemClock.elapsedRealtime());
                     btnPlayPause.setText(playing ? "❚❚ Duraklat" : "▶ Oynat");
                     if (playing) {
                         playerStatusBadge.setText("Oynatılıyor");
@@ -237,28 +283,17 @@ public final class PlayerActivity extends Activity {
                     updateQualityLabel();
                 }
                 @Override public void onPlayerError(PlaybackException e) {
-                    if (!fallbackList.isEmpty()) {
-                        String nextUrl = fallbackList.remove(0);
-                        if (!nextUrl.equals(url)) {
-                            url = nextUrl;
-                            playerStatusBadge.setText("Yedek sunucu deneniyor…");
-                            release();
-                            initialize();
-                updateNextSourceButton();
-                            return;
-                        }
-                    }
-                    showError(e.getErrorCodeName());
+                    handlePlaybackError(e);
                 }
             });
 
-            MediaItem.Builder item = new MediaItem.Builder().setUri(url);
-            String path = android.net.Uri.parse(url).getPath();
-            if ((path != null && path.toLowerCase(Locale.ROOT).endsWith(".m3u8")) || url.toLowerCase(Locale.ROOT).contains(".m3u8")) {
+            MediaItem.Builder item = new MediaItem.Builder().setUri(request.url);
+            if (StreamProbe.HLS.equals(probedMime) || (title.source != Source.SPORTS && StreamRequest.isHls(request.url))) {
                 item.setMimeType(MimeTypes.APPLICATION_M3U8);
             }
             player.setMediaItem(item.build());
-            player.seekTo(position);
+            if (title.source == Source.SPORTS) player.seekToDefaultPosition();
+            else player.seekTo(position);
             player.prepare();
             player.setPlayWhenReady(shouldPlay);
             btnPlayPause.requestFocus();
@@ -267,6 +302,56 @@ public final class PlayerActivity extends Activity {
             release();
             showError(e.getClass().getSimpleName());
         }
+    }
+
+    private void handlePlaybackError(PlaybackException error) {
+        int httpStatus = 0;
+        String requestKind = "";
+        Throwable cause = error;
+        while (cause != null) {
+            if (cause instanceof HttpDataSource.InvalidResponseCodeException) {
+                HttpDataSource.InvalidResponseCodeException response = (HttpDataSource.InvalidResponseCodeException) cause;
+                httpStatus = response.responseCode;
+                String path = response.dataSpec.uri.getPath();
+                requestKind = path != null && (path.endsWith(".m3u8") || path.endsWith(".m3u"))
+                    ? "Yayın listesi" : "Yayın isteği";
+                break;
+            }
+            cause = cause.getCause();
+        }
+        String detail = httpStatus == 0 ? error.getErrorCodeName() : requestKind + " — HTTP " + httpStatus;
+        boolean recoverable = LiveRecovery.retryHttp(httpStatus)
+            || error.errorCode == PlaybackException.ERROR_CODE_BEHIND_LIVE_WINDOW
+            || error.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED
+            || error.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT;
+        long delay = title.source == Source.SPORTS && recoverable ? liveRecovery.nextDelay() : -1;
+        if (delay < 0) { tryNextSource(detail); return; }
+        // Reopen the original channel URL, not an expired redirected playlist or old segment.
+        // Preserve the detected format so recovery does not create an extra server session.
+        release();
+        position = 0;
+        playerStatusBadge.setText("Bağlantı yenileniyor… " + detail);
+        pendingRecovery = () -> {
+            pendingRecovery = null;
+            if (!closing && !isFinishing() && !isDestroyed()) initialize();
+        };
+        progressHandler.postDelayed(pendingRecovery, delay);
+    }
+
+    private void tryNextSource(String error) {
+        while (!fallbackList.isEmpty()) {
+            String next = fallbackList.remove(0);
+            if (next == null || next.trim().isEmpty() || next.equals(url)) continue;
+            release();
+            url = next;
+            liveRecovery.reset();
+            if (title.source == Source.SPORTS) position = 0;
+            playerStatusBadge.setText("Yedek sunucu deneniyor…");
+            initialize();
+            updateNextSourceButton();
+            return;
+        }
+        showError(error);
     }
 
     private void updateQualityLabel() {
@@ -385,16 +470,15 @@ public final class PlayerActivity extends Activity {
     }
 
     private void nextSource() {
-        if (!fallbackList.isEmpty()) {
+        while (!fallbackList.isEmpty()) {
             String nextUrl = fallbackList.remove(0);
-            if (!nextUrl.equals(url)) {
+            if (nextUrl != null && !nextUrl.trim().isEmpty() && !nextUrl.equals(url)) {
                 url = nextUrl;
                 playerStatusBadge.setText("Yedek sunucu (Ses/Goruntu senkronu icin)... ");
                 release();
                 initialize();
                 updateNextSourceButton();
-            } else {
-                nextSource();
+                return;
             }
         }
     }
@@ -491,17 +575,20 @@ public final class PlayerActivity extends Activity {
             .setMessage("Hata kodu: " + code + "\nFarklı bir oynatma kaynağı deneyebilirsiniz.")
             .setPositiveButton("Kaynağa dön", (d, w) -> closePlayer())
             .setNegativeButton("Tekrar dene", (d, w) -> {
-                if (player == null) {
-                    initialize();
-                    updateNextSourceButton();
-                } else {
-                    player.prepare();
-                    player.play();
-                }
+                release();
+                liveRecovery.reset();
+                if (title.source == Source.SPORTS) position = 0;
+                shouldPlay = true;
+                initialize();
+                updateNextSourceButton();
             }).show();
     }
 
     private void release() {
+        if (pendingRecovery != null) { progressHandler.removeCallbacks(pendingRecovery); pendingRecovery = null; }
+        probeGeneration++;
+        probing = false;
+        if (pendingProbe != null) { pendingProbe.cancel(true); pendingProbe = null; }
         progressHandler.removeCallbacks(hideControls);
         progressHandler.removeCallbacks(updateProgressTask);
         if (player == null) return;
@@ -509,7 +596,7 @@ public final class PlayerActivity extends Activity {
         player = null;
         position = old.getCurrentPosition();
         shouldPlay = old.getPlayWhenReady();
-        if (position > 1000) library.progress(title, position, old.getDuration());
+        if (title.source != Source.SPORTS && position > 1000) library.progress(title, position, old.getDuration());
         video.setPlayer(null);
         old.release();
     }
@@ -582,7 +669,7 @@ public final class PlayerActivity extends Activity {
     @Override protected void onStart() { super.onStart(); initialize();
                 updateNextSourceButton(); }
     @Override protected void onStop() { release(); super.onStop(); }
-    @Override protected void onDestroy() { release(); super.onDestroy(); }
+    @Override protected void onDestroy() { release(); probeExecutor.shutdownNow(); super.onDestroy(); }
     @Override protected void onSaveInstanceState(Bundle state) {
         state.putLong("position", player == null ? position : player.getCurrentPosition());
         super.onSaveInstanceState(state);

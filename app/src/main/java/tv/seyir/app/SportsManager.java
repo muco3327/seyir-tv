@@ -22,7 +22,9 @@ public final class SportsManager {
     public static final String REMOTE_SPORTS_URL = "https://raw.githubusercontent.com/muco3327/seyir-tv/main/sports.json";
     private static final Handler mainHandler = new Handler(Looper.getMainLooper());
     private static final Map<String, SportChannel> channelMap = new LinkedHashMap<>();
-    private static List<SportChannel> cachedList = null;
+    private static volatile List<SportChannel> cachedList = null;
+    private static final ExecutorService loader = Executors.newSingleThreadExecutor();
+    private static final java.util.concurrent.atomic.AtomicInteger loadGeneration = new java.util.concurrent.atomic.AtomicInteger();
 
     public static class SportChannel {
         public final String id;
@@ -103,9 +105,9 @@ public final class SportsManager {
         return cleaned.toLowerCase(Locale.ROOT).trim();
     }
 
-    private static String appendHeadersToUrl(String url, Map<String, String> headers) { if (headers == null || headers.isEmpty() || url.contains("|")) return url; StringBuilder sb = new StringBuilder(url).append("|"); for (Map.Entry<String, String> e : headers.entrySet()) { sb.append(e.getKey()).append("=").append(e.getValue()).append("&"); } return sb.toString(); }
+    private static String appendHeadersToUrl(String url, Map<String, String> headers) { return StreamRequest.encode(url, headers); }
 
-    public static void loadChannels(Context context, boolean forceRefresh, Callback callback, StatusCallback statusCallback) {
+    public static void loadChannels(Context context, boolean forceRefresh, Callback callback, StatusCallback statusListener) {
         if (!forceRefresh && cachedList != null && !cachedList.isEmpty()) {
             callback.onLoaded(new ArrayList<>(cachedList));
             return;
@@ -115,7 +117,13 @@ public final class SportsManager {
             GithubScanner.clearCache();
         }
 
-        Executors.newSingleThreadExecutor().execute(() -> {
+        final int generation = loadGeneration.incrementAndGet();
+        final StatusCallback statusCallback = statusListener == null ? null : message -> {
+            if (generation == loadGeneration.get()) statusListener.onStatus(message);
+        };
+        final Context appContext = context.getApplicationContext();
+        loader.execute(() -> {
+            if (generation != loadGeneration.get()) return;
             Map<String, SportChannel> aggregated = new LinkedHashMap<>();
             Set<String> seenUrls = new HashSet<>();
 
@@ -123,7 +131,7 @@ public final class SportsManager {
             if (statusCallback != null) mainHandler.post(() -> statusCallback.onStatus("Yerel liste yukleniyor..."));
             String json = fetchRemoteJson();
             if (json == null || json.trim().isEmpty()) {
-                json = loadAssetJson(context);
+                json = loadAssetJson(appContext);
             }
 
             List<SportChannel> baseChannels = parseJson(json);
@@ -142,6 +150,7 @@ public final class SportsManager {
 
             // 3. M3U İndirme ve Birleştirme
             for (String m3uUrl : m3uUrls) {
+                if (generation != loadGeneration.get()) return;
                 String shortName = m3uUrl.substring(m3uUrl.lastIndexOf('/') + 1);
                 if (statusCallback != null) mainHandler.post(() -> statusCallback.onStatus("Liste ayrıştırılıyor: " + shortName));
                 
@@ -149,7 +158,12 @@ public final class SportsManager {
             }
 
             List<SportChannel> channels = new ArrayList<>(aggregated.values());
-            if (statusCallback != null) mainHandler.post(() -> statusCallback.onStatus("Toplam " + channels.size() + " aktif kanal yuklendi"));
+            if (generation != loadGeneration.get()) return;
+            if (statusCallback != null) mainHandler.post(() -> {
+                if (generation == loadGeneration.get()) statusCallback.onStatus(channels.isEmpty()
+                    ? "Kanal listeleri yüklenemedi. Bağlantını kontrol edip yeniden dene."
+                    : channels.size() + " kanal listelendi. Yayınlar açılırken kontrol edilir.");
+            });
 
             if (!channels.isEmpty()) {
                 synchronized (SportsManager.class) {
@@ -165,7 +179,7 @@ public final class SportsManager {
             }
 
             List<SportChannel> result = channels.isEmpty() && cachedList != null ? cachedList : channels;
-            mainHandler.post(() -> callback.onLoaded(result));
+            mainHandler.post(() -> { if (generation == loadGeneration.get()) callback.onLoaded(result); });
         });
     }
 
@@ -247,12 +261,63 @@ public final class SportsManager {
                 }
 
                 if (!urls.isEmpty()) {
+                    for (int j = 0; j < urls.size(); j++) urls.set(j, appendHeadersToUrl(urls.get(j), headers));
                     list.add(new SportChannel(id, name, logo, category, urls, headers));
                 }
             }
         } catch (Exception ignored) {
         }
         return list;
+    }
+
+    private static String resolveNestedStreamUrl(String urlStr, Map<String, String> headers) {
+        if (urlStr == null || !urlStr.contains("raw.githubusercontent.com") || urlStr.contains("/catcast/")) {
+            return urlStr;
+        }
+        HttpURLConnection conn = null;
+        try {
+            URL url = new URL(urlStr);
+            conn = (HttpURLConnection) url.openConnection();
+            conn.setConnectTimeout(4000);
+            conn.setReadTimeout(4000);
+            conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)");
+            if (conn.getResponseCode() == 200) {
+                try (InputStream in = conn.getInputStream();
+                     BufferedReader reader = new BufferedReader(new InputStreamReader(in))) {
+                    String line;
+                    String targetUrl = null;
+                    while ((line = reader.readLine()) != null) {
+                        line = line.trim();
+                        // HLS entries are renditions/segments, not standalone channel URLs.
+                        if (line.startsWith("#EXT-X-")) return urlStr;
+                        if (line.startsWith("#EXTVLCOPT:")) {
+                            if (line.contains("http-user-agent=")) {
+                                headers.put("User-Agent", line.substring(line.indexOf("=") + 1).trim());
+                            } else if (line.contains("http-referrer=")) {
+                                headers.put("Referer", line.substring(line.indexOf("=") + 1).trim());
+                            } else if (line.contains("http-origin=")) {
+                                headers.put("Origin", line.substring(line.indexOf("=") + 1).trim());
+                            }
+                        } else if (!line.startsWith("#") && (line.startsWith("http://") || line.startsWith("https://"))) {
+                            targetUrl = line;
+                        }
+                    }
+                    if (targetUrl != null && !targetUrl.isEmpty()) {
+                        if (targetUrl.contains("cdnlivetv.tv")) {
+                            if (!headers.containsKey("Origin")) headers.put("Origin", "https://cdnlivetv.tv");
+                            if (!headers.containsKey("Referer")) headers.put("Referer", "https://cdnlivetv.tv/");
+                        }
+                        return targetUrl;
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+        } finally {
+            if (conn != null) {
+                try { conn.disconnect(); } catch (Exception ignored) {}
+            }
+        }
+        return urlStr;
     }
 
     private static void parseM3uToAggregator(String m3uUrl, Map<String, SportChannel> aggregated, Set<String> seenUrls) {
@@ -308,20 +373,25 @@ public final class SportsManager {
                                 
                                 // Pipe syntax handling
                                 if (streamUrl.contains("|")) {
-                                    String[] parts = streamUrl.split("\\\\|", 2);
-                                    streamUrl = parts[0];
-                                    String[] params = parts[1].split("&");
-                                    for(String p : params){
-                                        if(p.toLowerCase().startsWith("user-agent=")){
-                                            currentHeaders.put("User-Agent", p.substring(11));
-                                        } else if(p.toLowerCase().startsWith("referer=")){
-                                            currentHeaders.put("Referer", p.substring(8));
-                                        }
-                                    }
+                                    StreamRequest request = new StreamRequest(streamUrl, currentHeaders);
+                                    streamUrl = request.url;
+                                    currentHeaders.clear();
+                                    currentHeaders.putAll(request.headers);
                                 }
 
-                                if (!seenUrls.contains(streamUrl)) {
-                                    seenUrls.add(streamUrl);
+                                // Resolve nested GitHub M3U files (e.g. Mahsun channels pointing to Fastly CDN)
+                                if (streamUrl.contains("raw.githubusercontent.com") && streamUrl.endsWith(".m3u8")) {
+                                    streamUrl = resolveNestedStreamUrl(streamUrl, currentHeaders);
+                                }
+
+                                if (streamUrl.contains("cdnlivetv.tv")) {
+                                    if (!currentHeaders.containsKey("Origin")) currentHeaders.put("Origin", "https://cdnlivetv.tv");
+                                    if (!currentHeaders.containsKey("Referer")) currentHeaders.put("Referer", "https://cdnlivetv.tv/");
+                                }
+
+                                String requestKey = appendHeadersToUrl(streamUrl, currentHeaders);
+                                if (!seenUrls.contains(requestKey)) {
+                                    seenUrls.add(requestKey);
                                     
                                     // Adult/XXX filtresi
                                     String lGroup = currentGroup.toLowerCase(Locale.ROOT);
@@ -353,16 +423,26 @@ public final class SportsManager {
                                         String cleanKey = cleanChannelName(currentName);
                                         if(cleanKey.isEmpty()) cleanKey = md5(currentName);
 
+                                        String finalUrl = appendHeadersToUrl(streamUrl, currentHeaders);
+                                        boolean isPriority = streamUrl.contains("andro.evrenesoglu99.click")
+                                                || streamUrl.contains("androstream")
+                                                || streamUrl.contains("europlayiptv")
+                                                || streamUrl.contains("daioncdn.net")
+                                                || streamUrl.contains("ercdn.net");
+
                                         if (aggregated.containsKey(cleanKey)) {
                                             SportChannel existing = aggregated.get(cleanKey);
-                                            existing.urls.add(appendHeadersToUrl(streamUrl, currentHeaders));
-                                            if (existing.logo.isEmpty() && !currentLogo.isEmpty()) {
-                                                // cannot modify final logo, that's fine
+                                            if (!existing.urls.contains(finalUrl)) {
+                                                if (isPriority) {
+                                                    existing.urls.add(0, finalUrl);
+                                                } else {
+                                                    existing.urls.add(finalUrl);
+                                                }
                                             }
                                         } else {
                                             String id = "gh_" + md5(cleanKey + streamUrl).substring(0, 8);
                                             List<String> urls = new ArrayList<>();
-                                            urls.add(appendHeadersToUrl(streamUrl, currentHeaders));
+                                            urls.add(finalUrl);
                                             aggregated.put(cleanKey, new SportChannel(id, currentName, currentLogo, currentGroup, urls, new HashMap<>(currentHeaders)));
                                         }
                                     }
