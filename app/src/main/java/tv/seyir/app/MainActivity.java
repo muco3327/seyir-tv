@@ -71,22 +71,26 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
         shell=Ui.column(this);shell.setBackgroundColor(Ui.BG);int pad=Ui.dp(this,24);shell.setPadding(pad,Ui.dp(this,16),pad,Ui.dp(this,10));
         scroll=new ScrollView(this);scroll.setFillViewport(true);scroll.setBackgroundColor(Ui.BG);scroll.addView(shell);root.addView(scroll,new FrameLayout.LayoutParams(-1,-1));
         LinearLayout top=Ui.row(this);
-        TextView brand=Ui.text(this,"▶ SEYİR TV",20,Ui.MINT);Ui.bold(brand);shell.addView(brand);Ui.gap(shell,8);
-        Button searchButton=Ui.button(this,"Ara",this::search);top.addView(searchButton);defaultFocus=searchButton;space(top);
-        top.addView(Ui.button(this,"Favoriler",()->showLibrary("favorites")));space(top);
-        top.addView(Ui.button(this,"Tüm kanallar",()->openSource(Source.SPORTS)));space(top);
-        top.addView(Ui.button(this,"Bilgi",()->new AlertDialog.Builder(this).setTitle("Seyir TV · 0.5.12")
-            .setMessage("Canlı TV kanalları tek ekranda.\n\nYön tuşları: gezin\nOK: kanalı aç\nOK uzun bas: favorilere ekle veya çıkar\nGeri: önceki ekran\n\nFavoriler bu cihazda saklanır. Yayınların kullanılabilirliği kaynak sunucularına bağlıdır.")
-            .setPositiveButton("Tamam",null).show()));space(top);
-        top.addView(Ui.button(this,"Güncelle",()->AppUpdater.check(this,true)));space(top);
-        top.addView(Ui.button(this,"Yenile",()->{if(selected!=null)openDetail(selected);else openSource(source, true);}));space(top);
-        HorizontalScrollView toolsBar=new HorizontalScrollView(this);toolsBar.setHorizontalScrollBarEnabled(false);toolsBar.addView(top);shell.addView(toolsBar);Ui.gap(shell,14);
+        TextView brand=Ui.text(this,"▶ SEYİR TV",20,Ui.MINT);Ui.bold(brand);top.addView(brand,new LinearLayout.LayoutParams(0,-2,1));
+        top.addView(Ui.button(this,"Yenile",()->openSource(Source.SPORTS,true)));space(top);
+        top.addView(Ui.button(this,"Güncelle",()->AppUpdater.check(this,true)));
+        shell.addView(top,new LinearLayout.LayoutParams(-1,-2));Ui.gap(shell,16);
+        LinearLayout navigation=Ui.row(this);
+        addNavigationButton(navigation,"Tüm kanallar",()->openSource(Source.SPORTS));
+        defaultFocus=addNavigationButton(navigation,"Ara",this::search);
+        addNavigationButton(navigation,"Kategoriler",this::showCategories);
+        addNavigationButton(navigation,"Favoriler",()->showLibrary("favorites"));
+        shell.addView(navigation,new LinearLayout.LayoutParams(-1,-2));Ui.gap(shell,18);
         shell.post(()->{if(!browserVisible&&getCurrentFocus()==null)defaultFocus.requestFocus();});
         LinearLayout label=Ui.row(this);heading=Ui.text(this,"Canlı TV",22,Ui.WHITE);Ui.bold(heading);label.addView(heading,new LinearLayout.LayoutParams(0,-2,1));
-        label.addView(Ui.button(this,"Kategoriler",this::showCategories));shell.addView(label);Ui.gap(shell,6);
+        shell.addView(label);Ui.gap(shell,6);
         status=Ui.text(this,"Kaynak yükleniyor…",13,Ui.MUTED);shell.addView(status);Ui.gap(shell,12);
         body=Ui.column(this);shell.addView(body,new LinearLayout.LayoutParams(-1,-2));
         TextView footer=Ui.text(this,"OK  Seç     ·     Yön tuşları  Gezin     ·     Geri  Önceki ekran",12,Ui.MUTED);footer.setPadding(0,Ui.dp(this,8),0,0);shell.addView(footer);
+    }
+    private Button addNavigationButton(LinearLayout row,String text,Runnable action){
+        Button button=Ui.button(this,text,action);button.setSingleLine();button.setEllipsize(TextUtils.TruncateAt.END);button.setMinWidth(0);button.setMinimumWidth(0);
+        LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,Ui.dp(this,48),1);lp.setMargins(row.getChildCount()==0?0:Ui.dp(this,10),0,0,0);row.addView(button,lp);return button;
     }
     private void space(LinearLayout l){View v=new View(this);l.addView(v,new LinearLayout.LayoutParams(Ui.dp(this,8),1));}
     private void openSource(Source s){ openSource(s, false); }

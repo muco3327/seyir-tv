@@ -1,5 +1,11 @@
 # Seyir TV — 2026-09-23 düzeltmeleri
 
+## 0.5.13 — üst gezinme alanı
+
+- Bilgi düğmesi kaldırıldı. Marka, Yenile ve Güncelle üst satırda; Tüm kanallar, Ara, Kategoriler ve Favoriler eşit genişlikte ikinci satırda yer alır. Ayrı sağa itilmiş kategori düğmesi ve yatay araç çubuğu kaldırıldı.
+- Başlık ve durum satırı gezinmenin altında kalır; tüm alan sayfayla kayar. Kanal odaklama, oynatıcı, kaynak motoru ve API güncelleme denetimi değiştirilmedi.
+- Sürüm 0.5.13 / 56, sürüme özel GitHub APK ve version.json ile yayımlanır.
+
 ## 0.5.12 — GitHub API üzerinden güncel sürüm bilgisi
 
 - 0.5.11 yayınından hemen sonra raw dosya adresi benzersiz query ile bile eski 0.5.10 bilgisini döndürdü. Aynı anda contents API, raw+json Accept başlığıyla 0.5.11 bilgisini doğru döndürdü.
