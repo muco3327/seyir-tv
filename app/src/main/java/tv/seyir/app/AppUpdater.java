@@ -38,19 +38,22 @@ public final class AppUpdater {
 
     private static final Handler mainHandler = new Handler(Looper.getMainLooper());
     private static boolean isDownloading = false;
+    private static final java.util.concurrent.ExecutorService updateChecks = Executors.newSingleThreadExecutor();
 
     private AppUpdater() {}
 
     public static void check(Activity activity, boolean manual) {
         if (activity == null || activity.isFinishing()) return;
-        Executors.newSingleThreadExecutor().execute(() -> {
+        updateChecks.execute(() -> {
             try {
-                URL url = new URL(VERSION_URL);
+                URL url = new URL(VERSION_URL + "?check=" + java.util.UUID.randomUUID());
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setConnectTimeout(8000);
                 conn.setReadTimeout(8000);
                 conn.setRequestProperty("User-Agent", "SeyirTV-Updater");
                 conn.setUseCaches(false);
+                conn.setRequestProperty("Cache-Control", "no-cache, no-store");
+                conn.setRequestProperty("Pragma", "no-cache");
 
                 if (conn.getResponseCode() != 200) {
                     throw new Exception("HTTP " + conn.getResponseCode());
@@ -67,6 +70,7 @@ public final class AppUpdater {
 
                 JSONObject json = new JSONObject(sb.toString());
                 int remoteCode = json.optInt("versionCode", 0);
+                if (remoteCode <= 0) throw new Exception("Sunucudan geçerli sürüm bilgisi alınamadı.");
                 String remoteName = json.optString("versionName", "Bilinmeyen");
                 String changelog = json.optString("changelog", "Performans ve hata duzeltmeleri.");
                 String apkUrl = json.optString("apkUrl", DEFAULT_APK_URL);
@@ -81,7 +85,9 @@ public final class AppUpdater {
                     if (remoteCode > currentCode) {
                         showUpdateDialog(activity, remoteName, changelog, apkUrl);
                     } else if (manual) {
-                        Toast.makeText(activity, "Seyir TV guncel (v" + currentName + ")", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(activity, remoteCode == currentCode
+                            ? "Seyir TV güncel (v" + currentName + ")"
+                            : "Kurulu: " + currentName + " · Sunucudaki: " + remoteName + ". Daha yeni paket henüz görünmüyor.", Toast.LENGTH_LONG).show();
                     }
                 });
             } catch (Exception e) {

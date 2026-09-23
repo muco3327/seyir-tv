@@ -75,7 +75,7 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
         Button searchButton=Ui.button(this,"Ara",this::search);top.addView(searchButton);defaultFocus=searchButton;space(top);
         top.addView(Ui.button(this,"Favoriler",()->showLibrary("favorites")));space(top);
         top.addView(Ui.button(this,"Tüm kanallar",()->openSource(Source.SPORTS)));space(top);
-        top.addView(Ui.button(this,"Bilgi",()->new AlertDialog.Builder(this).setTitle("Seyir TV · 0.5.10")
+        top.addView(Ui.button(this,"Bilgi",()->new AlertDialog.Builder(this).setTitle("Seyir TV · 0.5.11")
             .setMessage("Canlı TV kanalları tek ekranda.\n\nYön tuşları: gezin\nOK: kanalı aç\nOK uzun bas: favorilere ekle veya çıkar\nGeri: önceki ekran\n\nFavoriler bu cihazda saklanır. Yayınların kullanılabilirliği kaynak sunucularına bağlıdır.")
             .setPositiveButton("Tamam",null).show()));space(top);
         top.addView(Ui.button(this,"Güncelle",()->AppUpdater.check(this,true)));space(top);

@@ -1,5 +1,11 @@
 # Seyir TV — 2026-09-23 düzeltmeleri
 
+## 0.5.11 — uygulama içi güncelleme önbelleği
+
+- Kullanıcı 0.5.9'un güncel gösterildiğini bildirdi. GitHub yanıtında max-age=300 ve cache HIT gözlendi; cihazdaki yanıt görülmediği için CDN önbelleği olası nedendir.
+- AppUpdater her sürüm denetimine benzersiz check parametresi ve no-cache başlıkları ekler. Eksik/geçersiz versionCode güncel kabul edilmez; sunucu sürümü kurulu sürümden eskiyse açıkça gösterilir. Denetimler paylaşılan yürütücü kullanır.
+- Sürüm 0.5.11 / 54; oynatıcı ve kaynak yükleme kodları değişmedi. Eski kurulumun yeni denetim kodunu alması için gerekirse bir defalık elle APK kurulumu gerekir.
+
 ## 0.5.10 — canlı TV arayüzü ve GitHub yayını
 
 - Devam et, Site görünümü ve tek kaynaklı gereksiz sekme satırı kaldırıldı. Film afişi oranındaki kartlar kanal logosuna uygun kısa kartlara çevrildi.
