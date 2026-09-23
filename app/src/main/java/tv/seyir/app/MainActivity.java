@@ -68,29 +68,27 @@ public final class MainActivity extends Activity implements SiteEngine.Listener 
         AppUpdater.check(this, false);
     }
     private void createShell(){
-        shell=Ui.column(this);shell.setBackgroundColor(Ui.BG);int pad=Ui.dp(this,24);shell.setPadding(pad,Ui.dp(this,16),pad,Ui.dp(this,10));
+        shell=Ui.column(this);shell.setBackgroundColor(Ui.BG);int pad=Ui.dp(this,24);shell.setPadding(pad,Ui.dp(this,10),pad,Ui.dp(this,10));
         scroll=new ScrollView(this);scroll.setFillViewport(true);scroll.setBackgroundColor(Ui.BG);scroll.addView(shell);root.addView(scroll,new FrameLayout.LayoutParams(-1,-1));
         LinearLayout top=Ui.row(this);
-        TextView brand=Ui.text(this,"▶ SEYİR TV",20,Ui.MINT);Ui.bold(brand);top.addView(brand,new LinearLayout.LayoutParams(0,-2,1));
-        top.addView(Ui.button(this,"Yenile",()->openSource(Source.SPORTS,true)));space(top);
-        top.addView(Ui.button(this,"Güncelle",()->AppUpdater.check(this,true)));
-        shell.addView(top,new LinearLayout.LayoutParams(-1,-2));Ui.gap(shell,16);
-        LinearLayout navigation=Ui.row(this);
-        addNavigationButton(navigation,"Tüm kanallar",()->openSource(Source.SPORTS));
-        defaultFocus=addNavigationButton(navigation,"Ara",this::search);
-        addNavigationButton(navigation,"Kategoriler",this::showCategories);
-        addNavigationButton(navigation,"Favoriler",()->showLibrary("favorites"));
-        shell.addView(navigation,new LinearLayout.LayoutParams(-1,-2));Ui.gap(shell,18);
+        TextView brand=Ui.text(this,"▶ SEYİR TV",16,Ui.MINT);Ui.bold(brand);top.addView(brand,new LinearLayout.LayoutParams(Ui.dp(this,112),-2));
+        addNavigationButton(top,"Tüm kanallar",()->openSource(Source.SPORTS));
+        defaultFocus=addNavigationButton(top,"Ara",this::search);
+        addNavigationButton(top,"Kategoriler",this::showCategories);
+        addNavigationButton(top,"Favoriler",()->showLibrary("favorites"));
+        addNavigationButton(top,"Yenile",()->openSource(Source.SPORTS,true));
+        addNavigationButton(top,"Güncelle",()->AppUpdater.check(this,true));
+        shell.addView(top,new LinearLayout.LayoutParams(-1,-2));Ui.gap(shell,8);
         shell.post(()->{if(!browserVisible&&getCurrentFocus()==null)defaultFocus.requestFocus();});
-        LinearLayout label=Ui.row(this);heading=Ui.text(this,"Canlı TV",22,Ui.WHITE);Ui.bold(heading);label.addView(heading,new LinearLayout.LayoutParams(0,-2,1));
-        shell.addView(label);Ui.gap(shell,6);
-        status=Ui.text(this,"Kaynak yükleniyor…",13,Ui.MUTED);shell.addView(status);Ui.gap(shell,12);
+        LinearLayout label=Ui.row(this);heading=Ui.text(this,"Canlı TV",17,Ui.WHITE);Ui.bold(heading);heading.setSingleLine();heading.setEllipsize(TextUtils.TruncateAt.END);label.addView(heading,new LinearLayout.LayoutParams(0,-2,1));
+        status=Ui.text(this,"Kanallar yükleniyor…",12,Ui.MUTED);status.setSingleLine();status.setEllipsize(TextUtils.TruncateAt.END);status.setGravity(Gravity.RIGHT);label.addView(status,new LinearLayout.LayoutParams(0,-2,2));
+        shell.addView(label);Ui.gap(shell,8);
         body=Ui.column(this);shell.addView(body,new LinearLayout.LayoutParams(-1,-2));
         TextView footer=Ui.text(this,"OK  Seç     ·     Yön tuşları  Gezin     ·     Geri  Önceki ekran",12,Ui.MUTED);footer.setPadding(0,Ui.dp(this,8),0,0);shell.addView(footer);
     }
     private Button addNavigationButton(LinearLayout row,String text,Runnable action){
-        Button button=Ui.button(this,text,action);button.setSingleLine();button.setEllipsize(TextUtils.TruncateAt.END);button.setMinWidth(0);button.setMinimumWidth(0);
-        LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,Ui.dp(this,48),1);lp.setMargins(row.getChildCount()==0?0:Ui.dp(this,10),0,0,0);row.addView(button,lp);return button;
+        Button button=Ui.button(this,text,action);button.setSingleLine();button.setEllipsize(TextUtils.TruncateAt.END);button.setMinWidth(0);button.setMinimumWidth(0);button.setMinimumHeight(0);button.setTextSize(12);button.setPadding(Ui.dp(this,6),0,Ui.dp(this,6),0);
+        LinearLayout.LayoutParams lp=new LinearLayout.LayoutParams(0,Ui.dp(this,40),1);lp.setMargins(row.getChildCount()==0?0:Ui.dp(this,6),0,0,0);row.addView(button,lp);return button;
     }
     private void space(LinearLayout l){View v=new View(this);l.addView(v,new LinearLayout.LayoutParams(Ui.dp(this,8),1));}
     private void openSource(Source s){ openSource(s, false); }

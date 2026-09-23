@@ -1,5 +1,10 @@
 # Seyir TV — 2026-09-23 düzeltmeleri
 
+## 0.5.14 — kompakt başlık
+
+- Logo ve altı işlem tek 40 dp satıra alındı. Başlık ve durum/kanal sayısı yan yana yerleştirildi. Dikey boşluklar azaltıldı; üst alan sayfayla kaymaya devam eder.
+- Değişiklik MainActivity üst alanı ile sınırlı; oynatma ve güncelleme motoru aynı. Sürüm 0.5.14 / 57.
+
 ## 0.5.13 — üst gezinme alanı
 
 - Bilgi düğmesi kaldırıldı. Marka, Yenile ve Güncelle üst satırda; Tüm kanallar, Ara, Kategoriler ve Favoriler eşit genişlikte ikinci satırda yer alır. Ayrı sağa itilmiş kategori düğmesi ve yatay araç çubuğu kaldırıldı.

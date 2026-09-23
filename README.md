@@ -1,10 +1,10 @@
 # Seyir TV
 
-Android TV ve Mi Box için canlı TV kanal uygulaması. Güncel sürüm: **0.5.13** (56).
+Android TV ve Mi Box için canlı TV kanal uygulaması. Güncel sürüm: **0.5.14** (57).
 
 ## Kurulum
 
-[Son APK](https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.13.apk) dosyasını indirip mevcut uygulamanın üzerine kurun. Uygulamadaki **Güncelle** düğmesi de GitHub sürüm bilgisini kontrol eder.
+[Son APK](https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.14.apk) dosyasını indirip mevcut uygulamanın üzerine kurun. Uygulamadaki **Güncelle** düğmesi de GitHub sürüm bilgisini kontrol eder.
 
 ## Kullanım
 
