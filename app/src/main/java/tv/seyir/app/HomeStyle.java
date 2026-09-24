@@ -55,12 +55,23 @@ final class HomeStyle {
         });
         return b;
     }
+    static void icon(TextView button, String kind) {
+        HomeIcon icon = new HomeIcon(kind, button.getCurrentTextColor());
+        int size = dp(button.getContext(), 20); icon.setBounds(0, 0, size, size);
+        button.setCompoundDrawables(icon, null, null, null);
+        button.setCompoundDrawablePadding(button.getText().length() == 0 ? 0 : dp(button.getContext(), 8));
+        View.OnFocusChangeListener previous = button.getOnFocusChangeListener();
+        button.setOnFocusChangeListener((v, focused) -> {
+            if (previous != null) previous.onFocusChange(v, focused);
+            icon.color(button.getCurrentTextColor());
+        });
+    }
     static void focus(View view, boolean active, int radius) {
         view.setFocusable(true); view.setClickable(true);
-        view.setBackground(shape(view.getContext(), active ? Color.rgb(51, 53, 60) : PANEL, 0, radius));
+        view.setBackground(shape(view.getContext(), active ? Color.rgb(51, 53, 60) : PANEL, active ? ACCENT : 0, radius));
         view.setOnFocusChangeListener((v, focused) -> {
             v.setBackground(shape(v.getContext(), focused ? Color.rgb(60, 62, 70) : active ? Color.rgb(51, 53, 60) : PANEL,
-                focused ? WHITE : 0, radius));
+                focused ? WHITE : active ? ACCENT : 0, radius));
             float scale = focused && !(v instanceof TextView) ? 1.035f : 1f;
             v.animate().scaleX(scale).scaleY(scale)
                 .setInterpolator(new android.view.animation.DecelerateInterpolator()).setDuration(180).start();

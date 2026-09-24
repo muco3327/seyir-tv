@@ -86,6 +86,7 @@ public class TvHomeActivity extends Activity {
             if (!alive() || generation != loadGeneration) return;
             channels = new ArrayList<>(result); loading = false;
             render(true);
+            content.setAlpha(0f); content.animate().alpha(1f).setDuration(180).start();
         }, message -> {
             if (alive() && loading && generation == loadGeneration && status != null) status.setText(message);
         });
@@ -139,7 +140,8 @@ public class TvHomeActivity extends Activity {
         status = HomeStyle.text(this, loading ? "Kanallar hazırlanıyor…" : groups.size() + " kanal", 12, HomeStyle.MUTED, false);
         status.setMaxLines(1); status.setEllipsize(android.text.TextUtils.TruncateAt.END);
         heading.addView(status, new LinearLayout.LayoutParams(dp(160), -2)); status.setGravity(Gravity.END);
-        TextView filter = HomeStyle.button(this, "Kategoriler  ⌄", !category.isEmpty() && mode.equals("channels"), this::categories);
+        TextView filter = HomeStyle.button(this, "Kategoriler", !category.isEmpty() && mode.equals("channels"), this::categories);
+        HomeStyle.icon(filter, "filter");
         LinearLayout.LayoutParams filterParams = new LinearLayout.LayoutParams(-2, dp(40)); filterParams.leftMargin = dp(18);
         heading.addView(filter, filterParams); register("nav:categories", filter);
         shell.addView(heading);
@@ -173,7 +175,8 @@ public class TvHomeActivity extends Activity {
     }
 
     private void nav(LinearLayout row, String label, String key, boolean active, Runnable action) {
-        TextView b = HomeStyle.tab(this, label, active, action);
+        TextView b = HomeStyle.tab(this, key.equals("settings") ? "" : label, active, action);
+        if (key.equals("settings") || key.equals("search")) HomeStyle.icon(b, key);
         LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-2, dp(44)); p.leftMargin = dp(7);
         row.addView(b, p); register("nav:" + key, b);
     }
@@ -192,22 +195,28 @@ public class TvHomeActivity extends Activity {
         card.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
         HomeStyle.focus(card, expanded.equals(group.key), 20);
         FrameLayout art = new FrameLayout(this);
-        art.setBackground(HomeStyle.shape(this, Color.rgb(228, 229, 232), 0, 14)); art.setClipToOutline(true);
+        art.setBackground(HomeStyle.shape(this, Color.rgb(193, 197, 204), 0, 16)); art.setClipToOutline(true);
         TextView initials = HomeStyle.text(this, group.name.substring(0, Math.min(2, group.name.length())).toUpperCase(java.util.Locale.ROOT), 28, Color.rgb(80, 89, 106), true);
         initials.setGravity(Gravity.CENTER); art.addView(initials, new FrameLayout.LayoutParams(-1, -1));
-        ImageView logo = new ImageView(this); logo.setScaleType(ImageView.ScaleType.FIT_CENTER); logo.setPadding(dp(12), dp(9), dp(12), dp(9));
-        art.addView(logo, new FrameLayout.LayoutParams(-1, -1));
+        ImageView logo = new ImageView(this); logo.setScaleType(ImageView.ScaleType.FIT_CENTER); logo.setPadding(dp(4), dp(4), dp(4), dp(4));
+        art.addView(logo, new FrameLayout.LayoutParams(dp(132), dp(90), Gravity.CENTER));
         card.addView(art, new LinearLayout.LayoutParams(-1, dp(110)));
         if (favorite) {
-            TextView star = HomeStyle.text(this, "★", 14, HomeStyle.WHITE, true); star.setGravity(Gravity.CENTER);
+            ImageView star = new ImageView(this); star.setImageDrawable(new HomeIcon("star", HomeStyle.ACCENT)); star.setPadding(dp(6), dp(6), dp(6), dp(6));
             star.setBackground(HomeStyle.shape(this, Color.rgb(50, 52, 58), 0, 16));
             FrameLayout.LayoutParams badge = new FrameLayout.LayoutParams(dp(28), dp(28), Gravity.TOP | Gravity.END);
             badge.setMargins(0, dp(6), dp(6), 0); art.addView(star, badge);
         }
         String logoUrl = ""; for (SportsManager.SportChannel ch : group.variants) if (ch.logo != null && !ch.logo.isEmpty()) { logoUrl = ch.logo; break; }
         poster(logo, initials, logoUrl, generation);
-        TextView title = HomeStyle.text(this, group.name, 14, HomeStyle.WHITE, true);
+        TextView title = HomeStyle.text(this, group.name, 14, HomeStyle.MUTED, true);
         title.setSingleLine(true); title.setEllipsize(android.text.TextUtils.TruncateAt.END); title.setPadding(0, dp(10), 0, dp(5)); card.addView(title);
+        title.setGravity(Gravity.CENTER);
+        View.OnFocusChangeListener cardStyle = card.getOnFocusChangeListener();
+        card.setOnFocusChangeListener((v, focused) -> {
+            if (cardStyle != null) cardStyle.onFocusChange(v, focused);
+            title.setTextColor(focused ? HomeStyle.WHITE : HomeStyle.MUTED);
+        });
         card.setContentDescription(group.name + (favorite ? ", favori" : "") + ", kalite seçeneklerini aç");
         register("card:" + group.key, card);
         card.setOnClickListener(v -> {
@@ -227,12 +236,15 @@ public class TvHomeActivity extends Activity {
         LinearLayout.LayoutParams panelParams = new LinearLayout.LayoutParams(-1, -2); panelParams.bottomMargin = dp(14); panel.setLayoutParams(panelParams);
         LinearLayout titleRow = HomeStyle.row(this);
         titleRow.addView(HomeStyle.text(this, group.name + "  ·  Yayın seç", 17, HomeStyle.WHITE, true), new LinearLayout.LayoutParams(0, -2, 1));
-        TextView fav = HomeStyle.button(this, favorite ? "★" : "☆", favorite, () -> toggleFavorite(group));
+        TextView fav = HomeStyle.button(this, "", favorite, () -> toggleFavorite(group));
+        if (favorite) fav.setTextColor(HomeStyle.ACCENT);
+        HomeStyle.icon(fav, "star");
         fav.setContentDescription(favorite ? "Favoriden çıkar" : "Favoriye ekle");
         titleRow.addView(fav); register("favorite:" + group.key, fav);
-        TextView close = HomeStyle.button(this, "×", false, () -> {
+        TextView close = HomeStyle.button(this, "", false, () -> {
             expanded = ""; savedScroll = scroll.getScrollY(); focusKey = "card:" + group.key; render(true);
         });
+        HomeStyle.icon(close, "close");
         close.setContentDescription("Kalite seçeneklerini kapat");
         LinearLayout.LayoutParams cp = new LinearLayout.LayoutParams(-2, -2); cp.leftMargin = dp(8); titleRow.addView(close, cp); register("close:" + group.key, close);
         panel.addView(titleRow);
@@ -241,17 +253,20 @@ public class TvHomeActivity extends Activity {
         Map<String, Integer> totals = new LinkedHashMap<>(), seen = new LinkedHashMap<>();
         for (SportsManager.SportChannel ch : group.variants) totals.merge(ChannelPresentation.quality(ch.name), 1, Integer::sum);
         LinearLayout row = null;
+        int panelWidth = Math.round(getResources().getDisplayMetrics().widthPixels / getResources().getDisplayMetrics().density) - 92;
+        int qualityColumns = Math.max(1, Math.min(4, panelWidth / 162));
         for (int i = 0; i < group.variants.size(); i++) {
-            if (i % 4 == 0) { row = HomeStyle.row(this); panel.addView(row); }
+            if (i % qualityColumns == 0) { row = HomeStyle.row(this); panel.addView(row); }
             SportsManager.SportChannel ch = group.variants.get(i);
             String quality = ChannelPresentation.quality(ch.name); int number = seen.merge(quality, 1, Integer::sum);
-            String label = "▶  " + quality + (totals.get(quality) > 1 ? " · Seçenek " + number : "");
+            String label = quality + (totals.get(quality) > 1 ? " · " + number : "");
             TextView b = HomeStyle.button(this, label, false, () -> play(ch));
+            HomeStyle.icon(b, "play");
             b.setContentDescription(group.name + ", " + quality + ", seçenek " + number);
             register("quality:" + ch.id, b);
             b.setMinHeight(dp(48));
             b.setSingleLine(false); b.setMaxLines(2);
-            LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(0, -2, 1);
+            LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(dp(150), -2);
             p.setMargins(dp(4), dp(6), dp(8), dp(8)); row.addView(b, p);
         }
         return panel;
@@ -268,19 +283,42 @@ public class TvHomeActivity extends Activity {
     }
 
     private void emptyState() {
+        if (loading) { loadingCards(); return; }
         LinearLayout empty = HomeStyle.column(this); empty.setPadding(dp(28), dp(34), dp(28), dp(34));
         empty.setBackground(HomeStyle.shape(this, HomeStyle.PANEL, 0, 20));
+        ImageView symbol = new ImageView(this);
+        symbol.setImageDrawable(new HomeIcon(mode.equals("favorites") ? "star" : "search", HomeStyle.ACCENT));
+        LinearLayout.LayoutParams symbolParams = new LinearLayout.LayoutParams(dp(38), dp(38)); symbolParams.bottomMargin = dp(18);
+        empty.addView(symbol, symbolParams);
         String title = loading ? "Kanallar yükleniyor" : mode.equals("favorites") ? "Sevdiğin kanallar burada" : "Kanal bulunamadı";
         empty.addView(HomeStyle.text(this, title, 22, HomeStyle.WHITE, true));
         String subtitle = loading ? "Liste hazır olduğunda burada görünecek." : mode.equals("favorites") ? "Kanallar bölümünde bir kartta OK tuşunu basılı tutarak favorilerine ekleyebilirsin." : mode.equals("search") ? "Farklı bir kanal adıyla tekrar ara." : "Başka bir kategori seçebilir veya Ayarlar’dan listeyi yenileyebilirsin.";
         TextView description = HomeStyle.text(this, subtitle, 14, HomeStyle.MUTED, false); description.setPadding(0, dp(12), 0, dp(20)); empty.addView(description);
         if (!loading) {
-            TextView b = HomeStyle.button(this, mode.equals("search") ? "Yeniden ara" : "Kanallara git", true, () -> {
+            TextView b = HomeStyle.button(this, mode.equals("search") ? "Yeniden ara" : "Kanal ekle", true, () -> {
                 if (mode.equals("search")) search(); else { category = ""; switchMode("channels"); }
             });
             empty.addView(b, new LinearLayout.LayoutParams(-2, -2)); register("empty", b);
         }
         content.addView(empty);
+    }
+
+    private void loadingCards() {
+        int width = Math.round(getResources().getDisplayMetrics().widthPixels / getResources().getDisplayMetrics().density);
+        int columns = Math.max(2, Math.min(6, (width - 60) / 190));
+        for (int r = 0; r < 2; r++) {
+            LinearLayout row = HomeStyle.row(this);
+            for (int i = 0; i < columns; i++) {
+                LinearLayout placeholder = HomeStyle.column(this); placeholder.setPadding(dp(12), dp(12), dp(12), dp(12));
+                placeholder.setBackground(HomeStyle.shape(this, HomeStyle.PANEL, 0, 20));
+                View logo = new View(this); logo.setBackground(HomeStyle.shape(this, Color.rgb(48, 50, 57), 0, 16));
+                placeholder.addView(logo, new LinearLayout.LayoutParams(-1, dp(110)));
+                View name = new View(this); name.setBackground(HomeStyle.shape(this, Color.rgb(48, 50, 57), 0, 6));
+                LinearLayout.LayoutParams line = new LinearLayout.LayoutParams(dp(100), dp(12)); line.gravity = Gravity.CENTER; line.topMargin = dp(12); placeholder.addView(name, line);
+                LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(0, dp(172), 1); p.setMargins(i == 0 ? 0 : dp(9), 0, i == columns - 1 ? 0 : dp(9), dp(18)); row.addView(placeholder, p);
+            }
+            content.addView(row);
+        }
     }
 
     private void switchMode(String next) {

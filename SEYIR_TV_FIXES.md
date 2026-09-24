@@ -1,5 +1,13 @@
 # Seyir TV — 2026-09-23 düzeltmeleri
 
+## 0.5.20 — simgeler, kartlar ve boş durumlar
+
+- HomeIcon yalnızca ana ekrana ait çizgi simgelerini çizer; arama, ayarlar, filtre, favori, kapatma ve kalite seçenekleri aynı çizgi stilindedir. Erişilebilir düğme açıklamaları korunur.
+- Logo kutusu 132×90 dp, gri arka plan ve ortalanmış kanal adı kullanılır. Odakta başlık aydınlanır; açık kart mint çerçeveyle seçili kalır.
+- Kalite seçenekleri 150 dp düğmeler halinde, ekran genişliğine göre satırlara bölünür. Önceki kırpılma düzeltmesi korunur.
+- Yükleme sırasında iki satır statik kart yer tutucusu gösterilir; veri geldiğinde 180 ms geçiş uygulanır. Boş favorilerde yıldız ve Kanal ekle eylemi bulunur.
+- Release derleme ve lintVital başarılı. Oynatıcı/kaynak dosyaları SHA-256 karşılaştırması ve play metodu metin karşılaştırmasıyla değişmeden doğrulandı. Cihaz üzerinde görsel doğrulama yapılmadı.
+
 ## 0.5.19 — kalite düğmesi kırpılması
 
 - HomeStyle satır/sütunlarının çocuk kırpması kapatıldı. Metin düğmeleri odakta büyütülmez; beyaz çerçeve korunur. Kart büyüme animasyonu devam eder.

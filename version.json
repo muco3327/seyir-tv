@@ -1,6 +1,6 @@
 {
-  "versionCode": 62,
-  "versionName": "0.5.19",
-  "changelog": "Kalite düğmelerinin ve odak çerçevesinin kırpılması düzeltildi. Düğmeler metin boyutuna göre genişler. Oynatma sistemi değiştirilmedi.",
-  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.19.apk"
+  "versionCode": 63,
+  "versionName": "0.5.20",
+  "changelog": "Tutarlı çizgi simgeleri, dengeli logo alanları, kompakt kalite seçenekleri ve yeni yükleme/favori ekranları. Oynatma sistemi değiştirilmedi.",
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.20.apk"
 }
