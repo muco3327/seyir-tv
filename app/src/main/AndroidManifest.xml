@@ -21,7 +21,11 @@
         </provider>
         <activity android:name=".PlayerActivity" android:exported="false"
             android:screenOrientation="sensorLandscape" android:configChanges="keyboardHidden|orientation|screenSize" />
-        <activity android:name=".MainActivity" android:exported="true"
+        <activity android:name=".MainActivity" android:exported="false"
+            android:windowSoftInputMode="adjustPan"
+            android:screenOrientation="sensorLandscape" android:configChanges="keyboardHidden|orientation|screenSize">
+        </activity>
+        <activity android:name=".TvHomeActivity" android:exported="true"
             android:windowSoftInputMode="adjustPan"
             android:screenOrientation="sensorLandscape" android:configChanges="keyboardHidden|orientation|screenSize">
             <intent-filter>
