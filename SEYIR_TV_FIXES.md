@@ -1,5 +1,11 @@
 # Seyir TV — 2026-09-23 düzeltmeleri
 
+## 0.5.24 — Apple TV tarzı oynatıcı panelleri
+
+- Üst başlık ve alt zaman çubuğu tam genişlikli eski bar görünümünden yüzen, yuvarlatılmış ve hafif çerçeveli panellere taşındı.
+- Geri düğmesi ve durum rozeti pill arka plan kullanır; ilerleme çubuğu ve oynat/duraklat bölümü daha küçük metin ve geniş boşluklarla düzenlendi.
+- `PlayerActivity.java` ve oynatma motoru değiştirilmedi; yalnızca `activity_player.xml` ve yeni çizim kaynakları güncellendi.
+
 ## 0.5.23 — oynatıcı araç çubuğu sadeleştirmesi
 
 - Oynatıcıdaki alt araç satırında geri sar, ileri sar, boyut, kalite, ses dili, altyazı ve hız düğmeleri görsel olarak gizlendi. Temel oynat/duraklat düğmesi ile ilerleme çubuğu korunur.

@@ -1,6 +1,6 @@
 {
-  "versionCode": 66,
-  "versionName": "0.5.23",
-  "changelog": "Oynatıcı arayüzü sadeleştirildi: alt araç çubuğunda yalnızca temel oynat/duraklat kontrolü bırakıldı.",
-  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.23.apk"
+  "versionCode": 67,
+  "versionName": "0.5.24",
+  "changelog": "Oynatıcı panelleri Apple TV tarzı yüzen, yuvarlatılmış görünüme taşındı. Oynatma mantığı değiştirilmedi.",
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.24.apk"
 }
