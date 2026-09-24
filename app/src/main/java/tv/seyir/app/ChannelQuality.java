@@ -14,5 +14,9 @@ final class ChannelQuality {
         if (n.matches(".*\\bHQ\\b.*")) return "HQ";
         return "unknown";
     }
-    static String groupKey(String channel, String name) { return channel + "|" + tier(name); }
+    static String groupKey(String channel, String name) {
+        String n = name == null ? "" : name.toLowerCase(Locale.ROOT).trim();
+        String provider = n.matches(".*\\b(atom|zeus)$") ? n.replaceAll(".*\\b(atom|zeus)$", "$1") : "";
+        return channel + "|" + tier(name) + (provider.isEmpty() ? "" : "|" + provider);
+    }
 }

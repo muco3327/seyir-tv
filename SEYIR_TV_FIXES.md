@@ -1,5 +1,12 @@
 # Seyir TV — 2026-09-23 düzeltmeleri
 
+## 0.5.21 — Atom ve Zeus listeleme
+
+- Güncel kadirsener1/mahsun playlist içinde BEIN SPORTS 1-ATOM ve BeIN Sport 1-ZEUS kayıtları mevcut; grupları Spor, diğer Zeus kayıtlarınınki Spor-Neon. Önceki filtre sağlayıcı son ekleri ve eksik TR etiketi nedeniyle bunları eliyordu.
+- Yabancı ülke/dil ve yetişkin kontrollerinden sonra yalnızca beIN Sport(s) 1–5 Atom/Zeus + Spor/Spor-Neon eşleşmesine izin verilir. Genel yabancı beIN filtresi gevşetilmez.
+- ChannelQuality.groupKey sağlayıcı son ekini korur; SportsManager ad temizliği Atom/Zeus son ekini silse bile kaynaklar birbirine ve etiketsiz kanala birleşmez. PlayerActivity ve URL/başlık işleme değiştirilmedi.
+- 7 hedefli ChannelFilter/ChannelQuality testi ve release derleme başarılı. Yayınların oynatılabilirliği bu listeleme düzeltmesiyle garanti edilmez; canlı yayın testi yapılmadı.
+
 ## 0.5.20 — simgeler, kartlar ve boş durumlar
 
 - HomeIcon yalnızca ana ekrana ait çizgi simgelerini çizer; arama, ayarlar, filtre, favori, kapatma ve kalite seçenekleri aynı çizgi stilindedir. Erişilebilir düğme açıklamaları korunur.

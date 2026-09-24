@@ -2,6 +2,18 @@ package tv.seyir.app;
 import org.junit.Test;
 import static org.junit.Assert.*;
 public class ChannelFilterTest {
+    @Test public void preservesRequestedProviderVariantsWithoutOpeningForeignFilter() {
+        assertTrue(ChannelFilter.allows("BEIN SPORTS 1-ATOM", "Spor"));
+        assertTrue(ChannelFilter.allows("BeIN Sport 1-ZEUS", "Spor"));
+        assertTrue(ChannelFilter.allows("BeIN Sport 2 zeus", "Spor-Neon"));
+        assertFalse(ChannelFilter.allows("FR: BEIN SPORTS 1-ATOM", "Spor"));
+        assertFalse(ChannelFilter.allows("BEIN SPORTS 1-ATOM", "France"));
+        assertFalse(ChannelFilter.allows("BEIN SPORTS 1-OTHER", "Spor"));
+        assertNotEquals(ChannelQuality.groupKey("beinsports1", "BEIN SPORTS 1-ATOM"),
+            ChannelQuality.groupKey("beinsports1", "BeIN Sport 1-ZEUS"));
+        assertNotEquals(ChannelQuality.groupKey("beinsports1", "BEIN SPORTS 1-ATOM"),
+            ChannelQuality.groupKey("beinsports1", "BEIN SPORTS 1"));
+    }
     @Test public void rejectsUserExamples() {
         for(String name:new String[]{"TV4","Afroturk TV (1080p)","Aksu TV (720p)","Alanya Posta TV (1080p)","Altas TV (1080p)","Anadolu Net TV"}) assertFalse(name,ChannelFilter.allows(name,"General"));
     }

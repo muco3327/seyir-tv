@@ -18,6 +18,9 @@ final class ChannelFilter {
         String n = normalized(name), g = normalized(group);
         if (FOREIGN.matcher(n + " " + g).find() || n.matches("^(fr|uk|us|en|ar|es|de|it|pt|pl|ru|nl)bein.*")) return false;
         if ((n + " " + g).matches(".*\\b(adult|xxx|nsfw)\\b.*")) return false;
+        // Explicitly requested provider variants use Spor rather than a country tag.
+        if (n.matches("bein\\s*sports?\\s*[1-5]\\s*[- ]\\s*(atom|zeus)")
+                && g.matches("spor(?:-neon)?")) return true;
         boolean turkish = Pattern.compile("(^|[^a-z])(tr|turk|turkish|turkiye|turkey)([^a-z]|$)").matcher(n + " " + g).find() || n.startsWith("trbein");
         String clean = n.replaceFirst("^(?:tr(?=bein)|(?:tr|turkiye|turkey|turkish)(?:\\s*[:|_-]\\s*|\\s+))", "")
             .replaceAll("\\[[^]]*]|\\([^)]*\\)", "")
