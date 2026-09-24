@@ -136,6 +136,7 @@ public final class SportsManager {
 
             List<SportChannel> baseChannels = parseJson(json);
             for (SportChannel ch : baseChannels) {
+                if (!ChannelFilter.allows(ch.name, ch.category)) continue;
                 String cleanKey = cleanChannelName(ch.name);
                 if (cleanKey.isEmpty()) cleanKey = md5(ch.name);
                 aggregated.put(cleanKey, ch);
@@ -368,7 +369,7 @@ public final class SportsManager {
                                 currentHeaders.put("Origin", line.substring(line.indexOf("=") + 1).trim());
                             }
                         } else if (!line.startsWith("#")) {
-                            if (currentName != null && (line.startsWith("http://") || line.startsWith("https://"))) {
+                            if (currentName != null && ChannelFilter.allows(currentName, currentGroup) && (line.startsWith("http://") || line.startsWith("https://"))) {
                                 String streamUrl = line;
                                 
                                 // Pipe syntax handling

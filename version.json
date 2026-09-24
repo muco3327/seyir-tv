@@ -1,6 +1,6 @@
 {
-  "versionCode": 57,
-  "versionName": "0.5.14",
-  "changelog": "Üst alan tek satıra indirildi. Başlık ve kanal sayısı yan yana alındı; kanal kartlarına daha fazla alan ayrıldı. Canlı TV oynatma akışı değişmedi.",
-  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.14.apk"
+  "versionCode": 58,
+  "versionName": "0.5.15",
+  "changelog": "Kanal filtresi eklendi: Türkiye spor, ulusal ve sinema kanalları listelenir. Yabancı beIN sürümleri, TV4 ve yerel/ilgisiz kanallar elenir. Oynatma motoru değişmedi.",
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.15.apk"
 }

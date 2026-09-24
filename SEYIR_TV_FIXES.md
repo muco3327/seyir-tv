@@ -1,5 +1,12 @@
 # Seyir TV — 2026-09-23 düzeltmeleri
 
+## 0.5.15 — Türkiye kanal filtresi (2026-09-24)
+
+- ChannelFilter, JSON başlangıç listesine ve GitHub M3U kayıtlarına birleştirmeden önce uygulanır; yabancı URL'ler Türk kanalın yedeklerine karışmaz.
+- İzin listesi Türkiye ulusal kanalları, Türkiye spor markaları ve sinema kanallarını kapsar. TV4 ve belirtilen yerel kanallar kabul edilmez. General kategorisi izin vermez. beIN Sports/Connect için TR/Türkiye etiketleri gerekir; yabancı dil/ülke etiketi varsa reddedilir.
+- Filtre ad ve kategori metadatasına dayanır; video ses dilini analiz etmez. Yanlış etiketli yayınların dili bu yöntemle doğrulanamaz. Bilinmeyen isimler ihtiyatlı olarak elenir; izin listesi ChannelFilter.java içinde bakımı yapılabilir.
+- Kullanıcının yerel kanal örnekleri, ulusal kanallar, yabancı/Türk beIN ve sinema için 4 regresyon testi geçti. Sürüm 0.5.15 / 58. Oynatıcı kodu değiştirilmedi.
+
 ## 0.5.14 — kompakt başlık
 
 - Logo ve altı işlem tek 40 dp satıra alındı. Başlık ve durum/kanal sayısı yan yana yerleştirildi. Dikey boşluklar azaltıldı; üst alan sayfayla kaymaya devam eder.
