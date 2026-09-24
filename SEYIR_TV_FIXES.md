@@ -1,5 +1,11 @@
 # Seyir TV — 2026-09-23 düzeltmeleri
 
+## 0.5.19 — kalite düğmesi kırpılması
+
+- HomeStyle satır/sütunlarının çocuk kırpması kapatıldı. Metin düğmeleri odakta büyütülmez; beyaz çerçeve korunur. Kart büyüme animasyonu devam eder.
+- Kalite seçeneklerinde sabit 46 dp yükseklik yerine en az 48 dp ve içeriğe göre yükseklik kullanılır. İki satır metin ve çerçeve çevresinde boşluk sağlanır.
+- Oynatıcı ve kaynak dosyaları değiştirilmedi; önceki SHA-256 imzaları korundu.
+
 ## 0.5.18 — ana ekran görsel yenilemesi (2026-09-24)
 
 - Aktif ana ekran TvHomeActivity; görünüm yardımcıları HomeStyle. Üstte Favoriler/Kanallar/Ara sekmeleri ve Ayarlar simgesi, başlığın yanında kategori filtresi bulunur. Üst alan sayfayla kayar.

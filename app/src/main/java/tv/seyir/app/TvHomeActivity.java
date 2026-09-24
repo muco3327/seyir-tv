@@ -249,7 +249,10 @@ public class TvHomeActivity extends Activity {
             TextView b = HomeStyle.button(this, label, false, () -> play(ch));
             b.setContentDescription(group.name + ", " + quality + ", seçenek " + number);
             register("quality:" + ch.id, b);
-            LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(0, dp(46), 1); p.setMargins(0, 0, dp(8), dp(6)); row.addView(b, p);
+            b.setMinHeight(dp(48));
+            b.setSingleLine(false); b.setMaxLines(2);
+            LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(0, -2, 1);
+            p.setMargins(dp(4), dp(6), dp(8), dp(8)); row.addView(b, p);
         }
         return panel;
     }

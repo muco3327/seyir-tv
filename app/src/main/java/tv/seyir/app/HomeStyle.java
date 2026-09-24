@@ -24,10 +24,12 @@ final class HomeStyle {
         return d;
     }
     static LinearLayout column(Context c) {
-        LinearLayout v = new LinearLayout(c); v.setOrientation(LinearLayout.VERTICAL); return v;
+        LinearLayout v = new LinearLayout(c); v.setOrientation(LinearLayout.VERTICAL);
+        v.setClipChildren(false); v.setClipToPadding(false); return v;
     }
     static LinearLayout row(Context c) {
         LinearLayout v = new LinearLayout(c); v.setOrientation(LinearLayout.HORIZONTAL);
+        v.setClipChildren(false); v.setClipToPadding(false);
         v.setGravity(Gravity.CENTER_VERTICAL); return v;
     }
     static TextView text(Context c, String value, int size, int color, boolean bold) {
@@ -59,7 +61,8 @@ final class HomeStyle {
         view.setOnFocusChangeListener((v, focused) -> {
             v.setBackground(shape(v.getContext(), focused ? Color.rgb(60, 62, 70) : active ? Color.rgb(51, 53, 60) : PANEL,
                 focused ? WHITE : 0, radius));
-            v.animate().scaleX(focused ? 1.035f : 1f).scaleY(focused ? 1.035f : 1f)
+            float scale = focused && !(v instanceof TextView) ? 1.035f : 1f;
+            v.animate().scaleX(scale).scaleY(scale)
                 .setInterpolator(new android.view.animation.DecelerateInterpolator()).setDuration(180).start();
             v.setElevation(dp(v.getContext(), focused ? 12 : 0));
         });
