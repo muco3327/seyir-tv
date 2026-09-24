@@ -370,6 +370,10 @@ public final class SportsManager {
                                 currentHeaders.put("Origin", line.substring(line.indexOf("=") + 1).trim());
                             }
                         } else if (!line.startsWith("#")) {
+                            if (currentName != null && "Atom Spor".equalsIgnoreCase(currentGroup)
+                                    && currentName.toLowerCase(Locale.ROOT).matches("bein\\s*sports?\\s*(?:[1-5]|max\\s*[12])")) {
+                                currentName += "-ATOM";
+                            }
                             if (currentName != null && ChannelFilter.allows(currentName, currentGroup) && (line.startsWith("http://") || line.startsWith("https://"))) {
                                 String streamUrl = line;
                                 

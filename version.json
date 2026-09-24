@@ -1,6 +1,6 @@
 {
-  "versionCode": 67,
-  "versionName": "0.5.24",
-  "changelog": "Oynatıcı panelleri Apple TV tarzı yüzen, yuvarlatılmış görünüme taşındı. Oynatma mantığı değiştirilmedi.",
-  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.24.apk"
+  "versionCode": 68,
+  "versionName": "0.5.25",
+  "changelog": "Tahir2020 sabit kaynağı eklendi; GitHub ek liste taraması ikincil ve hataya dayanıklı hale getirildi. Filtre ve oynatma mantığı değiştirilmedi.",
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.25.apk"
 }

@@ -1,5 +1,11 @@
 # Seyir TV — 2026-09-23 düzeltmeleri
 
+## 0.5.25 — sabit kaynak ve GitHub tarama sırası
+
+- Tahir2020/TR_Avrupa `playerlist.m3u` sabit topluluk kaynaklarına eklendi.
+- Sabit kaynaklar GitHub repository keşfinden önce doğrulanır; GitHub API veya repository hatası sabit kanalların kaybolmasına neden olmaz.
+- Mevcut kanal filtresi, kaynak gruplama ve oynatma motoru değiştirilmedi.
+
 ## 0.5.24 — Apple TV tarzı oynatıcı panelleri
 
 - Üst başlık ve alt zaman çubuğu tam genişlikli eski bar görünümünden yüzen, yuvarlatılmış ve hafif çerçeveli panellere taşındı.

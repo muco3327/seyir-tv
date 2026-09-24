@@ -2,6 +2,19 @@ package tv.seyir.app;
 import org.junit.Test;
 import static org.junit.Assert.*;
 public class ChannelFilterTest {
+    @Test public void restoresAuditedBeinListingsOnly() {
+        for(String name:new String[]{"beIN SPORTS 1 Turkey-TV247", "beIN SPORTS 1-CDN", "beIN SPORTS 1-MAHSUN", "beIN Sports 1-forestgump 1", "beIN SPORTS HD 1 [TR]-ace", "BeIN Sport MAX 1"})
+            assertTrue(name, ChannelFilter.allows(name,"Spor"));
+        assertTrue(ChannelFilter.allows("beIN SPORTS 2 Turkey-TR","Bein-TV247"));
+        assertTrue(ChannelFilter.allows("beIN Sports 2-forestgump","Bein-TV247"));
+        assertTrue(ChannelFilter.allows("BEIN SPORTS 1","Atom Spor"));
+        assertTrue(ChannelFilter.allows("beIN Sports Haber-talip","TR Spor"));
+        for(String name:new String[]{"beIN SPORTS 1 France-FR", "beIN Sports 1 Arabic-QA", "beIN Sports 1 Malaysia-MY", "beIN SPORTS Australia 1-AU", "BEIN SPORTS 1-OTHER"})
+            assertFalse(name, ChannelFilter.allows(name,"Spor"));
+        assertFalse(ChannelFilter.allows("BEIN SPORTS 1","World"));
+        assertFalse(ChannelFilter.allows("Random TV","Spor"));
+        assertNotEquals(ChannelQuality.groupKey("beinsports1","beIN SPORTS 1-CDN"), ChannelQuality.groupKey("beinsports1","beIN SPORTS 1-MAHSUN"));
+    }
     @Test public void preservesRequestedProviderVariantsWithoutOpeningForeignFilter() {
         assertTrue(ChannelFilter.allows("BEIN SPORTS 1-ATOM", "Spor"));
         assertTrue(ChannelFilter.allows("BeIN Sport 1-ZEUS", "Spor"));

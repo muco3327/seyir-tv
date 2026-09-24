@@ -16,7 +16,8 @@ final class ChannelQuality {
     }
     static String groupKey(String channel, String name) {
         String n = name == null ? "" : name.toLowerCase(Locale.ROOT).trim();
-        String provider = n.matches(".*\\b(atom|zeus)$") ? n.replaceAll(".*\\b(atom|zeus)$", "$1") : "";
+        java.util.regex.Matcher supplier = java.util.regex.Pattern.compile("\\b(atom|zeus|cdn|mahsun|forestgump|tv247|ace|tal|talip|tul)(?:\\s+1)?$").matcher(n);
+        String provider = supplier.find() ? supplier.group(1) : "";
         return channel + "|" + tier(name) + (provider.isEmpty() ? "" : "|" + provider);
     }
 }

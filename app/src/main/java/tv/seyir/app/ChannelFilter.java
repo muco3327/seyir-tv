@@ -18,6 +18,7 @@ final class ChannelFilter {
         String n = normalized(name), g = normalized(group);
         if (FOREIGN.matcher(n + " " + g).find() || n.matches("^(fr|uk|us|en|ar|es|de|it|pt|pl|ru|nl)bein.*")) return false;
         if ((n + " " + g).matches(".*\\b(adult|xxx|nsfw)\\b.*")) return false;
+        if (allowsBeinVariant(n, g)) return true;
         // Explicitly requested provider variants use Spor rather than a country tag.
         if (n.matches("bein\\s*sports?\\s*[1-5]\\s*[- ]\\s*(atom|zeus)")
                 && g.matches("spor(?:-neon)?")) return true;
@@ -33,5 +34,17 @@ final class ChannelFilter {
         if (clean.matches("bein(?:sports?|connect)(?:max)?[0-9]*(?:hd|sd|fhd|uhd|hq|4k)?")) return turkish;
         if (clean.matches("(?:sinematv|sinema|sinemayerli|sinemaaile|sinemaaksiyon|sinemakomedi|sinemayuzbir|sinemafantastik|sinemakorku|yesilcam|filmbox|tivibusinema)[0-9]*(?:tv|hd)?")) return true;
         return turkish && clean.matches("(?:beinmovies|beinsinema|moviesmart|filmbox|cinemax)(?:premiere|premier|action|stars|family|fest|turk|comedy|classic|gold|platin|premium|extra|plus)*[0-9]*(?:hd|uhd)?");
+    }
+
+    private static boolean allowsBeinVariant(String n, String g) {
+        if (!n.matches(".*bein\\s*sports?.*")) return false;
+        boolean country = n.matches(".*(?:\\bturkey\\b|\\btr\\b).*")
+            || g.matches(".*\\b(tr|turkey|turkiye|turkish)\\b.*");
+        boolean localGroup = g.equals("spor") || g.startsWith("spor-") || g.equals("atom spor") || g.equals("tr spor") || g.equals("bein-tv247");
+        String clean = n.replaceAll("\\[[^]]*]", " ")
+            .replaceAll("\\b(turkey|tr|hd|fhd|uhd|hq|sd|1080p|720p)\\b", " ")
+            .replaceAll("(?:[- ]+(?:atom|zeus|cdn|mahsun|forestgump|tv247|ace|tal|talip|tul)(?:\\s+1)?)$", "")
+            .replaceAll("[^a-z0-9]", "");
+        return (country || localGroup) && clean.matches("beinsports?(?:[1-5]|max[12]|haber)");
     }
 }
