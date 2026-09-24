@@ -70,7 +70,8 @@ public class TvHomeActivity extends Activity {
         }
         scroll = new ScrollView(this); scroll.setFillViewport(true); scroll.setClipToPadding(false);
         scroll.setBackgroundColor(HomeStyle.BG); scroll.setVerticalScrollBarEnabled(false);
-        shell = HomeStyle.column(this); shell.setPadding(dp(24), dp(16), dp(24), dp(24));
+        shell = HomeStyle.column(this); shell.setPadding(dp(30), dp(16), dp(30), dp(24));
+        shell.setClipChildren(false); shell.setClipToPadding(false);
         scroll.addView(shell, new ScrollView.LayoutParams(-1, -2)); setContentView(scroll);
         load(false);
         AppUpdater.check(this, false);
@@ -120,13 +121,13 @@ public class TvHomeActivity extends Activity {
         shell.removeAllViews(); focusViews.clear();
         // Header belongs to the page's ScrollView; it never obscures the channel grid.
         LinearLayout header = HomeStyle.row(this);
-        TextView brand = HomeStyle.text(this, "▶  SEYİR TV", 18, HomeStyle.ACCENT, true);
+        TextView brand = HomeStyle.text(this, "seyir tv", 22, HomeStyle.WHITE, true);
         header.addView(brand, new LinearLayout.LayoutParams(0, dp(46), 1)); brand.setGravity(Gravity.CENTER_VERTICAL);
         nav(header, "Favoriler", "favorites", mode.equals("favorites"), () -> switchMode("favorites"));
         nav(header, "Kanallar", "channels", mode.equals("channels"), () -> switchMode("channels"));
         nav(header, "Ara", "search", mode.equals("search"), this::search);
-        nav(header, "Kategoriler", "categories", !category.isEmpty() && mode.equals("channels"), this::categories);
-        nav(header, "Ayarlar", "settings", false, this::settings);
+        nav(header, "⚙", "settings", false, this::settings);
+        focusViews.get("nav:settings").setContentDescription("Ayarlar");
         shell.addView(header, new LinearLayout.LayoutParams(-1, -2));
 
         List<Group> groups = visibleGroups();
@@ -137,22 +138,25 @@ public class TvHomeActivity extends Activity {
         heading.addView(h, new LinearLayout.LayoutParams(0, -2, 1));
         status = HomeStyle.text(this, loading ? "Kanallar hazırlanıyor…" : groups.size() + " kanal", 12, HomeStyle.MUTED, false);
         status.setMaxLines(1); status.setEllipsize(android.text.TextUtils.TruncateAt.END);
-        heading.addView(status, new LinearLayout.LayoutParams(dp(240), -2)); status.setGravity(Gravity.END);
+        heading.addView(status, new LinearLayout.LayoutParams(dp(160), -2)); status.setGravity(Gravity.END);
+        TextView filter = HomeStyle.button(this, "Kategoriler  ⌄", !category.isEmpty() && mode.equals("channels"), this::categories);
+        LinearLayout.LayoutParams filterParams = new LinearLayout.LayoutParams(-2, dp(40)); filterParams.leftMargin = dp(18);
+        heading.addView(filter, filterParams); register("nav:categories", filter);
         shell.addView(heading);
-        content = HomeStyle.column(this); shell.addView(content);
+        content = HomeStyle.column(this); content.setClipChildren(false); content.setClipToPadding(false); shell.addView(content);
         if (groups.isEmpty()) {
             emptyState();
         } else {
-            int width = getResources().getDisplayMetrics().widthPixels / dp(1);
-            int columns = Math.max(3, Math.min(7, (width - 48) / 160));
+            int width = Math.round(getResources().getDisplayMetrics().widthPixels / getResources().getDisplayMetrics().density);
+            int columns = Math.max(2, Math.min(6, (width - 60) / 190));
             Set<String> favorites = favoriteKeys();
             for (int start = 0; start < groups.size(); start += columns) {
                 LinearLayout row = HomeStyle.row(this); row.setGravity(Gravity.TOP); row.setClipChildren(false); row.setClipToPadding(false);
                 Group open = null;
                 for (int c = 0; c < columns; c++) {
                     int index = start + c;
-                    LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, dp(166), 1);
-                    lp.setMargins(c == 0 ? 0 : dp(6), 0, c == columns - 1 ? 0 : dp(6), dp(12));
+                    LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(0, dp(172), 1);
+                    lp.setMargins(c == 0 ? 0 : dp(9), 0, c == columns - 1 ? 0 : dp(9), dp(18));
                     if (index < groups.size()) {
                         Group group = groups.get(index);
                         row.addView(card(group, favorites.contains(group.key), generation), lp);
@@ -169,14 +173,18 @@ public class TvHomeActivity extends Activity {
     }
 
     private void nav(LinearLayout row, String label, String key, boolean active, Runnable action) {
-        TextView b = HomeStyle.button(this, label, active, action);
+        TextView b = HomeStyle.tab(this, label, active, action);
         LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(-2, dp(44)); p.leftMargin = dp(7);
         row.addView(b, p); register("nav:" + key, b);
     }
 
     private void register(String key, View view) {
         view.setId(View.generateViewId()); focusViews.put(key, view);
-        // Styling is installed by HomeStyle.focus; click handlers also persist the exact card.
+        View.OnFocusChangeListener styling = view.getOnFocusChangeListener();
+        view.setOnFocusChangeListener((v, focused) -> {
+            if (styling != null) styling.onFocusChange(v, focused);
+            if (focused) focusKey = key;
+        });
     }
 
     private View card(Group group, boolean favorite, int generation) {
@@ -184,19 +192,22 @@ public class TvHomeActivity extends Activity {
         card.setDescendantFocusability(ViewGroup.FOCUS_BLOCK_DESCENDANTS);
         HomeStyle.focus(card, expanded.equals(group.key), 20);
         FrameLayout art = new FrameLayout(this);
-        art.setBackground(HomeStyle.shape(this, Color.rgb(236, 238, 242), 0, 12)); art.setClipToOutline(true);
+        art.setBackground(HomeStyle.shape(this, Color.rgb(228, 229, 232), 0, 14)); art.setClipToOutline(true);
         TextView initials = HomeStyle.text(this, group.name.substring(0, Math.min(2, group.name.length())).toUpperCase(java.util.Locale.ROOT), 28, Color.rgb(80, 89, 106), true);
         initials.setGravity(Gravity.CENTER); art.addView(initials, new FrameLayout.LayoutParams(-1, -1));
         ImageView logo = new ImageView(this); logo.setScaleType(ImageView.ScaleType.FIT_CENTER); logo.setPadding(dp(12), dp(9), dp(12), dp(9));
         art.addView(logo, new FrameLayout.LayoutParams(-1, -1));
-        card.addView(art, new LinearLayout.LayoutParams(-1, dp(86)));
+        card.addView(art, new LinearLayout.LayoutParams(-1, dp(110)));
+        if (favorite) {
+            TextView star = HomeStyle.text(this, "★", 14, HomeStyle.WHITE, true); star.setGravity(Gravity.CENTER);
+            star.setBackground(HomeStyle.shape(this, Color.rgb(50, 52, 58), 0, 16));
+            FrameLayout.LayoutParams badge = new FrameLayout.LayoutParams(dp(28), dp(28), Gravity.TOP | Gravity.END);
+            badge.setMargins(0, dp(6), dp(6), 0); art.addView(star, badge);
+        }
         String logoUrl = ""; for (SportsManager.SportChannel ch : group.variants) if (ch.logo != null && !ch.logo.isEmpty()) { logoUrl = ch.logo; break; }
         poster(logo, initials, logoUrl, generation);
         TextView title = HomeStyle.text(this, group.name, 14, HomeStyle.WHITE, true);
         title.setSingleLine(true); title.setEllipsize(android.text.TextUtils.TruncateAt.END); title.setPadding(0, dp(10), 0, dp(5)); card.addView(title);
-        Set<String> tiers = new LinkedHashSet<>(); for (SportsManager.SportChannel ch : group.variants) tiers.add(ChannelPresentation.quality(ch.name));
-        TextView quality = HomeStyle.text(this, (favorite ? "★  " : "") + String.join(" · ", tiers), 11, favorite ? HomeStyle.ACCENT : HomeStyle.MUTED, false);
-        quality.setSingleLine(true); quality.setEllipsize(android.text.TextUtils.TruncateAt.END); card.addView(quality);
         card.setContentDescription(group.name + (favorite ? ", favori" : "") + ", kalite seçeneklerini aç");
         register("card:" + group.key, card);
         card.setOnClickListener(v -> {
@@ -211,18 +222,21 @@ public class TvHomeActivity extends Activity {
 
     private View variants(Group group, boolean favorite) {
         LinearLayout panel = HomeStyle.column(this); panel.setPadding(dp(16), dp(14), dp(16), dp(14));
-        panel.setBackground(HomeStyle.shape(this, Color.rgb(22, 32, 38), HomeStyle.ACCENT, 18));
+        panel.setBackground(HomeStyle.shape(this, Color.rgb(29, 30, 35), 0, 22));
+        panel.setAlpha(0f); panel.animate().alpha(1f).setDuration(160).start();
         LinearLayout.LayoutParams panelParams = new LinearLayout.LayoutParams(-1, -2); panelParams.bottomMargin = dp(14); panel.setLayoutParams(panelParams);
         LinearLayout titleRow = HomeStyle.row(this);
         titleRow.addView(HomeStyle.text(this, group.name + "  ·  Yayın seç", 17, HomeStyle.WHITE, true), new LinearLayout.LayoutParams(0, -2, 1));
-        TextView fav = HomeStyle.button(this, favorite ? "★  Favoriden çıkar" : "☆  Favoriye ekle", false, () -> toggleFavorite(group));
+        TextView fav = HomeStyle.button(this, favorite ? "★" : "☆", favorite, () -> toggleFavorite(group));
+        fav.setContentDescription(favorite ? "Favoriden çıkar" : "Favoriye ekle");
         titleRow.addView(fav); register("favorite:" + group.key, fav);
-        TextView close = HomeStyle.button(this, "Kapat", false, () -> {
+        TextView close = HomeStyle.button(this, "×", false, () -> {
             expanded = ""; savedScroll = scroll.getScrollY(); focusKey = "card:" + group.key; render(true);
         });
+        close.setContentDescription("Kalite seçeneklerini kapat");
         LinearLayout.LayoutParams cp = new LinearLayout.LayoutParams(-2, -2); cp.leftMargin = dp(8); titleRow.addView(close, cp); register("close:" + group.key, close);
         panel.addView(titleRow);
-        TextView note = HomeStyle.text(this, "Kalite adları kaynak etiketidir. Gerçek çözünürlük oynatıcıda gösterilir.", 11, HomeStyle.MUTED, false);
+        TextView note = HomeStyle.text(this, "Kaynak kalitesi", 11, HomeStyle.MUTED, false);
         note.setPadding(0, dp(7), 0, dp(10)); panel.addView(note);
         Map<String, Integer> totals = new LinkedHashMap<>(), seen = new LinkedHashMap<>();
         for (SportsManager.SportChannel ch : group.variants) totals.merge(ChannelPresentation.quality(ch.name), 1, Integer::sum);

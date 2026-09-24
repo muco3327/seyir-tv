@@ -11,8 +11,8 @@ import android.widget.TextView;
 
 /** Home-only styling. Deliberately independent from the player's shared Ui class. */
 final class HomeStyle {
-    static final int BG = Color.rgb(12, 14, 19);
-    static final int PANEL = Color.rgb(28, 31, 39);
+    static final int BG = Color.rgb(17, 18, 21);
+    static final int PANEL = Color.rgb(35, 36, 41);
     static final int WHITE = Color.rgb(245, 246, 249);
     static final int MUTED = Color.rgb(166, 174, 190);
     static final int ACCENT = Color.rgb(141, 222, 209);
@@ -40,16 +40,28 @@ final class HomeStyle {
         TextView b = text(c, label, 14, active ? WHITE : MUTED, true);
         b.setGravity(Gravity.CENTER); b.setPadding(dp(c, 15), dp(c, 11), dp(c, 15), dp(c, 11));
         b.setMinHeight(dp(c, 44)); b.setSingleLine(true);
-        focus(b, active, 14); b.setOnClickListener(v -> action.run()); return b;
+        focus(b, active, 24); b.setOnClickListener(v -> action.run()); return b;
+    }
+    static TextView tab(Context c, String label, boolean active, Runnable action) {
+        TextView b = button(c, label, active, action);
+        b.setTextColor(active ? BG : MUTED);
+        b.setBackground(shape(c, active ? WHITE : Color.TRANSPARENT, 0, 24));
+        b.setOnFocusChangeListener((v, focused) -> {
+            b.setTextColor(active || focused ? BG : MUTED);
+            b.setBackground(shape(c, active || focused ? WHITE : Color.TRANSPARENT, focused ? ACCENT : 0, 24));
+            b.animate().scaleX(focused ? 1.04f : 1f).scaleY(focused ? 1.04f : 1f).setDuration(180).start();
+        });
+        return b;
     }
     static void focus(View view, boolean active, int radius) {
         view.setFocusable(true); view.setClickable(true);
-        view.setBackground(shape(view.getContext(), active ? Color.rgb(49, 57, 66) : PANEL, 0, radius));
+        view.setBackground(shape(view.getContext(), active ? Color.rgb(51, 53, 60) : PANEL, 0, radius));
         view.setOnFocusChangeListener((v, focused) -> {
-            v.setBackground(shape(v.getContext(), focused ? Color.rgb(51, 61, 73) : active ? Color.rgb(49, 57, 66) : PANEL,
+            v.setBackground(shape(v.getContext(), focused ? Color.rgb(60, 62, 70) : active ? Color.rgb(51, 53, 60) : PANEL,
                 focused ? WHITE : 0, radius));
-            v.animate().scaleX(focused ? 1.025f : 1f).scaleY(focused ? 1.025f : 1f).setDuration(130).start();
-            v.setElevation(dp(v.getContext(), focused ? 8 : 0));
+            v.animate().scaleX(focused ? 1.035f : 1f).scaleY(focused ? 1.035f : 1f)
+                .setInterpolator(new android.view.animation.DecelerateInterpolator()).setDuration(180).start();
+            v.setElevation(dp(v.getContext(), focused ? 12 : 0));
         });
     }
 }

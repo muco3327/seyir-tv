@@ -1,6 +1,6 @@
 {
-  "versionCode": 60,
-  "versionName": "0.5.17",
-  "changelog": "Yeni modern TV ana ekranı; favoriler, kategori, arama ve kalite seçenekleri. Oynatıcı değiştirilmedi.",
-  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.17.apk"
+  "versionCode": 61,
+  "versionName": "0.5.18",
+  "changelog": "Sade üst menü, büyük logo kartları, yumuşak odak animasyonları ve kompakt kalite paneli. Oynatma sistemi değiştirilmedi.",
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.18.apk"
 }

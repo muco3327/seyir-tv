@@ -1,5 +1,14 @@
 # Seyir TV — 2026-09-23 düzeltmeleri
 
+## 0.5.18 — ana ekran görsel yenilemesi (2026-09-24)
+
+- Aktif ana ekran TvHomeActivity; görünüm yardımcıları HomeStyle. Üstte Favoriler/Kanallar/Ara sekmeleri ve Ayarlar simgesi, başlığın yanında kategori filtresi bulunur. Üst alan sayfayla kayar.
+- Daha geniş logo kartları, tek satır kanal adı, küçük favori rozeti ve beyaz odak çerçevesi kullanılır. Kalite etiketleri sadece açılır panelde görünür. Geçişler 160–180 ms, bulanıklık kullanılmaz.
+- Odak dinleyicisi stil animasyonunu koruyarak seçili kontrolü kaydeder. Yoğunluğa göre sütun sayısı hesaplaması düzeltildi.
+- PlayerActivity, SportsManager, activity_player.xml ve TvHomeActivity.play metodu değiştirilmedi. Önceki koruma imzalarıyla karşılaştırıldı. ChannelPresentation ve yayın URL listelerine dokunulmadı.
+- Önceki arayüz backup_ui_0517 altında yerel olarak saklandı. Son izlenenler eklenmedi.
+- Sürüm 0.5.18 / 61. Release derleme/lint kontrolü yapıldı; bağlı yerel emülatör offline olduğundan cihaz üstü görsel doğrulama yapılamadı.
+
 ## 0.5.16 — kalite bağlantılarının ayrılması (2026-09-24)
 
 - Düzenlemeden önce app klasörü, yapılandırmalar, sürüm ve notlar backup_quality_20260924-092405 klasörüne kopyalandı. Yedek Git'e eklenmedi.
