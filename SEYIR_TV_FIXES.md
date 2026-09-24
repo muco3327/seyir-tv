@@ -1,5 +1,18 @@
 # Seyir TV — 2026-09-23 düzeltmeleri
 
+## 0.5.23 — oynatıcı araç çubuğu sadeleştirmesi
+
+- Oynatıcıdaki alt araç satırında geri sar, ileri sar, boyut, kalite, ses dili, altyazı ve hız düğmeleri görsel olarak gizlendi. Temel oynat/duraklat düğmesi ile ilerleme çubuğu korunur.
+- Düğmelerin Java bağları ve oynatma mantığı korunur; gizli kontroller gerektiğinde kaynak koddan yeniden görünür yapılabilir. PlayerActivity davranış kodu değiştirilmedi, yalnızca `activity_player.xml` görünürlüğü güncellendi.
+
+## 0.5.22 — diğer Türkiye beIN Sports alternatifleri
+
+- Yalnızca beIN Sport(s) 1–5, Max 1–2 ve Haber adları için denetlenen yerel grup/ülke işaretleri ile Atom, Zeus, CDN, MAHSUN, forestgump, TV247, ace, tal, talip ve tul son ekleri tanınır. Yabancı ülke/dil reddi önce uygulanır.
+- Atom Spor kategorisindeki beIN adlarına ATOM eklenir; diğer kanal ailelerine dokunulmaz. Sağlayıcı birleştirme anahtarı genişletildi; URL ve istek başlıkları aynı kaldı.
+- Güncel mahsun listesinde 115 beIN Sports kaydının 74'ü kabul, 41 yabancı kayıt ret. Önceki 19 kabulden 55 kaynak kaydı artış var; bu ayrı kanal sayısı değildir.
+- Atom'un iki beIN 1 kaynağı, listedeki kendi başlıklarıyla uygulama dışında HTTP 403 döndürüyor; bu güncelleme sunucu erişimini düzeltmez.
+- Hedefli filtre/kalite testleri ve release APK derlemesi çalıştırıldı. PlayerActivity değiştirilmedi.
+
 ## 0.5.21 — Atom ve Zeus listeleme
 
 - Güncel kadirsener1/mahsun playlist içinde BEIN SPORTS 1-ATOM ve BeIN Sport 1-ZEUS kayıtları mevcut; grupları Spor, diğer Zeus kayıtlarınınki Spor-Neon. Önceki filtre sağlayıcı son ekleri ve eksik TR etiketi nedeniyle bunları eliyordu.
