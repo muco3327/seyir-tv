@@ -14,12 +14,15 @@ import java.util.*;
 
 public class GithubScanner {
 
-    // Reliable community-maintained IPTV lists (always available, no API limits)
+    // Reliable community-maintained IPTV lists (always available, no API limits).
+    // These fixed sources are deliberately loaded before GitHub discovery so a
+    // temporary GitHub/API failure can never replace the working base catalog.
     private static final String[] CURATED_LISTS = {
             "https://raw.githubusercontent.com/kadirsener1/mahsun/main/playlist.m3u",
             "https://raw.githubusercontent.com/omerdenizhan/IPTV-M3U/refs/heads/main/m3u/turkiye.m3u",
             "https://raw.githubusercontent.com/omerdenizhan/IPTV-M3U/refs/heads/main/m3u/turkiye-iptv-org.m3u",
             "https://raw.githubusercontent.com/myiptv2/iptv-playlist/main/kanallar.m3u",
+            "https://raw.githubusercontent.com/Tahir2020/TR_Avrupa/main/playlist/playerlist.m3u",
             "https://iptv-org.github.io/iptv/countries/tr.m3u"
     };
 
@@ -46,7 +49,8 @@ public class GithubScanner {
         List<String> discoveredUrls = new ArrayList<>();
         Set<String> seenUrls = new HashSet<>();
 
-        // Phase 1: Add curated community lists (these are always up-to-date)
+        // Phase 1: Add curated community lists. This phase is independent from
+        // GitHub repository discovery and is kept usable when the API is down.
         if (callback != null) callback.onProgress("Topluluk IPTV listeleri kontrol ediliyor...");
         for (String listUrl : CURATED_LISTS) {
             if (isUrlAccessible(listUrl)) {
@@ -55,14 +59,23 @@ public class GithubScanner {
                 if (callback != null) callback.onProgress("Liste bulundu: " + listUrl.substring(listUrl.lastIndexOf('/') + 1));
             }
         }
+        final int curatedCount = discoveredUrls.size();
+        if (callback != null) {
+            callback.onProgress(curatedCount > 0
+                    ? "Sabit kaynaklar hazır: " + curatedCount + " liste. GitHub ek kaynak taraması başlatılıyor..."
+                    : "Sabit kaynaklara ulaşılamadı. GitHub ek kaynak taraması deneniyor...");
+        }
 
-        // Phase 2: GitHub search for additional playlists
+        // Phase 2: GitHub search for additional playlists. A failure here is
+        // intentionally non-fatal: the curated list collected above is still
+        // returned and remains the primary catalog.
         Set<String> seenRepos = new HashSet<>();
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.DAY_OF_YEAR, -180);
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
         String sinceDate = dateFormat.format(cal.getTime());
 
+        boolean githubSearchFailed = false;
         for (String q : SEARCH_QUERIES) {
             try {
                 if (callback != null) callback.onProgress("GitHub taranyor: " + q);
@@ -71,6 +84,7 @@ public class GithubScanner {
 
                 List<JSONObject> repos = fetchGithubSearchRepos(searchUrl);
                 if (repos == null) {
+                    githubSearchFailed = true;
                     if (callback != null) callback.onProgress("GitHub API limiti, atlanyor...");
                     continue;
                 }
@@ -117,7 +131,18 @@ public class GithubScanner {
                     }
                     try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
                 }
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+                // GitHub is an optional discovery layer. Do not discard the
+                // already validated fixed sources when a query/repository
+                // cannot be read.
+                githubSearchFailed = true;
+            }
+        }
+
+        if (callback != null && githubSearchFailed) {
+            callback.onProgress(curatedCount > 0
+                    ? "GitHub ek kaynak taraması başarısız oldu; sabit listeler kullanılacak."
+                    : "GitHub ek kaynak taraması başarısız oldu; kullanılabilir liste bulunamadı.");
         }
 
         cachedUrls = discoveredUrls;
