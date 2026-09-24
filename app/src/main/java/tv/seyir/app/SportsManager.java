@@ -139,6 +139,7 @@ public final class SportsManager {
                 if (!ChannelFilter.allows(ch.name, ch.category)) continue;
                 String cleanKey = cleanChannelName(ch.name);
                 if (cleanKey.isEmpty()) cleanKey = md5(ch.name);
+                cleanKey = ChannelQuality.groupKey(cleanKey, ch.name);
                 aggregated.put(cleanKey, ch);
                 seenUrls.addAll(ch.urls);
             }
@@ -423,22 +424,14 @@ public final class SportsManager {
                                         
                                         String cleanKey = cleanChannelName(currentName);
                                         if(cleanKey.isEmpty()) cleanKey = md5(currentName);
+                                        cleanKey = ChannelQuality.groupKey(cleanKey, currentName);
 
                                         String finalUrl = appendHeadersToUrl(streamUrl, currentHeaders);
-                                        boolean isPriority = streamUrl.contains("andro.evrenesoglu99.click")
-                                                || streamUrl.contains("androstream")
-                                                || streamUrl.contains("europlayiptv")
-                                                || streamUrl.contains("daioncdn.net")
-                                                || streamUrl.contains("ercdn.net");
 
                                         if (aggregated.containsKey(cleanKey)) {
                                             SportChannel existing = aggregated.get(cleanKey);
                                             if (!existing.urls.contains(finalUrl)) {
-                                                if (isPriority) {
-                                                    existing.urls.add(0, finalUrl);
-                                                } else {
-                                                    existing.urls.add(finalUrl);
-                                                }
+                                                existing.urls.add(finalUrl);
                                             }
                                         } else {
                                             String id = "gh_" + md5(cleanKey + streamUrl).substring(0, 8);

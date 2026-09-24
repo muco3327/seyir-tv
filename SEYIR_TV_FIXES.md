@@ -1,5 +1,13 @@
 # Seyir TV — 2026-09-23 düzeltmeleri
 
+## 0.5.16 — kalite bağlantılarının ayrılması (2026-09-24)
+
+- Düzenlemeden önce app klasörü, yapılandırmalar, sürüm ve notlar backup_quality_20260924-092405 klasörüne kopyalandı. Yedek Git'e eklenmedi.
+- ChannelQuality kalite etiketini birleştirme anahtarına ekler. UHD, HD, SD, açık 1080p/720p ve belirsiz kalite birbirine karışmaz. Kaynaklar son ekleneni başa taşıma yerine liste sırasını korur; yedekler aynı kalite etiketindeki kayıtlar arasındadır.
+- PlayerActivity kalite düğmesi seçilmesi istenen çözünürlük yerine oynatılan gerçek yüksekliği gösterir. Aynı yükseklikteki parçalar kalite menüsünde silinmez; bildirilen bit hızı ve fps görünür. Yayın bilgisi diyalogu gerçek çözünürlüğü ve kaynak tarafından bildirilen ortalama bit hızını gösterir.
+- 22 hedefli JUnit testi başarılı. Kaynak etiketinin gerçekten UHD olduğunu garanti etmez; düşük bit hızlı veya upscale edilmiş kaynağı uygulama düzeltemez. Mi Box görüntü testi yapılmadı.
+- Sürüm 0.5.16 / 59.
+
 ## 0.5.15 — Türkiye kanal filtresi (2026-09-24)
 
 - ChannelFilter, JSON başlangıç listesine ve GitHub M3U kayıtlarına birleştirmeden önce uygulanır; yabancı URL'ler Türk kanalın yedeklerine karışmaz.

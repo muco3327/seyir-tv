@@ -356,13 +356,21 @@ public final class PlayerActivity extends Activity {
 
     private void updateQualityLabel() {
         if (btnQuality == null) return;
-        if (selectedQualityHeight > 0) {
-            btnQuality.setText("⚙️ Kalite: " + selectedQualityHeight + "p");
-        } else {
-            int currentH = player != null ? player.getVideoSize().height : 0;
-            if (currentH > 0) btnQuality.setText("⚙️ Kalite: Otomatik (" + currentH + "p)");
-            else btnQuality.setText("⚙️ Kalite: Otomatik");
-        }
+        int currentH = player != null ? player.getVideoSize().height : 0;
+        btnQuality.setText(currentH > 0 ? "⚙️ Görüntü: " + currentH + "p" : "⚙️ Kalite");
+    }
+
+    private void showStreamInfo() {
+        Format format = player == null ? null : player.getVideoFormat();
+        String resolution = format != null && format.height > 0 ? format.width + " × " + format.height : "Henüz bilinmiyor";
+        int bitrate = format == null ? -1 : format.averageBitrate;
+        String rate = bitrate > 0 ? String.format(Locale.ROOT,"%.2f Mbit/sn",bitrate / 1000000.0) : "Kaynak bildirmiyor";
+        String fps = format != null && format.frameRate > 0 ? String.format(Locale.ROOT,"%.1f",format.frameRate) : "Kaynak bildirmiyor";
+        new AlertDialog.Builder(this).setTitle("Yayın bilgisi")
+            .setMessage("Kanal etiketi: " + ChannelQuality.tier(title.title) + "\nGerçek çözünürlük: " + resolution
+                + "\nBildirilen ortalama bit hızı: " + rate + "\nKare hızı: " + fps
+                + "\n\n1080p tek başına netlik garantisi değildir. Düşük bit hızı, kaynak sıkıştırması veya düşük çözünürlükten büyütme piksellenmeye neden olabilir.")
+            .setPositiveButton("Tamam",null).show();
     }
 
     private void selectQuality() {
@@ -375,14 +383,15 @@ public final class PlayerActivity extends Activity {
         heights.add(0);
         overrides.add(null);
 
-        Set<Integer> seenHeights = new HashSet<>();
         for (Tracks.Group group : player.getCurrentTracks().getGroups()) {
             if (group.getType() == C.TRACK_TYPE_VIDEO) {
                 for (int i = 0; i < group.length; i++) {
                     if (group.isTrackSupported(i)) {
                         Format f = group.getTrackFormat(i);
-                        if (f.height > 0 && seenHeights.add(f.height)) {
-                            String desc = f.height + "p" + (f.height >= 1080 ? " (FHD)" : f.height >= 720 ? " (HD)" : " (SD)");
+                        if (f.height > 0) {
+                            String desc = f.height + "p" + (f.height >= 2160 ? " (UHD)" : f.height >= 1080 ? " (FHD)" : f.height >= 720 ? " (HD)" : " (SD)");
+                            if (f.averageBitrate > 0) desc += String.format(Locale.ROOT," · %.2f Mbit/sn",f.averageBitrate/1000000.0);
+                            if (f.frameRate > 0) desc += String.format(Locale.ROOT," · %.0f fps",f.frameRate);
                             labels.add(desc);
                             heights.add(f.height);
                             overrides.add(new TrackSelectionOverride(group.getMediaTrackGroup(), i));
@@ -394,7 +403,7 @@ public final class PlayerActivity extends Activity {
         if (labels.size() <= 1) {
             new AlertDialog.Builder(this).setTitle("Görüntü kalitesi")
                 .setMessage("Bu yayında tek bir çözünürlük sunuluyor (Otomatik).")
-                .setPositiveButton("Tamam", null).show();
+                .setPositiveButton("Tamam", null).setNeutralButton("Yayın bilgisi",(d,w)->showStreamInfo()).show();
             return;
         }
         new AlertDialog.Builder(this).setTitle("Görüntü kalitesi seç")
@@ -410,7 +419,7 @@ public final class PlayerActivity extends Activity {
                 player.setTrackSelectionParameters(p.build());
                 updateQualityLabel();
                 scheduleHide();
-            }).show();
+            }).setNeutralButton("Yayın bilgisi",(d,w)->showStreamInfo()).show();
     }
 
     private void selectTracks(int type) {
