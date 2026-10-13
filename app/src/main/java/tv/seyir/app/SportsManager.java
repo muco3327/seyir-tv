@@ -82,7 +82,7 @@ public final class SportsManager {
         String cleaned = name;
         
         String lower = cleaned.toLowerCase(Locale.ROOT);
-        if (lower.contains("bein") || lower.contains("sport")) {
+        if (lower.contains("bein") || lower.contains("sport") || lower.contains("spor") || lower.contains("tabi")) {
             int dashIndex = cleaned.lastIndexOf('-');
             if (dashIndex > 3) {
                 String suffix = cleaned.substring(dashIndex + 1).trim();
@@ -418,6 +418,8 @@ public final class SportsManager {
                                         currentGroup = "A Spor";
                                     } else if (lName.contains("exxen")) {
                                         currentGroup = "Exxen";
+                                    } else if (lName.contains("tabii") || lName.contains("tabi spor") || lName.contains("tabispor")) {
+                                        currentGroup = "Tabii Spor";
                                     } else if (lName.contains("bein movies") || lName.contains("bein series")) {
                                         currentGroup = "beIN Sinema & Dizi";
                                     } else if (lGroup.contains("spor") || lGroup.contains("sport")) {

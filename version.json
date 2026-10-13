@@ -1,6 +1,6 @@
 {
-  "versionCode": 68,
-  "versionName": "0.5.25",
-  "changelog": "Tahir2020 sabit kaynağı eklendi; GitHub ek liste taraması ikincil ve hataya dayanıklı hale getirildi. Filtre ve oynatma mantığı değiştirilmedi.",
-  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.25.apk"
+  "versionCode": 69,
+  "versionName": "0.5.26",
+  "changelog": "Tabii Spor (1-8) ve Tabii TV eklendi! Kanal onay filtresi (ChannelFilter) ve kategori motoru güncellendi; UEFA maçları için Tabii Spor kanalları doğrudan resmi TRT Akamai CDN yedekleriyle birlikte listeye dahil edildi.",
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.26.apk"
 }

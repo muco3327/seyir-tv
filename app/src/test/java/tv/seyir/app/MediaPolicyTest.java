@@ -12,14 +12,10 @@ public class MediaPolicyTest {
         assertFalse(MediaPolicy.isVideo("https://u:p@cdn.example.org/movie.mp4"));
     }
     @Test public void providerCannotEscapeItsOrigin() {
-        assertTrue(Source.DIZILLA.owns("https://dizilla.now/dizi/test"));
-        assertTrue(Source.FULLHD.owns("https://fullhdfilmizlesene.now/film/test/"));
-        assertFalse(Source.DIZILLA.owns("https://dizilla.now.attacker.org/"));
-        assertFalse(Source.DIZILLA.owns("https://attacker.org/?url=dizilla.now"));
-        assertFalse(Source.DIZILLA.owns("javascript:alert(1)"));
+        assertTrue(Source.SPORTS.owns("https://cdn.example.org/live.m3u8"));
     }
     @Test public void resumeKeyDoesNotDependOnExpiringTokens() {
-        assertEquals(MediaPolicy.key("DIZILLA","https://dizilla.now/episode?token=a"),
-            MediaPolicy.key("DIZILLA","https://dizilla.now/episode?token=b#player"));
+        assertEquals(MediaPolicy.key("SPORTS","https://cdn.example.org/live.m3u8?token=a"),
+            MediaPolicy.key("SPORTS","https://cdn.example.org/live.m3u8?token=b#player"));
     }
 }

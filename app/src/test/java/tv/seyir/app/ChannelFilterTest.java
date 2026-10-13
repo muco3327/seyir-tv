@@ -46,4 +46,10 @@ public class ChannelFilterTest {
         assertFalse(ChannelFilter.allows("Random Cinema","General"));
         assertFalse(ChannelFilter.allows("FR: FilmBox HD","Movies"));
     }
+    @Test public void preservesTabiiChannels() {
+        for(String name:new String[]{"TABİİ SPOR", "Tabii Spor 1", "Tabii Spor 2", "Tabii Spor 8", "TR:TABII SPOR UHD", "TR:TABII SPOR 1 HD", "TABİ SPOR", "TABİİ TV"})
+            assertTrue(name, ChannelFilter.allows(name, "TabiiSpor"));
+        assertTrue(ChannelFilter.allows("Tabii Spor 1", "Spor"));
+        assertTrue(ChannelFilter.allows("TABİİ TV", "Sinema"));
+    }
 }

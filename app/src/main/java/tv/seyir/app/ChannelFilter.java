@@ -7,7 +7,7 @@ import java.util.regex.Pattern;
 /** Deliberately conservative: a generic category such as General is not an allow rule. */
 final class ChannelFilter {
     private static final Pattern FOREIGN = Pattern.compile("(^|[^a-z])(fr|france|french|francais|en|eng|english|uk|usa|us|de|german|germany|arabic|ar|arab|es|esp|spanish|it|italian|pt|portugal|pl|poland|nl|netherlands|ru|russian)([^a-z]|$)");
-    private static final Pattern NATIONAL = Pattern.compile("(?:trt(?:1|2|3|4k|haber|spor|sporyildiz|cocuk|belgesel|muzik|turk|avaz|diyanetcocuk)|startv|star|kanald|showtv|show|atv|atvavrupa|ahaber|apara|anews|a2|now|nowtv|fox|foxtv|tv8|tv85|kanal7|ulketv|kanal24|24tv|tv24|ntv|cnnturk|haberturk|haberglobal|halktv|tele1|szctv|sozcutv|tgrthaber|tv100|beyaztv|360|tv360|teve2|tv2|dmax|tlc|cnbce|e2|ekoltv|fb tv|fbtv|gstv)");
+    private static final Pattern NATIONAL = Pattern.compile("(?:trt(?:1|2|3|4k|haber|spor|sporyildiz|cocuk|belgesel|muzik|turk|avaz|diyanetcocuk)|startv|star|kanald|showtv|show|atv|atvavrupa|ahaber|apara|anews|a2|now|nowtv|fox|foxtv|tv8|tv85|kanal7|ulketv|kanal24|24tv|tv24|ntv|cnnturk|haberturk|haberglobal|halktv|tele1|szctv|sozcutv|tgrthaber|tv100|beyaztv|360|tv360|teve2|tv2|dmax|tlc|cnbce|e2|ekoltv|fb tv|fbtv|gstv|tabiitv|tabitv)");
 
     static String normalized(String value) {
         String s = (value == null ? "" : value).toLowerCase(Locale.ROOT).replace('ı','i');
@@ -29,7 +29,7 @@ final class ChannelFilter {
             .replaceAll("[^a-z0-9]", "");
         if (clean.equals("tv4")) return false;
         if (NATIONAL.matcher(clean).matches()) return true;
-        if (clean.matches("(?:aspor|htspor|trtspor|trtsporyildiz|ssport|ssportplus|tivibuspor|smartspor|spor smart|sporsmart|exxen|ekolsports|tjktv)[0-9]*")) return true;
+        if (clean.matches("(?:aspor|htspor|trtspor|trtsporyildiz|tabiispor|tabispor|tabiitv|tabitv|tabii|tabi|ssport|ssportplus|tivibuspor|smartspor|spor smart|sporsmart|exxen|ekolsports|tjktv)[0-9]*")) return true;
         if (clean.equals("beinsportshaber")) return true;
         if (clean.matches("bein(?:sports?|connect)(?:max)?[0-9]*(?:hd|sd|fhd|uhd|hq|4k)?")) return turkish;
         if (clean.matches("(?:sinematv|sinema|sinemayerli|sinemaaile|sinemaaksiyon|sinemakomedi|sinemayuzbir|sinemafantastik|sinemakorku|yesilcam|filmbox|tivibusinema)[0-9]*(?:tv|hd)?")) return true;

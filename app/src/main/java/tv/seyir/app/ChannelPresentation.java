@@ -14,7 +14,9 @@ final class ChannelPresentation {
         if (!trt4k) n = n.replaceAll("(?i)\\b4K\\b", " ");
         n = n.replaceAll("(?i)bein\\s*sports?", "beIN Sports ")
             .replaceAll("(?i)bein\\s*connect", "beIN Connect ")
-            .replaceAll("(?i)bein\\s*movies", "beIN Movies ");
+            .replaceAll("(?i)bein\\s*movies", "beIN Movies ")
+            .replaceAll("(?i)tabi+i?\\s*sports?", "Tabii Spor ")
+            .replaceAll("(?i)tabi+i?\\s*tv", "Tabii TV");
         n = n.replaceAll("\\s+", " ").replaceAll("^[ |:_-]+|[ |:_-]+$", "").trim();
         return n.isEmpty() ? (raw == null ? "Kanal" : raw.trim()) : n;
     }
