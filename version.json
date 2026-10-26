@@ -1,6 +1,6 @@
 {
   "versionCode": 74,
   "versionName": "0.5.31",
-  "changelog": "Görüntü Kalitesi ve Oyuncu İyileştirmeleri (v0.5.31):\n1. TV ekranında pikselleşmeyi önlemek için düşük kaliteli 'Mobil' (360p) yayınlar filtrelendi.\n2. beIN Sports ve spor kanalları yüksek çözünürlüklü HD/FHD kaynaklara bağlandı.\n3. Oynatıcı içi hızlı 'Kanallar' menüsü, en boy oranı ve 1080p/720p netlik seçici eklendi.",
+  "changelog": "Modern IPTV Player & Akıllı Kumanda/Geri Tuşu Entegrasyonu (v0.5.31):\n1. Modern Sinematik Arayüz: Üst/alt degrade paneller, dijital saat, 1080p FHD ve CANLI rozetleri.\n2. Tivimate Tarzı Sol Kanal Çekmecesi: Video oynarken sol taraftan kayan modern kanal listesi ve kategori filtreleri (Spor / Ulusal).\n3. Akıllı Kumanda ve Geri Tuşu: Kumandadan geriye basınca takılmadan doğrudan kanaldan çıkar veya açık çekmeceyi kapatır.\n4. D-Pad Hızlı Gezinme: Kumanda YUKARI tuşuyla kanal çekmecesi, AŞAĞI ile kontroller, CH+/- ile anında zapping.\n5. Donanım hızlandırmalı SurfaceView sıfır gecikme modu.",
   "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.31.apk"
 }

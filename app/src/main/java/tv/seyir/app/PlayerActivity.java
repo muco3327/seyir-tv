@@ -21,12 +21,35 @@ public final class PlayerActivity extends Activity {
     private PlayerView video;
     private TitleItem title;
     private Library library;
-    private LinearLayout topPanel, bottomPanel;
-    private TextView playerTitle, playerStatusBadge, tvCurrentTime, tvTotalTime, tvGestureHud;
-    private SeekBar playerProgress;
-    private Button btnTopBack, btnRewind, btnPlayPause, btnNextSource, btnForward, btnResize, btnQuality, btnAudio, btnSubtitle, btnSpeed;
-    private Button btnChannels, btnPrevChannel, btnNextChannel, btnLock, btnFloatingUnlock;
 
+    // Layout Containers
+    private View playerControlsOverlay;
+    private LinearLayout topPanel, bottomPanel;
+    private View playerBufferingLayout;
+    private TextView tvBufferingStatus;
+    private LinearLayout channelSidebar;
+
+    // Badges & Info
+    private TextView playerTitle, playerStatusBadge, badgeLive, badgeHd, tvPlayerClock;
+    private TextView tvCurrentTime, tvTotalTime, tvGestureHud;
+    private SeekBar playerProgress;
+
+    // Control Buttons
+    private Button btnTopBack, btnTopChannels, btnTopClose;
+    private Button btnChannels, btnPrevChannel, btnRewind, btnPlayPause, btnForward, btnNextChannel;
+    private Button btnQuality, btnResize, btnNextSource, btnLock, btnFloatingUnlock;
+    private Button btnAudio, btnSubtitle, btnSpeed;
+
+    // Sidebar Views
+    private TextView tvSidebarTitle, tvSidebarCount;
+    private Button btnCloseSidebar, btnFilterAll, btnFilterSports, btnFilterNational;
+    private ListView lvSidebarChannels;
+    private ChannelAdapter sidebarAdapter;
+    private final List<SportsManager.SportChannel> allChannels = new ArrayList<>();
+    private final List<SportsManager.SportChannel> filteredChannels = new ArrayList<>();
+    private String currentFilter = "all";
+
+    // Playback state
     private String url;
     private final Map<String,String> headers = new HashMap<>();
     private final Map<String,String> initialHeaders = new HashMap<>();
@@ -41,6 +64,8 @@ public final class PlayerActivity extends Activity {
     private final List<String> fallbackList = new ArrayList<>();
     private long position;
     private boolean shouldPlay = true, closing = false, userScrubbing = false;
+
+    // Resize modes
     private int resizeModeIndex = 0;
     private static final int[] RESIZE_MODES = {
         AspectRatioFrameLayout.RESIZE_MODE_FIT,
@@ -54,6 +79,7 @@ public final class PlayerActivity extends Activity {
         "📐 Boyut: Yakınlaştır (Zoom)",
         "📐 Boyut: 16:9 Sabit"
     };
+
     private final Handler progressHandler = new Handler(Looper.getMainLooper());
     private final Handler hudHandler = new Handler(Looper.getMainLooper());
     private int selectedQualityHeight = 0;
@@ -77,7 +103,19 @@ public final class PlayerActivity extends Activity {
     };
 
     private final Runnable hideControls = () -> {
-        if (player != null && player.isPlaying() && !insideControls(getCurrentFocus())) overlays(false);
+        if (player != null && player.isPlaying() && !insideControls(getCurrentFocus())) {
+            overlays(false);
+        }
+    };
+
+    private final Runnable clockRunnable = new Runnable() {
+        @Override public void run() {
+            if (!closing && tvPlayerClock != null) {
+                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("HH:mm", Locale.getDefault());
+                tvPlayerClock.setText(sdf.format(new Date()));
+                progressHandler.postDelayed(this, 30000);
+            }
+        }
     };
 
     private final Runnable updateProgressTask = new Runnable() {
@@ -88,14 +126,8 @@ public final class PlayerActivity extends Activity {
                 if (isLive) {
                     tvCurrentTime.setText("CANLI");
                     tvTotalTime.setText("🔴 CANLI");
-                    playerProgress.setEnabled(false);
                     playerProgress.setProgress(1000);
-                    btnRewind.setVisibility(View.GONE);
-                    btnForward.setVisibility(View.GONE);
                 } else {
-                    btnRewind.setVisibility(View.VISIBLE);
-                    btnForward.setVisibility(View.VISIBLE);
-                    playerProgress.setEnabled(true);
                     long pos = player.getCurrentPosition();
                     long dur = player.getDuration();
                     if (dur > 0 && !userScrubbing) {
@@ -151,15 +183,26 @@ public final class PlayerActivity extends Activity {
         setContentView(R.layout.activity_player);
         hideBars();
         bindViews();
+        setupSidebar();
         setupGestures();
+        progressHandler.post(clockRunnable);
     }
 
     private void bindViews() {
         video = findViewById(R.id.player_view);
+        playerControlsOverlay = findViewById(R.id.player_controls_overlay);
         topPanel = findViewById(R.id.player_top_panel);
         bottomPanel = findViewById(R.id.player_bottom_panel);
+        playerBufferingLayout = findViewById(R.id.player_buffering_layout);
+        tvBufferingStatus = findViewById(R.id.tv_buffering_status);
+        channelSidebar = findViewById(R.id.channel_sidebar);
+
         playerTitle = findViewById(R.id.player_title);
         playerStatusBadge = findViewById(R.id.player_status_badge);
+        badgeLive = findViewById(R.id.badge_live);
+        badgeHd = findViewById(R.id.badge_hd);
+        tvPlayerClock = findViewById(R.id.tv_player_clock);
+
         tvCurrentTime = findViewById(R.id.tv_current_time);
         tvTotalTime = findViewById(R.id.tv_total_time);
         playerProgress = findViewById(R.id.player_progress);
@@ -167,6 +210,9 @@ public final class PlayerActivity extends Activity {
         btnFloatingUnlock = findViewById(R.id.btn_floating_unlock);
 
         btnTopBack = findViewById(R.id.btn_top_back);
+        btnTopChannels = findViewById(R.id.btn_top_channels);
+        btnTopClose = findViewById(R.id.btn_top_close);
+
         btnChannels = findViewById(R.id.btn_channels);
         btnPrevChannel = findViewById(R.id.btn_prev_channel);
         btnRewind = findViewById(R.id.btn_rewind);
@@ -181,16 +227,29 @@ public final class PlayerActivity extends Activity {
         btnSubtitle = findViewById(R.id.btn_subtitle);
         btnSpeed = findViewById(R.id.btn_speed);
 
+        // Sidebar Views
+        tvSidebarTitle = findViewById(R.id.tv_sidebar_title);
+        tvSidebarCount = findViewById(R.id.tv_sidebar_count);
+        btnCloseSidebar = findViewById(R.id.btn_close_sidebar);
+        btnFilterAll = findViewById(R.id.btn_filter_all);
+        btnFilterSports = findViewById(R.id.btn_filter_sports);
+        btnFilterNational = findViewById(R.id.btn_filter_national);
+        lvSidebarChannels = findViewById(R.id.lv_sidebar_channels);
+
         playerTitle.setText(title != null ? title.title : "Seyir TV");
 
-        Button[] allButtons = {btnTopBack, btnChannels, btnPrevChannel, btnRewind, btnPlayPause, btnNextSource,
-                btnForward, btnNextChannel, btnResize, btnQuality, btnLock, btnAudio, btnSubtitle, btnSpeed};
+        Button[] allButtons = {btnTopBack, btnTopChannels, btnTopClose, btnChannels, btnPrevChannel, btnRewind,
+                btnPlayPause, btnNextSource, btnForward, btnNextChannel, btnResize, btnQuality, btnLock,
+                btnAudio, btnSubtitle, btnSpeed, btnCloseSidebar, btnFilterAll, btnFilterSports, btnFilterNational};
         for (Button b : allButtons) {
             if (b != null) Ui.focus(b);
         }
 
         btnTopBack.setOnClickListener(v -> closePlayer());
-        btnChannels.setOnClickListener(v -> showChannelsDialog());
+        btnTopClose.setOnClickListener(v -> closePlayer());
+        btnTopChannels.setOnClickListener(v -> showChannelSidebar());
+        btnChannels.setOnClickListener(v -> showChannelSidebar());
+
         btnPrevChannel.setOnClickListener(v -> prevChannel());
         btnNextChannel.setOnClickListener(v -> nextChannel());
         btnRewind.setOnClickListener(v -> seek(-10000));
@@ -230,6 +289,114 @@ public final class PlayerActivity extends Activity {
         });
     }
 
+    private void setupSidebar() {
+        sidebarAdapter = new ChannelAdapter();
+        lvSidebarChannels.setAdapter(sidebarAdapter);
+
+        lvSidebarChannels.setOnItemClickListener((parent, view, position, id) -> {
+            if (position >= 0 && position < filteredChannels.size()) {
+                switchChannel(filteredChannels.get(position));
+                hideChannelSidebar();
+            }
+        });
+
+        btnCloseSidebar.setOnClickListener(v -> hideChannelSidebar());
+        btnFilterAll.setOnClickListener(v -> applyFilter("all"));
+        btnFilterSports.setOnClickListener(v -> applyFilter("sports"));
+        btnFilterNational.setOnClickListener(v -> applyFilter("national"));
+
+        refreshChannelList();
+    }
+
+    private void refreshChannelList() {
+        allChannels.clear();
+        List<SportsManager.SportChannel> cached = SportsManager.getCachedChannels();
+        allChannels.addAll(cached);
+        applyFilter(currentFilter);
+    }
+
+    private void applyFilter(String filter) {
+        currentFilter = filter;
+        btnFilterAll.setTextColor(filter.equals("all") ? 0xFFFFFFFF : 0xFF94A3B8);
+        btnFilterSports.setTextColor(filter.equals("sports") ? 0xFFFFFFFF : 0xFF94A3B8);
+        btnFilterNational.setTextColor(filter.equals("national") ? 0xFFFFFFFF : 0xFF94A3B8);
+
+        filteredChannels.clear();
+        for (SportsManager.SportChannel ch : allChannels) {
+            if (filter.equals("all")) {
+                filteredChannels.add(ch);
+            } else if (filter.equals("sports")) {
+                if (ch.category != null && ch.category.toLowerCase(Locale.ROOT).contains("spor")) {
+                    filteredChannels.add(ch);
+                }
+            } else if (filter.equals("national")) {
+                if (ch.category != null && !ch.category.toLowerCase(Locale.ROOT).contains("spor")) {
+                    filteredChannels.add(ch);
+                }
+            }
+        }
+        if (sidebarAdapter != null) sidebarAdapter.notifyDataSetChanged();
+        if (tvSidebarCount != null) tvSidebarCount.setText(filteredChannels.size() + " Kanal • Kumanda ile Seçin");
+    }
+
+    public void showChannelSidebar() {
+        if (channelSidebar == null) return;
+        refreshChannelList();
+        channelSidebar.setVisibility(View.VISIBLE);
+        channelSidebar.bringToFront();
+        progressHandler.removeCallbacks(hideControls);
+
+        int currentIdx = -1;
+        for (int i = 0; i < filteredChannels.size(); i++) {
+            if (title != null && filteredChannels.get(i).name.equalsIgnoreCase(title.title)) {
+                currentIdx = i;
+                break;
+            }
+        }
+        if (currentIdx >= 0) {
+            lvSidebarChannels.setSelection(currentIdx);
+        }
+        lvSidebarChannels.requestFocus();
+    }
+
+    public void hideChannelSidebar() {
+        if (channelSidebar != null && channelSidebar.getVisibility() == View.VISIBLE) {
+            channelSidebar.setVisibility(View.GONE);
+            scheduleHide();
+            if (video != null) video.requestFocus();
+        }
+    }
+
+    private class ChannelAdapter extends BaseAdapter {
+        @Override public int getCount() { return filteredChannels.size(); }
+        @Override public Object getItem(int pos) { return filteredChannels.get(pos); }
+        @Override public long getItemId(int pos) { return pos; }
+        @Override public View getView(int pos, View convertView, ViewGroup parent) {
+            if (convertView == null) {
+                convertView = getLayoutInflater().inflate(R.layout.item_player_channel, parent, false);
+            }
+            SportsManager.SportChannel ch = filteredChannels.get(pos);
+            TextView tvNum = convertView.findViewById(R.id.tv_item_channel_num);
+            TextView tvName = convertView.findViewById(R.id.tv_item_channel_name);
+            TextView tvCat = convertView.findViewById(R.id.tv_item_channel_cat);
+            TextView tvPlaying = convertView.findViewById(R.id.tv_item_channel_playing);
+
+            tvNum.setText(String.valueOf(pos + 1));
+            tvName.setText(ch.name);
+            tvCat.setText(ch.category != null ? ch.category : "Genel");
+
+            boolean isPlaying = title != null && (ch.name.equalsIgnoreCase(title.title) || (ch.urls != null && ch.urls.contains(url)));
+            if (isPlaying) {
+                tvPlaying.setVisibility(View.VISIBLE);
+                tvName.setTextColor(0xFF38BDF8);
+            } else {
+                tvPlaying.setVisibility(View.GONE);
+                tvName.setTextColor(0xFFFFFFFF);
+            }
+            return convertView;
+        }
+    }
+
     private void setupGestures() {
         gestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
             @Override
@@ -238,7 +405,11 @@ public final class PlayerActivity extends Activity {
                     showUnlockButton();
                     return true;
                 }
-                boolean showing = bottomPanel != null && bottomPanel.getVisibility() == View.VISIBLE;
+                if (channelSidebar != null && channelSidebar.getVisibility() == View.VISIBLE) {
+                    hideChannelSidebar();
+                    return true;
+                }
+                boolean showing = playerControlsOverlay != null && playerControlsOverlay.getVisibility() == View.VISIBLE;
                 overlays(!showing);
                 return true;
             }
@@ -264,7 +435,7 @@ public final class PlayerActivity extends Activity {
         hudHandler.removeCallbacks(hideHudRunnable);
         tvGestureHud.setText(text);
         tvGestureHud.setVisibility(View.VISIBLE);
-        hudHandler.postDelayed(hideHudRunnable, 1100);
+        hudHandler.postDelayed(hideHudRunnable, 1400);
     }
 
     private void showUnlockButton() {
@@ -279,6 +450,7 @@ public final class PlayerActivity extends Activity {
         isLocked = lock;
         if (lock) {
             overlays(false);
+            hideChannelSidebar();
             showUnlockButton();
             showHud("🔒 Ekran Kilitlendi");
         } else {
@@ -344,27 +516,8 @@ public final class PlayerActivity extends Activity {
         return super.dispatchTouchEvent(event);
     }
 
-    private void showChannelsDialog() {
-        List<SportsManager.SportChannel> channels = SportsManager.getCachedChannels();
-        if (channels.isEmpty()) {
-            Toast.makeText(this, "Kanal listesi yükleniyor, lütfen bekleyin...", Toast.LENGTH_SHORT).show();
-            return;
-        }
-        String[] items = new String[channels.size()];
-        for (int i = 0; i < channels.size(); i++) {
-            SportsManager.SportChannel c = channels.get(i);
-            boolean active = title != null && (c.name.equalsIgnoreCase(title.title) || (c.urls != null && c.urls.contains(url)));
-            items[i] = (active ? "▶ " : "    ") + c.name + " (" + c.category + ")";
-        }
-        new AlertDialog.Builder(this)
-            .setTitle("📺 Kanal Seç (" + channels.size() + " Kanal)")
-            .setItems(items, (dialog, which) -> switchChannel(channels.get(which)))
-            .setNegativeButton("Kapat", null)
-            .show();
-    }
-
     private void prevChannel() {
-        List<SportsManager.SportChannel> channels = SportsManager.getCachedChannels();
+        List<SportsManager.SportChannel> channels = allChannels.isEmpty() ? SportsManager.getCachedChannels() : allChannels;
         if (channels.isEmpty() || title == null) return;
         int currentIdx = -1;
         for (int i = 0; i < channels.size(); i++) {
@@ -375,7 +528,7 @@ public final class PlayerActivity extends Activity {
     }
 
     private void nextChannel() {
-        List<SportsManager.SportChannel> channels = SportsManager.getCachedChannels();
+        List<SportsManager.SportChannel> channels = allChannels.isEmpty() ? SportsManager.getCachedChannels() : allChannels;
         if (channels.isEmpty() || title == null) return;
         int currentIdx = -1;
         for (int i = 0; i < channels.size(); i++) {
@@ -388,7 +541,7 @@ public final class PlayerActivity extends Activity {
     private void switchChannel(SportsManager.SportChannel ch) {
         if (ch == null || ch.urls == null || ch.urls.isEmpty()) return;
         release();
-        title = new TitleItem(Source.SPORTS, ch.name, ch.urls.get(0), ch.logo, "");
+        title = new TitleItem(Source.SPORTS, ch.name, ch.urls.get(0), ch.logo, ch.category != null ? ch.category : "");
         playerTitle.setText(ch.name);
         fallbackList.clear();
         for (int i = 1; i < ch.urls.size(); i++) {
@@ -404,6 +557,7 @@ public final class PlayerActivity extends Activity {
         updateNextSourceButton();
         playerStatusBadge.setText("Kanal açılıyor…");
         showHud("📺 " + ch.name);
+        if (sidebarAdapter != null) sidebarAdapter.notifyDataSetChanged();
         initialize();
     }
 
@@ -421,6 +575,10 @@ public final class PlayerActivity extends Activity {
     private void initialize() {
         if (closing || isFinishing() || isDestroyed()) return;
         playerStatusBadge.setText("Bağlanıyor…");
+        if (playerBufferingLayout != null) {
+            playerBufferingLayout.setVisibility(View.VISIBLE);
+            tvBufferingStatus.setText("Yayın bağlanıyor…");
+        }
         scheduleHide();
         startProbe(url);
     }
@@ -481,6 +639,7 @@ public final class PlayerActivity extends Activity {
                     liveRecovery.playing(playing, SystemClock.elapsedRealtime());
                     btnPlayPause.setText(playing ? "❚❚ Duraklat" : "▶ Oynat");
                     if (playing) {
+                        if (playerBufferingLayout != null) playerBufferingLayout.setVisibility(View.GONE);
                         playerStatusBadge.setText("Oynatılıyor");
                         scheduleHide();
                     } else {
@@ -491,14 +650,21 @@ public final class PlayerActivity extends Activity {
                 @Override public void onPlaybackStateChanged(int s) {
                     if (player == null || closing) return;
                     if (s == Player.STATE_READY) {
+                        if (playerBufferingLayout != null) playerBufferingLayout.setVisibility(View.GONE);
                         boolean isLive = player.isCurrentMediaItemLive() || player.getDuration() <= 0;
-                        playerStatusBadge.setText(isLive ? "🔴 CANLI" : "Hazır");
+                        if (badgeLive != null) badgeLive.setVisibility(isLive ? View.VISIBLE : View.GONE);
+                        playerStatusBadge.setText(isLive ? "Oracle Gateway" : "Hazır");
                         if (!isLive) library.save("history", title, false);
                         updateQualityLabel();
                         scheduleHide();
                     } else if (s == Player.STATE_BUFFERING) {
+                        if (playerBufferingLayout != null) {
+                            playerBufferingLayout.setVisibility(View.VISIBLE);
+                            tvBufferingStatus.setText("Yayın yükleniyor…");
+                        }
                         playerStatusBadge.setText("Yükleniyor…");
                     } else if (s == Player.STATE_ENDED) {
+                        if (playerBufferingLayout != null) playerBufferingLayout.setVisibility(View.GONE);
                         library.progress(title, player.getDuration(), player.getDuration());
                         playerStatusBadge.setText("Tamamlandı");
                         overlays(true);
@@ -508,6 +674,7 @@ public final class PlayerActivity extends Activity {
                     updateQualityLabel();
                 }
                 @Override public void onPlayerError(PlaybackException e) {
+                    if (playerBufferingLayout != null) playerBufferingLayout.setVisibility(View.GONE);
                     handlePlaybackError(e);
                 }
             });
@@ -584,9 +751,10 @@ public final class PlayerActivity extends Activity {
     }
 
     private void updateQualityLabel() {
-        if (btnQuality == null) return;
         int currentH = player != null && player.getVideoSize().height > 0 ? player.getVideoSize().height : selectedQualityHeight;
-        btnQuality.setText(currentH > 0 ? "⚙️ " + currentH + "p" + (currentH >= 1080 ? " FHD" : (currentH >= 720 ? " HD" : "")) : "⚙️ Kalite: 1080p");
+        String qText = currentH >= 2160 ? "4K UHD" : currentH >= 1080 ? "1080p FHD" : currentH >= 720 ? "720p HD" : currentH > 0 ? currentH + "p" : "1080p FHD";
+        if (badgeHd != null) badgeHd.setText(qText);
+        if (btnQuality != null) btnQuality.setText("⚙️ Netlik: " + qText);
     }
 
     private void selectQuality() {
@@ -743,7 +911,11 @@ public final class PlayerActivity extends Activity {
     }
 
     private boolean insideControls(View view) {
-        return insideTopPanel(view) || insideBottomPanel(view);
+        while (view != null) {
+            if (view == topPanel || view == bottomPanel || view == channelSidebar) return true;
+            view = view.getParent() instanceof View ? (View) view.getParent() : null;
+        }
+        return false;
     }
 
     private boolean insideTopPanel(View view) {
@@ -773,16 +945,18 @@ public final class PlayerActivity extends Activity {
     }
 
     private void overlays(boolean show) {
-        if (topPanel == null || bottomPanel == null) return;
-        topPanel.setVisibility(show ? View.VISIBLE : View.GONE);
-        bottomPanel.setVisibility(show ? View.VISIBLE : View.GONE);
+        if (playerControlsOverlay == null) return;
+        if (channelSidebar != null && channelSidebar.getVisibility() == View.VISIBLE) {
+            return;
+        }
+        playerControlsOverlay.setVisibility(show ? View.VISIBLE : View.GONE);
         if (show) {
             scheduleHide();
             if (getCurrentFocus() == null || !insideControls(getCurrentFocus())) {
-                btnPlayPause.requestFocus();
+                if (btnPlayPause != null) btnPlayPause.requestFocus();
             }
         } else {
-            video.requestFocus();
+            if (video != null) video.requestFocus();
         }
         hideBars();
     }
@@ -798,7 +972,7 @@ public final class PlayerActivity extends Activity {
         playerStatusBadge.setText("Hata: " + code);
         new AlertDialog.Builder(this).setTitle("Yayın Açılamadı")
             .setMessage("Kaynak yanıt vermedi (" + code + ").\nFarklı bir kaynak veya kanal deneyebilirsiniz.")
-            .setPositiveButton("Kanal Listesi", (d, w) -> showChannelsDialog())
+            .setPositiveButton("Kanal Listesi", (d, w) -> showChannelSidebar())
             .setNegativeButton("Tekrar Dene", (d, w) -> {
                 release();
                 liveRecovery.reset();
@@ -833,11 +1007,23 @@ public final class PlayerActivity extends Activity {
     }
 
     @Override public boolean dispatchKeyEvent(KeyEvent e) {
-        if (player == null) return super.dispatchKeyEvent(e);
-        int k = e.getKeyCode();
         if (e.getAction() != KeyEvent.ACTION_DOWN) return super.dispatchKeyEvent(e);
+        int k = e.getKeyCode();
+
+        // 1. Remote BACK key: If sidebar open -> close sidebar. Else -> DIRECT EXIT!
+        if (k == KeyEvent.KEYCODE_BACK) {
+            if (channelSidebar != null && channelSidebar.getVisibility() == View.VISIBLE) {
+                hideChannelSidebar();
+                return true;
+            }
+            closePlayer();
+            return true;
+        }
+
+        if (player == null) return super.dispatchKeyEvent(e);
         scheduleHide();
 
+        // 2. Channel Zapping Keys
         if (k == KeyEvent.KEYCODE_CHANNEL_UP || k == KeyEvent.KEYCODE_PAGE_UP) {
             nextChannel();
             return true;
@@ -847,10 +1033,11 @@ public final class PlayerActivity extends Activity {
             return true;
         }
         if (k == KeyEvent.KEYCODE_PROG_GREEN || k == KeyEvent.KEYCODE_GUIDE) {
-            showChannelsDialog();
+            showChannelSidebar();
             return true;
         }
 
+        // 3. Media playback keys
         if (k == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) { if (e.getRepeatCount() == 0) togglePlay(); return true; }
         if (k == KeyEvent.KEYCODE_MEDIA_PLAY) { player.play(); btnPlayPause.setText("❚❚ Duraklat"); return true; }
         if (k == KeyEvent.KEYCODE_MEDIA_PAUSE) { player.pause(); btnPlayPause.setText("▶ Oynat"); return true; }
@@ -862,11 +1049,23 @@ public final class PlayerActivity extends Activity {
             return true;
         }
 
-        boolean controlsShown = bottomPanel != null && bottomPanel.getVisibility() == View.VISIBLE;
+        // 4. D-Pad Navigation
+        boolean sidebarShown = channelSidebar != null && channelSidebar.getVisibility() == View.VISIBLE;
+        boolean controlsShown = playerControlsOverlay != null && playerControlsOverlay.getVisibility() == View.VISIBLE;
+
+        if (sidebarShown) {
+            // Sidebar handles its own D-pad navigation
+            return super.dispatchKeyEvent(e);
+        }
+
         if (!controlsShown) {
             if (k == KeyEvent.KEYCODE_DPAD_CENTER || k == KeyEvent.KEYCODE_ENTER) {
                 overlays(true);
                 btnPlayPause.requestFocus();
+                return true;
+            }
+            if (k == KeyEvent.KEYCODE_DPAD_UP || k == KeyEvent.KEYCODE_DPAD_LEFT) {
+                showChannelSidebar();
                 return true;
             }
             if (k == KeyEvent.KEYCODE_DPAD_DOWN) {
@@ -874,12 +1073,10 @@ public final class PlayerActivity extends Activity {
                 btnPlayPause.requestFocus();
                 return true;
             }
-            if (k == KeyEvent.KEYCODE_DPAD_UP) {
-                showChannelsDialog();
+            if (k == KeyEvent.KEYCODE_DPAD_RIGHT) {
+                seek(10000);
                 return true;
             }
-            if (k == KeyEvent.KEYCODE_DPAD_RIGHT) { seek(e.getRepeatCount() > 4 ? 30000 : 10000); return true; }
-            if (k == KeyEvent.KEYCODE_DPAD_LEFT) { seek(e.getRepeatCount() > 4 ? -30000 : -10000); return true; }
         } else {
             if (k == KeyEvent.KEYCODE_DPAD_UP && insideBottomPanel(getCurrentFocus())) {
                 btnTopBack.requestFocus();
@@ -898,7 +1095,10 @@ public final class PlayerActivity extends Activity {
             showUnlockButton();
             return;
         }
-        if (bottomPanel != null && bottomPanel.getVisibility() == View.VISIBLE) overlays(false);
-        else closePlayer();
+        if (channelSidebar != null && channelSidebar.getVisibility() == View.VISIBLE) {
+            hideChannelSidebar();
+            return;
+        }
+        closePlayer();
     }
 }

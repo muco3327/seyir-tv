@@ -10,5 +10,6 @@ backup_*/
 __pycache__/
 *.py[cod]
 .build/
+.gradle_build/
 .vscode/
 new tv/
