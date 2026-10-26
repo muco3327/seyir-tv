@@ -87,6 +87,7 @@ public class TvHomeActivity extends Activity {
             channels = new ArrayList<>(result); loading = false;
             render(true);
             content.setAlpha(0f); content.animate().alpha(1f).setDuration(180).start();
+            SportsManager.probeStartupChannels(channels, () -> { if (alive()) render(false); });
         }, message -> {
             if (alive() && loading && generation == loadGeneration && status != null) status.setText(message);
         });
@@ -162,11 +163,9 @@ public class TvHomeActivity extends Activity {
                     if (index < groups.size()) {
                         Group group = groups.get(index);
                         row.addView(card(group, favorites.contains(group.key), generation), lp);
-                        if (expanded.equals(group.key)) open = group;
                     } else row.addView(new View(this), lp);
                 }
                 content.addView(row);
-                if (open != null) content.addView(variants(open, favorites.contains(open.key)));
             }
         }
         TextView hint = HomeStyle.text(this, "OK  Seç     ·     OK basılı tut  Favori     ·     Geri  Önceki görünüm", 11, HomeStyle.MUTED, false);
@@ -220,13 +219,50 @@ public class TvHomeActivity extends Activity {
         card.setContentDescription(group.name + (favorite ? ", favori" : "") + ", kalite seçeneklerini aç");
         register("card:" + group.key, card);
         card.setOnClickListener(v -> {
-            savedScroll = scroll.getScrollY();
-            boolean closing = expanded.equals(group.key); expanded = closing ? "" : group.key;
-            focusKey = closing ? "card:" + group.key : "quality:" + group.variants.get(0).id;
-            render(true);
+            showChannelQualityDialog(group, favorite);
         });
         card.setOnLongClickListener(v -> { toggleFavorite(group); return true; });
         return card;
+    }
+
+    private void showChannelQualityDialog(Group group, boolean favorite) {
+        if (!alive() || group == null || group.variants.isEmpty()) return;
+
+        List<String> labels = new ArrayList<>();
+        List<SportsManager.SportChannel> targetChannels = new ArrayList<>();
+
+        labels.add("▶ Doğrudan Oynat (En Yüksek Kalite)");
+        targetChannels.add(group.variants.get(0));
+
+        for (int i = 0; i < group.variants.size(); i++) {
+            SportsManager.SportChannel ch = group.variants.get(i);
+            String rawQ = ChannelPresentation.quality(ch.name);
+            String desc = "⚙️ " + rawQ;
+            if (rawQ.contains("UHD") || rawQ.contains("4K")) desc += " (2160p 4K)";
+            else if (rawQ.contains("FHD") || rawQ.contains("1080")) desc += " (1080p FHD)";
+            else if (rawQ.contains("HD") || rawQ.contains("720")) desc += " (720p HD)";
+            else desc += " (Standart SD)";
+            if (group.variants.size() > 1) desc += " · Kaynak " + (i + 1);
+            labels.add(desc);
+            targetChannels.add(ch);
+        }
+
+        labels.add(favorite ? "★ Favorilerden Çıkar" : "☆ Favorilere Ekle");
+        targetChannels.add(null);
+
+        AlertDialog d = new AlertDialog.Builder(this)
+            .setTitle("📺 " + group.name + "  ·  Yayın Kalitesi")
+            .setItems(labels.toArray(new String[0]), (dialog, which) -> {
+                if (which == labels.size() - 1) {
+                    toggleFavorite(group);
+                } else if (which >= 0 && which < targetChannels.size()) {
+                    play(targetChannels.get(which));
+                }
+            })
+            .setNegativeButton("Kapat", null)
+            .create();
+        d.show();
+        styleDialog(d);
     }
 
     private View variants(Group group, boolean favorite) {

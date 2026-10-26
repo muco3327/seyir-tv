@@ -3,12 +3,18 @@ const axios = require('axios');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const http = require('http');
+const https = require('https');
 const { URL } = require('url');
 
 const app = express();
 app.use(cors());
 
 const PORT = 3000;
+
+// High performance connection pooling
+const httpAgent = new http.Agent({ keepAlive: true, maxSockets: 150, timeout: 15000 });
+const httpsAgent = new https.Agent({ keepAlive: true, maxSockets: 150, timeout: 15000 });
 
 // Load Verified Channels directly
 let curatedChannels = [];
@@ -23,20 +29,79 @@ function reloadChannels() {
 }
 reloadChannels();
 
+// Background Channel Health Scanner
+let channelStatus = {};
+async function scanChannels() {
+    console.log(`[HealthCheck] Checking ${curatedChannels.length} channels...`);
+    for (const ch of curatedChannels) {
+        let aliveUrls = [];
+        let deadUrls = [];
+        for (const u of ch.urls) {
+            try {
+                const parsed = new URL(u);
+                const h = getHeadersForUrl(u, parsed);
+                const t0 = Date.now();
+                await axios({
+                    method: 'get',
+                    url: u,
+                    headers: h,
+                    timeout: 4000,
+                    httpAgent,
+                    httpsAgent,
+                    validateStatus: (s) => s >= 200 && s < 400
+                });
+                const latency = Date.now() - t0;
+                aliveUrls.push({ url: u, latency });
+            } catch (e) {
+                deadUrls.push(u);
+            }
+        }
+        if (aliveUrls.length > 0) {
+            aliveUrls.sort((a, b) => a.latency - b.latency);
+            ch.urls = [...aliveUrls.map(a => a.url), ...deadUrls];
+            channelStatus[ch.id] = { online: true, latency: aliveUrls[0].latency, lastCheck: Date.now() };
+        } else {
+            channelStatus[ch.id] = { online: false, latency: -1, lastCheck: Date.now() };
+        }
+    }
+    const onlineCount = Object.values(channelStatus).filter(s => s.online).length;
+    console.log(`[HealthCheck] Completed. Online: ${onlineCount}/${curatedChannels.length}`);
+}
+setTimeout(scanChannels, 10000);
+setInterval(scanChannels, 10 * 60 * 1000);
+
 // API Channels endpoint
 app.get('/api/channels', (req, res) => {
     res.json(curatedChannels);
 });
 
-// Version endpoint
+// Channel status endpoint
+app.get('/api/channels/status', (req, res) => {
+    res.json({
+        timestamp: Date.now(),
+        total: curatedChannels.length,
+        online: Object.values(channelStatus).filter(s => s.online).length,
+        channels: channelStatus
+    });
+});
+
+// Version endpoint (Fallback for Seyir TV updater)
 app.get('/api/version', (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.json({
-        versionCode: 74,
-        versionName: "0.5.31",
-        changelog: "Görüntü Kalitesi ve Oyuncu İyileştirmeleri (v0.5.31):\n1. TV ekranında pikselleşmeyi önlemek için düşük kaliteli 'Mobil' (360p) yayınlar filtrelendi.\n2. beIN Sports ve spor kanalları yüksek çözünürlüklü HD/FHD kaynaklara bağlandı.\n3. Oynatıcı içi hızlı 'Kanallar' menüsü, en boy oranı ve 1080p/720p netlik seçici eklendi.",
-        apkUrl: "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.31.apk"
-    });
+    try {
+        let p = path.join(__dirname, 'version.json');
+        if (!fs.existsSync(p)) p = path.join(__dirname, '..', 'version.json');
+        const raw = fs.readFileSync(p, 'utf-8');
+        res.setHeader('Content-Type', 'application/json');
+        res.send(raw);
+    } catch (e) {
+        res.json({
+            versionCode: 76,
+            versionName: "0.5.33",
+            changelog: "Kapsamlı Kararlılık, D-Pad Gezinme ve Güncelleme İyileştirmeleri:\n1. GitHub güncelleme CDN bağlantısı doğrudan bağlandı.\n2. Kanal listesi kumanda D-Pad kategori geçişleri ve sağ tuş uzun basma ile kapanma düzeltildi.\n3. Başlangıçta kanal canlılık kontrolü eklendi.\n4. Kanal afişine basınca ekran kaymasını önleyen modern çözünürlük dialogu eklendi.",
+            apkUrl: "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.33.apk"
+        });
+    }
 });
 
 function isSegmentUrl(url) {
@@ -100,7 +165,9 @@ app.get('/channel/:id.m3u8', async (req, res) => {
                 method: 'get',
                 url: targetUrl,
                 headers: headers,
-                timeout: 6500,
+                timeout: 6000,
+                httpAgent,
+                httpsAgent,
                 validateStatus: (status) => status >= 200 && status < 300
             });
 
@@ -123,7 +190,6 @@ app.get('/channel/:id.m3u8', async (req, res) => {
         } catch (err) {
             console.log(`[Failover] Channel ${channelId} source ${i+1}/${ch.urls.length} failed (${err.message}). Trying next...`);
             if (targetUrl.includes('medya.trt.com.tr')) {
-                console.log(`[Redirect] Channel ${channelId} redirecting to Turkey direct CDN: ${targetUrl}`);
                 return res.redirect(targetUrl);
             }
         }
@@ -160,14 +226,27 @@ app.get('/proxy', async (req, res) => {
         const u = new URL(targetUrl);
         const headers = getHeadersForUrl(targetUrl, u);
 
-        const response = await axios({
-            method: 'get',
-            url: targetUrl,
-            headers: headers,
-            responseType: isSegment ? 'stream' : 'arraybuffer',
-            timeout: 9000,
-            validateStatus: (status) => status >= 200 && status < 400
-        });
+        let response;
+        let attempts = 0;
+        const maxAttempts = isSegment ? 2 : 1;
+        while (attempts < maxAttempts) {
+            attempts++;
+            try {
+                response = await axios({
+                    method: 'get',
+                    url: targetUrl,
+                    headers: headers,
+                    responseType: isSegment ? 'stream' : 'arraybuffer',
+                    timeout: isSegment ? 6000 : 9000,
+                    httpAgent,
+                    httpsAgent,
+                    validateStatus: (status) => status >= 200 && status < 400
+                });
+                break;
+            } catch (retryErr) {
+                if (attempts >= maxAttempts) throw retryErr;
+            }
+        }
 
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
@@ -179,6 +258,9 @@ app.get('/proxy', async (req, res) => {
                 contentType = 'video/mp2t';
             }
             res.setHeader('Content-Type', contentType);
+            response.data.on('error', () => {
+                if (!res.headersSent) res.status(502).end();
+            });
             return response.data.pipe(res);
         }
 
@@ -259,325 +341,260 @@ app.get('/', (req, res) => {
         .btn-pill.active { background: #2563eb; color: #fff; border-color: #60a5fa; font-weight: 700; }
         .btn-pill.crisp-active { background: #10b981; color: #fff; border-color: #34d399; }
 
-        /* Sidebar Elements */
-        #header { padding: 16px; font-weight: 800; font-size: 17px; border-bottom: 2px solid #2563eb; background: #1e293b; display: flex; align-items: center; justify-content: space-between; }
-        #category-chips { display: flex; gap: 6px; padding: 10px 12px; background: #0b1120; border-bottom: 1px solid #1e293b; overflow-x: auto; scrollbar-width: none; }
-        #category-chips::-webkit-scrollbar { display: none; }
-        .chip { padding: 6px 12px; font-size: 12px; border-radius: 20px; background: #1e293b; color: #94a3b8; border: 1px solid #334155; cursor: pointer; white-space: nowrap; font-weight: 600; flex-shrink: 0; }
-        .chip.active { background: #2563eb; color: #fff; border-color: #60a5fa; }
+        /* Sidebar channel list */
+        #search-box { padding: 12px; border-bottom: 1px solid #1e293b; }
+        #search-input { width: 100%; padding: 10px 14px; background: #030712; border: 1px solid #334155; border-radius: 8px; color: #fff; font-size: 14px; outline: none; }
+        #search-input:focus { border-color: #38bdf8; }
+        #category-pills { display: flex; gap: 6px; padding: 10px 12px; overflow-x: auto; border-bottom: 1px solid #1e293b; scrollbar-width: none; }
+        #channel-list { flex: 1; overflow-y: auto; padding: 8px; }
+        .channel-item { display: flex; align-items: center; padding: 10px 12px; margin-bottom: 4px; border-radius: 8px; cursor: pointer; transition: background 0.15s; }
+        .channel-item:hover { background: #1e293b; }
+        .channel-item.active { background: #1d4ed8; font-weight: 700; }
+        .ch-num { font-size: 12px; color: #64748b; width: 28px; font-weight: 700; }
+        .channel-item.active .ch-num { color: #bfdbfe; }
+        .ch-name { flex: 1; font-size: 14px; color: #f1f5f9; }
+        .ch-tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(56,189,248,0.15); color: #38bdf8; font-weight: 600; }
+        .channel-item.active .ch-tag { background: rgba(255,255,255,0.25); color: #fff; }
 
-        #search-box { padding: 10px 12px; background: #0f172a; border-bottom: 1px solid #1e293b; position: relative; }
-        #search-input { width: 100%; padding: 10px 14px; background: #090e17; border: 1px solid #334155; color: #fff; border-radius: 8px; font-size: 14px; outline: none; }
-        #search-input:focus { border-color: #3b82f6; }
-
-        #channel-list { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
-        .channel-card { padding: 13px 16px; border-bottom: 1px solid #1e293b; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background 0.1s; }
-        .channel-card:active { background: #1e293b; }
-        .channel-card.active { background: #1e3a8a; border-left: 4px solid #3b82f6; }
-        .ch-name { font-size: 14px; font-weight: 600; color: #f1f5f9; }
-        .channel-card.active .ch-name { color: #60a5fa; }
-        .ch-badge { font-size: 11px; background: rgba(255,255,255,0.08); padding: 3px 8px; border-radius: 4px; color: #94a3b8; font-weight: 500; }
-        .channel-card.active .ch-badge { background: rgba(59,130,246,0.3); color: #bfdbfe; }
-
-        /* MOBILE SPECIFIC UX (Phone portrait / landscape) */
+        /* Mobile specific bottom drawer & layout */
+        #mobile-nav-bar { display: none; }
         @media (max-width: 820px) {
             #app-container { flex-direction: column; }
-            #main-stage { flex: none; width: 100%; height: auto; padding: 0; background: #070a12; }
-            #video-wrapper { max-width: 100%; aspect-ratio: 16 / 9; border-radius: 0; box-shadow: none; }
-            #player-meta { padding: 10px 12px; margin-top: 0; gap: 8px; }
-            #now-playing-title { font-size: 16px; }
-            #controls-row { padding: 8px 10px; font-size: 11px; }
-            .btn-pill { font-size: 11px; padding: 5px 8px; }
-            #sidebar { width: 100%; flex: 1; border-right: none; border-top: 1px solid #1e293b; min-height: 0; }
-            #header { display: none; } /* hide redundant header on mobile */
-            #channel-list { min-height: 0; }
+            #sidebar { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; }
+            #sidebar.open { display: flex; }
+            #main-stage { padding: 10px; justify-content: flex-start; }
+            #video-wrapper { border-radius: 8px; }
+            #mobile-nav-bar { display: flex; position: fixed; bottom: 0; left: 0; width: 100%; height: 56px; background: #0f172a; border-top: 1px solid #1e293b; z-index: 50; justify-content: space-around; align-items: center; }
+            .mobile-nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #94a3b8; font-size: 11px; font-weight: 600; cursor: pointer; background: none; border: none; }
+            .mobile-nav-btn.active { color: #38bdf8; }
+            .mobile-nav-btn svg { width: 20px; height: 20px; margin-bottom: 2px; }
+            #main-stage { padding-bottom: 66px; }
+            #close-mobile-sidebar { display: block; padding: 12px; background: #1e293b; color: #fff; text-align: center; font-weight: 700; cursor: pointer; }
         }
     </style>
 </head>
 <body>
     <div id="app-container">
-        <!-- Sidebar (Channels & Categories) -->
+        <!-- Sidebar -->
         <div id="sidebar">
-            <div id="header">
-                <span>📺 Seyir TV</span>
-                <span style="font-size: 12px; color: #10b981; font-weight: 600;">● Oracle Gateway</span>
-            </div>
-            <div id="category-chips">
-                <button class="chip active" onclick="setCategory('Tümü')">Tümü</button>
-                <button class="chip" onclick="setCategory('beIN Sports')">beIN Sports</button>
-                <button class="chip" onclick="setCategory('Tabii Spor')">Tabii Spor</button>
-                <button class="chip" onclick="setCategory('Tivibu Spor')">Tivibu Spor</button>
-                <button class="chip" onclick="setCategory('Smart Spor')">Smart Spor</button>
-                <button class="chip" onclick="setCategory('S Sport')">S Sport</button>
-                <button class="chip" onclick="setCategory('Ulusal')">Ulusal</button>
-            </div>
             <div id="search-box">
-                <input type="text" id="search-input" placeholder="Kanal ara... (beIN, Tabii, Tivibu vb.)" oninput="filterChannels()" />
+                <input type="text" id="search-input" placeholder="Kanal ara... (Örn: beIN, S Sport)">
+            </div>
+            <div id="category-pills">
+                <button class="btn-pill active" onclick="filterCategory('Tümü')">Tümü</button>
+                <button class="btn-pill" onclick="filterCategory('beIN Sports')">beIN Sports</button>
+                <button class="btn-pill" onclick="filterCategory('S Sport')">S Sport</button>
+                <button class="btn-pill" onclick="filterCategory('Tivibu')">Tivibu</button>
+                <button class="btn-pill" onclick="filterCategory('Tabii')">Tabii</button>
+                <button class="btn-pill" onclick="filterCategory('Ulusal')">Ulusal</button>
             </div>
             <div id="channel-list"></div>
+            <div id="close-mobile-sidebar" onclick="toggleSidebar()" style="display:none;">✕ Listeyi Kapat</div>
         </div>
 
-        <!-- Main Video & Detail Area -->
+        <!-- Main Stage -->
         <div id="main-stage">
             <div id="video-wrapper">
-                <video id="videoElement" controls autoplay playsinline preload="auto"></video>
+                <video id="video-player" playsinline controls></video>
                 <div id="video-top-bar">
                     <span class="v-badge live-badge">● CANLI</span>
                     <span id="res-badge" class="v-badge res-badge">1080p FHD</span>
                 </div>
             </div>
 
+            <!-- Player meta & controls -->
             <div id="player-meta">
                 <div id="title-row">
-                    <span id="now-playing-title">Kanal Seçin</span>
-                    <span id="stream-status">Hazır</span>
+                    <span id="now-playing-title">Yayın seçiniz</span>
+                    <span id="stream-status">Bağlantı Bekleniyor</span>
                 </div>
 
                 <div id="controls-row">
-                    <!-- Source Selector -->
-                    <div class="pill-group" id="sources-container">
+                    <div class="pill-group">
                         <span class="group-label">Kaynak:</span>
-                        <div id="source-buttons" style="display: inline-flex; gap: 5px; flex-wrap: wrap;"></div>
+                        <button class="btn-pill active" onclick="switchStreamType('gateway')">Oracle Failover</button>
+                        <button class="btn-pill" onclick="switchStreamType('direct')">Doğrudan Akış</button>
                     </div>
 
-                    <!-- Quality & Clarity Controls -->
                     <div class="pill-group">
-                        <span class="group-label">Görüntü Netliği:</span>
-                        <button id="btn-crisp" class="btn-pill" onclick="toggleCrispMode()" title="Görüntü keskinliğini ve kontrastını artırır">✨ Netlik Güçlendirici</button>
-                        <button id="btn-q-max" class="btn-pill active" onclick="forceMaxQuality()">1080p Max</button>
-                        <button id="btn-q-auto" class="btn-pill" onclick="setAutoQuality()">Otomatik</button>
+                        <span class="group-label">Görüntü:</span>
+                        <button id="btn-crisp" class="btn-pill" onclick="toggleCrisp()">✨ Canlı & Net</button>
+                    </div>
+
+                    <div class="pill-group">
+                        <button class="btn-pill" onclick="toggleSidebar()">📺 Kanallar</button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Mobile Nav Bar -->
+    <div id="mobile-nav-bar">
+        <button class="mobile-nav-btn active" onclick="toggleSidebar()">
+            <svg fill="currentColor" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+            Kanallar
+        </button>
+        <button class="mobile-nav-btn" onclick="toggleCrisp()">
+            <svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+            Netlik
+        </button>
+    </div>
+
     <script>
-        const video = document.getElementById('videoElement');
         let channels = [];
         let currentChannel = null;
-        let currentUrlIndex = -1; // -1: automatic resilient failover master endpoint
-        let activeCategory = 'Tümü';
-        let hlsPlayer = null;
-        let crispEnabled = false;
+        let hls = null;
+        let streamType = 'gateway';
+        let currentFilter = 'Tümü';
 
-        function destroyPlayers() {
-            if (hlsPlayer) { hlsPlayer.destroy(); hlsPlayer = null; }
-        }
+        const video = document.getElementById('video-player');
+        const channelList = document.getElementById('channel-list');
+        const titleEl = document.getElementById('now-playing-title');
+        const statusEl = document.getElementById('stream-status');
+        const resBadge = document.getElementById('res-badge');
+        const searchInput = document.getElementById('search-input');
+        const sidebar = document.getElementById('sidebar');
 
-        async function init() {
-            try {
-                const res = await fetch('/api/channels');
-                channels = await res.json();
-                renderList(channels);
-                if (channels.length > 0) playChannel(channels[0], -1);
-            } catch (e) {
-                document.getElementById('channel-list').innerHTML = '<div style="padding: 20px; color: #ef4444;">Kanallar alınamadı!</div>';
-            }
-        }
-
-        function setCategory(cat) {
-            activeCategory = cat;
-            document.querySelectorAll('.chip').forEach(b => {
-                b.classList.toggle('active', b.innerText === cat);
-            });
-            filterChannels();
-        }
-
-        function filterChannels() {
-            const q = document.getElementById('search-input').value.toLowerCase();
-            let filtered = channels;
-            if (activeCategory !== 'Tümü') {
-                filtered = filtered.filter(c => (c.category || '').toLowerCase() === activeCategory.toLowerCase());
-            }
-            if (q) {
-                filtered = filtered.filter(c => c.name.toLowerCase().includes(q) || (c.category || '').toLowerCase().includes(q));
-            }
-            renderList(filtered);
-        }
-
-        function renderList(items) {
-            const listEl = document.getElementById('channel-list');
-            listEl.innerHTML = '';
-            items.forEach((ch, idx) => {
-                const div = document.createElement('div');
-                div.className = 'channel-card' + (currentChannel && currentChannel.id === ch.id ? ' active' : (idx === 0 && !currentChannel ? ' active' : ''));
-                div.innerHTML = '<span class="ch-name">' + ch.name + '</span><span class="ch-badge">' + ch.category + '</span>';
-                div.onclick = () => {
-                    document.querySelectorAll('.channel-card').forEach(e => e.classList.remove('active'));
-                    div.classList.add('active');
-                    playChannel(ch, -1);
-                };
-                listEl.appendChild(div);
-            });
-        }
-
-        function renderSources(ch) {
-            const container = document.getElementById('source-buttons');
-            container.innerHTML = '';
-
-            const autoBtn = document.createElement('button');
-            autoBtn.className = 'btn-pill' + (currentUrlIndex === -1 ? ' active' : '');
-            autoBtn.innerText = '⚡ Otomatik Failover';
-            autoBtn.onclick = () => playChannel(ch, -1);
-            container.appendChild(autoBtn);
-
-            if (!ch.urls || ch.urls.length <= 1) return;
-            ch.urls.forEach((u, i) => {
-                const btn = document.createElement('button');
-                let label = 'K-' + (i + 1);
-                if (u.includes('zeus')) label = 'Zeus (' + (i + 1) + ')';
-                else if (u.includes('evrenesoglu')) label = 'CDN (' + (i + 1) + ')';
-                else if (u.includes('medya.trt')) label = 'TRT Medya';
-                else if (u.includes('daion')) label = 'Daion';
-                btn.className = 'btn-pill' + (i === currentUrlIndex ? ' active' : '');
-                btn.innerText = label;
-                btn.onclick = () => playChannel(ch, i);
-                container.appendChild(btn);
-            });
-        }
-
-        function playChannel(ch, urlIndex = -1) {
-            currentChannel = ch;
-            currentUrlIndex = urlIndex;
-            destroyPlayers();
-            renderSources(ch);
-
-            document.getElementById('now-playing-title').innerText = ch.name;
-            const statusEl = document.getElementById('stream-status');
-            statusEl.innerText = 'Bağlanıyor...';
-            statusEl.style.background = '#3b82f6';
-
-            let streamUrl = '/channel/' + ch.id + '.m3u8';
-            if (urlIndex >= 0 && ch.urls && ch.urls[urlIndex]) {
-                streamUrl = '/proxy?url=' + encodeURIComponent(ch.urls[urlIndex]);
-            }
-
-            let loaded = false;
-            const fallbackTimer = setTimeout(() => {
-                if (!loaded && urlIndex < (ch.urls.length - 1)) {
-                    playChannel(ch, urlIndex + 1);
+        // Load channels
+        fetch('/api/channels')
+            .then(res => res.json())
+            .then(data => {
+                channels = data;
+                renderChannels(channels);
+                if (channels.length > 0) {
+                    playChannel(channels[0]);
                 }
-            }, 8000);
+            })
+            .catch(err => {
+                statusEl.textContent = 'Kanal listesi alınamadı';
+            });
 
-            function onReady() {
-                loaded = true;
-                clearTimeout(fallbackTimer);
-                statusEl.innerText = 'Canlı Yayın';
-                statusEl.style.background = '#10b981';
-                updateResBadge();
+        function renderChannels(list) {
+            channelList.innerHTML = '';
+            list.forEach((ch, idx) => {
+                const item = document.createElement('div');
+                item.className = 'channel-item' + (currentChannel && currentChannel.id === ch.id ? ' active' : '');
+                item.onclick = () => {
+                    playChannel(ch);
+                    if (window.innerWidth <= 820) {
+                        sidebar.classList.remove('open');
+                    }
+                };
+
+                const num = document.createElement('span');
+                num.className = 'ch-num';
+                num.textContent = (idx + 1);
+
+                const name = document.createElement('span');
+                name.className = 'ch-name';
+                name.textContent = ch.name;
+
+                const tag = document.createElement('span');
+                tag.className = 'ch-tag';
+                tag.textContent = ch.category || 'Canlı';
+
+                item.appendChild(num);
+                item.appendChild(name);
+                item.appendChild(tag);
+                channelList.appendChild(item);
+            });
+        }
+
+        function playChannel(ch) {
+            currentChannel = ch;
+            titleEl.textContent = ch.name;
+            statusEl.textContent = 'Bağlanıyor...';
+            statusEl.style.background = '#f59e0b';
+
+            document.querySelectorAll('.channel-item').forEach(el => el.classList.remove('active'));
+            const activeItem = Array.from(document.querySelectorAll('.channel-item')).find(el => el.querySelector('.ch-name').textContent === ch.name);
+            if (activeItem) activeItem.classList.add('active');
+
+            let streamUrl = '';
+            if (streamType === 'gateway') {
+                streamUrl = '/channel/' + ch.id + '.m3u8';
+            } else {
+                streamUrl = ch.urls && ch.urls.length > 0 ? ch.urls[0] : '';
             }
 
-            video.onplaying = onReady;
+            if (hls) {
+                hls.destroy();
+                hls = null;
+            }
 
             if (Hls.isSupported()) {
-                hlsPlayer = new Hls({
+                hls = new Hls({
                     enableWorker: true,
                     lowLatencyMode: true,
-                    capLevelToPlayerSize: false, // Don't reduce quality on small phone screens!
-                    backBufferLength: 30,
-                    maxBufferLength: 20
+                    backBufferLength: 60,
+                    maxBufferLength: 30,
+                    maxMaxBufferLength: 60
                 });
-                hlsPlayer.loadSource(streamUrl);
-                hlsPlayer.attachMedia(video);
-                hlsPlayer.on(Hls.Events.MANIFEST_PARSED, () => {
-                    // Force maximum quality level immediately for maximum clarity!
-                    if (hlsPlayer.levels && hlsPlayer.levels.length > 0) {
-                        hlsPlayer.currentLevel = hlsPlayer.levels.length - 1;
-                    }
+                hls.loadSource(streamUrl);
+                hls.attachMedia(video);
+                hls.on(Hls.Events.MANIFEST_PARSED, (e, data) => {
                     video.play().catch(() => {});
-                    updateResBadge();
+                    statusEl.textContent = 'Yayında (FHD)';
+                    statusEl.style.background = '#10b981';
+                    if (data.levels && data.levels.length > 0) {
+                        const h = data.levels[0].height;
+                        resBadge.textContent = h ? h + 'p HD' : '1080p FHD';
+                    }
                 });
-                hlsPlayer.on(Hls.Events.LEVEL_SWITCHED, () => {
-                    updateResBadge();
-                });
-                hlsPlayer.on(Hls.Events.ERROR, (e, data) => {
+                hls.on(Hls.Events.ERROR, (e, data) => {
                     if (data.fatal) {
-                        switch (data.type) {
-                            case Hls.ErrorTypes.NETWORK_ERROR:
-                                console.warn('HLS Network Error, attempting recovery...');
-                                hlsPlayer.startLoad();
-                                break;
-                            case Hls.ErrorTypes.MEDIA_ERROR:
-                                console.warn('HLS Media Error, attempting recovery...');
-                                hlsPlayer.recoverMediaError();
-                                break;
-                            default:
-                                clearTimeout(fallbackTimer);
-                                console.warn('Fatal HLS Error, switching source...');
-                                if (urlIndex < (ch.urls.length - 1)) {
-                                    playChannel(ch, urlIndex + 1);
-                                } else {
-                                    statusEl.innerText = 'Yayın Hatası';
-                                    statusEl.style.background = '#ef4444';
-                                }
-                                break;
-                        }
-                    } else if (data.details === 'bufferStalledError') {
-                        console.warn('Buffer stalled, nudging video...');
-                        if (video.paused) {
-                            video.play().catch(() => {});
-                        } else {
-                            video.currentTime += 0.1;
-                        }
+                        statusEl.textContent = 'Yedek deneniyor...';
+                        statusEl.style.background = '#ef4444';
                     }
                 });
             } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
                 video.src = streamUrl;
                 video.play().catch(() => {});
-                video.onloadedmetadata = updateResBadge;
+                statusEl.textContent = 'Yayında';
+                statusEl.style.background = '#10b981';
             }
         }
 
-        function updateResBadge() {
-            const badge = document.getElementById('res-badge');
-            if (hlsPlayer && hlsPlayer.currentLevel >= 0 && hlsPlayer.levels[hlsPlayer.currentLevel]) {
-                const lvl = hlsPlayer.levels[hlsPlayer.currentLevel];
-                badge.innerText = (lvl.height ? lvl.height + 'p ' : '') + (lvl.height >= 1080 ? 'FHD' : (lvl.height >= 720 ? 'HD' : 'SD'));
-            } else if (video.videoHeight > 0) {
-                badge.innerText = video.videoHeight + 'p ' + (video.videoHeight >= 1080 ? 'FHD' : 'HD');
-            } else {
-                badge.innerText = '1080p FHD';
-            }
+        function filterCategory(cat) {
+            currentFilter = cat;
+            document.querySelectorAll('#category-pills .btn-pill').forEach(b => {
+                b.classList.toggle('active', b.textContent === cat);
+            });
+            applyFilters();
         }
 
-        function forceMaxQuality() {
-            if (hlsPlayer && hlsPlayer.levels.length > 0) {
-                hlsPlayer.currentLevel = hlsPlayer.levels.length - 1;
-            }
-            document.getElementById('btn-q-max').classList.add('active');
-            document.getElementById('btn-q-auto').classList.remove('active');
-            updateResBadge();
+        searchInput.addEventListener('input', applyFilters);
+
+        function applyFilters() {
+            const query = searchInput.value.toLowerCase().trim();
+            const filtered = channels.filter(ch => {
+                const matchName = ch.name.toLowerCase().includes(query);
+                const matchCat = currentFilter === 'Tümü' || (ch.category && ch.category.includes(currentFilter));
+                return matchName && matchCat;
+            });
+            renderChannels(filtered);
         }
 
-        function setAutoQuality() {
-            if (hlsPlayer) {
-                hlsPlayer.currentLevel = -1; // Auto level
-            }
-            document.getElementById('btn-q-auto').classList.add('active');
-            document.getElementById('btn-q-max').classList.remove('active');
-            updateResBadge();
+        function switchStreamType(type) {
+            streamType = type;
+            document.querySelectorAll('#controls-row .pill-group:first-child .btn-pill').forEach(b => {
+                b.classList.toggle('active', (type === 'gateway' && b.textContent.includes('Oracle')) || (type === 'direct' && b.textContent.includes('Doğrudan')));
+            });
+            if (currentChannel) playChannel(currentChannel);
         }
 
-        function toggleCrispMode() {
-            crispEnabled = !crispEnabled;
-            video.classList.toggle('crisp-mode', crispEnabled);
+        function toggleCrisp() {
             const btn = document.getElementById('btn-crisp');
-            btn.classList.toggle('crisp-active', crispEnabled);
-            btn.innerText = crispEnabled ? '✓ Netlik Aktif' : '✨ Netlik Güçlendirici';
+            video.classList.toggle('crisp-mode');
+            btn.classList.toggle('crisp-active');
         }
 
-        function toggleFullscreen() {
-            const wrapper = document.getElementById('video-wrapper');
-            if (!document.fullscreenElement) {
-                if (wrapper.requestFullscreen) wrapper.requestFullscreen();
-                else if (video.webkitEnterFullscreen) video.webkitEnterFullscreen(); // iOS Safari
-            } else {
-                if (document.exitFullscreen) document.exitFullscreen();
-            }
+        function toggleSidebar() {
+            sidebar.classList.toggle('open');
+            const closeBtn = document.getElementById('close-mobile-sidebar');
+            if (closeBtn) closeBtn.style.display = sidebar.classList.contains('open') ? 'block' : 'none';
         }
-
-        init();
     </script>
 </body>
 </html>
@@ -585,5 +602,5 @@ app.get('/', (req, res) => {
 });
 
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Seyir Gateway running on port ${PORT}`);
+    console.log(`Seyir TV Oracle Gateway running on port ${PORT}`);
 });

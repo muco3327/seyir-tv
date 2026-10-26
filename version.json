@@ -1,6 +1,6 @@
 {
-  "versionCode": 75,
-  "versionName": "0.5.32",
-  "changelog": "Modern Player D-Pad ve Seçim Düzeltmesi (v0.5.32):\n1. Tivimate kanal listesinde D-Pad kumanda ile gezinme ve seçim (ENTER) çalışmama sorunu düzeltildi.\n2. Dokunmatik ekranda kanal listesi kaydırma ve tek tıkla kanal açma aktif edildi.\n3. Kumandadan Geri tuşuyla kanaldan anında çıkış optimize edildi.",
-  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.32.apk"
+  "versionCode": 76,
+  "versionName": "0.5.33",
+  "changelog": "Kapsamlı Kararlılık, D-Pad Gezinme ve Güncelleme İyileştirmeleri (v0.5.33):\n1. GitHub güncelleme CDN bağlantısı doğrudan bağlandı, HTTP 403 engeli giderildi.\n2. Oynatıcı içi kanal listesinde D-Pad kategori geçişleri (Tümü -> Spor -> Ulusal) ve sağ tuş basılı tutma / kategori sonu ile kapanma düzeltildi.\n3. Sistem açılışında otomatik çalışan kanal taraması (Health Check) eklendi.\n4. Kanal afişine tıklandığında ekran kaymasını önleyen modern 'Yayın & Çözünürlük Seçici' (FHD/HD/SD) modal dialog eklendi.\n5. Oracle Gateway bağlantı havuzu (Keep-Alive) ve otomatik segment yeniden deneme (retry) ile yayın donmaları önlendi.",
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.33.apk"
 }

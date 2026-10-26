@@ -65,6 +65,7 @@ public final class SportsManager {
         public final String category;
         public final List<String> urls;
         public final Map<String, String> headers;
+        public volatile boolean isOnline = true;
 
         public SportChannel(String id, String name, String logo, String category, List<String> urls, Map<String, String> headers) {
             this.id = id;
@@ -235,6 +236,50 @@ public final class SportsManager {
     public static List<SportChannel> getCachedChannels() {
         synchronized (SportsManager.class) {
             return cachedList != null ? new ArrayList<>(cachedList) : Collections.emptyList();
+        }
+    }
+
+    private static final ExecutorService healthProbePool = Executors.newFixedThreadPool(4);
+
+    public static void probeStartupChannels(List<SportChannel> list, Runnable onDone) {
+        if (list == null || list.isEmpty()) return;
+        healthProbePool.execute(() -> {
+            for (SportChannel ch : list) {
+                if (ch.urls == null || ch.urls.isEmpty()) continue;
+                String primary = ch.getPrimaryUrl();
+                boolean ok = checkUrl(primary, 2200);
+                if (!ok && ch.urls.size() > 1) {
+                    for (int i = 1; i < ch.urls.size(); i++) {
+                        if (checkUrl(ch.urls.get(i), 2200)) {
+                            String working = ch.urls.remove(i);
+                            ch.urls.add(0, working);
+                            ok = true;
+                            break;
+                        }
+                    }
+                }
+                ch.isOnline = ok;
+            }
+            if (onDone != null) mainHandler.post(onDone);
+        });
+    }
+
+    private static boolean checkUrl(String urlStr, int timeoutMs) {
+        if (urlStr == null || urlStr.trim().isEmpty()) return false;
+        HttpURLConnection conn = null;
+        try {
+            URL u = new URL(urlStr);
+            conn = (HttpURLConnection) u.openConnection();
+            conn.setRequestMethod("GET");
+            conn.setConnectTimeout(timeoutMs);
+            conn.setReadTimeout(timeoutMs);
+            conn.setRequestProperty("User-Agent", "SeyirTV-HealthCheck");
+            int code = conn.getResponseCode();
+            return code >= 200 && code < 400;
+        } catch (Exception e) {
+            return false;
+        } finally {
+            if (conn != null) conn.disconnect();
         }
     }
 
@@ -649,3 +694,4 @@ public final class SportsManager {
         }
     }
 }
+
