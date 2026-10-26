@@ -12,10 +12,6 @@ app.use(cors());
 
 const PORT = 3000;
 
-// High performance connection pooling
-const httpAgent = new http.Agent({ keepAlive: true, maxSockets: 150, timeout: 15000 });
-const httpsAgent = new https.Agent({ keepAlive: true, maxSockets: 150, timeout: 15000 });
-
 // Load Verified Channels directly
 let curatedChannels = [];
 function reloadChannels() {
@@ -29,49 +25,8 @@ function reloadChannels() {
 }
 reloadChannels();
 
-// Background Channel Health Scanner
-let channelStatus = {};
-async function scanChannels() {
-    console.log(`[HealthCheck] Checking ${curatedChannels.length} channels...`);
-    for (const ch of curatedChannels) {
-        let aliveUrls = [];
-        let deadUrls = [];
-        for (const u of ch.urls) {
-            try {
-                const parsed = new URL(u);
-                const h = getHeadersForUrl(u, parsed);
-                const t0 = Date.now();
-                await axios({
-                    method: 'get',
-                    url: u,
-                    headers: h,
-                    timeout: 4000,
-                    httpAgent,
-                    httpsAgent,
-                    validateStatus: (s) => s >= 200 && s < 400
-                });
-                const latency = Date.now() - t0;
-                aliveUrls.push({ url: u, latency });
-            } catch (e) {
-                deadUrls.push(u);
-            }
-        }
-        if (aliveUrls.length > 0) {
-            aliveUrls.sort((a, b) => a.latency - b.latency);
-            ch.urls = [...aliveUrls.map(a => a.url), ...deadUrls];
-            channelStatus[ch.id] = { online: true, latency: aliveUrls[0].latency, lastCheck: Date.now() };
-        } else {
-            channelStatus[ch.id] = { online: false, latency: -1, lastCheck: Date.now() };
-        }
-    }
-    const onlineCount = Object.values(channelStatus).filter(s => s.online).length;
-    console.log(`[HealthCheck] Completed. Online: ${onlineCount}/${curatedChannels.length}`);
-}
-setTimeout(scanChannels, 10000);
-setInterval(scanChannels, 10 * 60 * 1000);
-
 // API Channels endpoint
-app.get('/api/channels', (req, res) => {
+app.get('/api/channels' , (req, res) => {
     res.json(curatedChannels);
 });
 
@@ -166,9 +121,7 @@ app.get('/channel/:id.m3u8', async (req, res) => {
                 url: targetUrl,
                 headers: headers,
                 timeout: 6000,
-                httpAgent,
-                httpsAgent,
-                validateStatus: (status) => status >= 200 && status < 300
+                                                validateStatus: (status) => status >= 200 && status < 300
             });
 
             const bodyStr = response.data.toString('utf-8');
@@ -238,9 +191,7 @@ app.get('/proxy', async (req, res) => {
                     headers: headers,
                     responseType: isSegment ? 'stream' : 'arraybuffer',
                     timeout: isSegment ? 6000 : 9000,
-                    httpAgent,
-                    httpsAgent,
-                    validateStatus: (status) => status >= 200 && status < 400
+                                                            validateStatus: (status) => status >= 200 && status < 400
                 });
                 break;
             } catch (retryErr) {
