@@ -21,6 +21,31 @@ import java.security.MessageDigest;
 public final class SportsManager {
     public static final String ORACLE_API_URL = "http://150.230.29.27:3000/api/channels";
     public static final String ORACLE_M3U_URL = "http://150.230.29.27:3000/playlist.m3u";
+    public static final String ORACLE_PROXY_PREFIX = "http://150.230.29.27:3000/proxy?url=";
+
+    public static String toOracleProxy(String streamUrl) {
+        if (streamUrl == null || streamUrl.trim().isEmpty() || streamUrl.contains("150.230.29.27:3000/proxy")) {
+            return streamUrl;
+        }
+        try {
+            return ORACLE_PROXY_PREFIX + java.net.URLEncoder.encode(streamUrl, "UTF-8");
+        } catch (Exception e) {
+            return ORACLE_PROXY_PREFIX + streamUrl;
+        }
+    }
+
+    public static boolean needsProxy(String url) {
+        if (url == null) return false;
+        String lower = url.toLowerCase(Locale.ROOT);
+        return lower.contains("workers.dev")
+            || lower.contains(".cfd")
+            || lower.contains("ardastream")
+            || lower.contains("live.php")
+            || lower.contains("camon1")
+            || lower.contains("tomtv")
+            || lower.contains("tv247")
+            || lower.contains("zeus");
+    }
     public static final String REMOTE_SPORTS_URL = "https://raw.githubusercontent.com/muco3327/seyir-tv/main/sports.json";
     private static final Handler mainHandler = new Handler(Looper.getMainLooper());
     private static final Map<String, SportChannel> channelMap = new LinkedHashMap<>();
@@ -142,7 +167,16 @@ public final class SportsManager {
                 String cleanKey = cleanChannelName(ch.name);
                 if (cleanKey.isEmpty()) cleanKey = md5(ch.name);
                 cleanKey = ChannelQuality.groupKey(cleanKey, ch.name);
-                aggregated.put(cleanKey, ch);
+                if (aggregated.containsKey(cleanKey)) {
+                    SportChannel existing = aggregated.get(cleanKey);
+                    for (String u : ch.urls) {
+                        if (!existing.urls.contains(u)) {
+                            existing.urls.add(u);
+                        }
+                    }
+                } else {
+                    aggregated.put(cleanKey, ch);
+                }
                 seenUrls.addAll(ch.urls);
             }
 
@@ -194,7 +228,7 @@ public final class SportsManager {
     }
 
     private static String fetchRemoteJson() {
-        String oracle = fetchUrl(ORACLE_API_URL, 3500);
+        String oracle = fetchUrl(ORACLE_API_URL, 8000);
         if (oracle != null && !oracle.trim().isEmpty()) {
             return oracle;
         }
@@ -280,11 +314,27 @@ public final class SportsManager {
                 if (uArr != null) {
                     for (int j = 0; j < uArr.length(); j++) {
                         String u = uArr.optString(j);
-                        if (!u.isEmpty()) urls.add(u);
+                        if (!u.isEmpty()) {
+                            if (needsProxy(u)) {
+                                urls.add(toOracleProxy(u));
+                                urls.add(u);
+                            } else {
+                                urls.add(u);
+                                urls.add(toOracleProxy(u));
+                            }
+                        }
                     }
                 } else if (obj.has("url")) {
                     String u = obj.optString("url");
-                    if (!u.isEmpty()) urls.add(u);
+                    if (!u.isEmpty()) {
+                        if (needsProxy(u)) {
+                            urls.add(toOracleProxy(u));
+                            urls.add(u);
+                        } else {
+                            urls.add(u);
+                            urls.add(toOracleProxy(u));
+                        }
+                    }
                 }
 
                 Map<String, String> headers = new HashMap<>();
@@ -471,12 +521,19 @@ public final class SportsManager {
 
                                         if (aggregated.containsKey(cleanKey)) {
                                             SportChannel existing = aggregated.get(cleanKey);
+                                            if (needsProxy(streamUrl)) {
+                                                String proxied = appendHeadersToUrl(toOracleProxy(streamUrl), currentHeaders);
+                                                if (!existing.urls.contains(proxied)) existing.urls.add(proxied);
+                                            }
                                             if (!existing.urls.contains(finalUrl)) {
                                                 existing.urls.add(finalUrl);
                                             }
                                         } else {
                                             String id = "gh_" + md5(cleanKey + streamUrl).substring(0, 8);
                                             List<String> urls = new ArrayList<>();
+                                            if (needsProxy(streamUrl)) {
+                                                urls.add(appendHeadersToUrl(toOracleProxy(streamUrl), currentHeaders));
+                                            }
                                             urls.add(finalUrl);
                                             aggregated.put(cleanKey, new SportChannel(id, currentName, currentLogo, currentGroup, urls, new HashMap<>(currentHeaders)));
                                         }

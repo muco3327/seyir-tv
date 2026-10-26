@@ -208,12 +208,13 @@ public final class PlayerActivity extends Activity {
                 playerStatusBadge.setText("Yayın bağlantısı kontrol ediliyor…");
                 pendingProbe = probeExecutor.submit(() -> {
                     try {
-                        String mime = StreamProbe.inspect(request, probeHeaders);
+                        StreamProbe.Result probeResult = StreamProbe.inspect(request, probeHeaders);
                         progressHandler.post(() -> {
                             if (generation != probeGeneration || closing || isFinishing() || isDestroyed()) return;
                             probing = false;
-                            probedUrl = candidate;
-                            probedMime = mime;
+                            url = probeResult.resolvedUrl;
+                            probedUrl = probeResult.resolvedUrl;
+                            probedMime = probeResult.mime;
                             initialize();
                         });
                     } catch (Exception error) {
@@ -339,6 +340,12 @@ public final class PlayerActivity extends Activity {
     }
 
     private void tryNextSource(String error) {
+        if (url != null && !url.contains("150.230.29.27:3000/proxy")) {
+            String proxied = SportsManager.toOracleProxy(url);
+            if (!fallbackList.contains(proxied)) {
+                fallbackList.add(0, proxied);
+            }
+        }
         while (!fallbackList.isEmpty()) {
             String next = fallbackList.remove(0);
             if (next == null || next.trim().isEmpty() || next.equals(url)) continue;
