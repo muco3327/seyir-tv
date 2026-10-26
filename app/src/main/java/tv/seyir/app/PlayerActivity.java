@@ -292,6 +292,8 @@ public final class PlayerActivity extends Activity {
     private void setupSidebar() {
         sidebarAdapter = new ChannelAdapter();
         lvSidebarChannels.setAdapter(sidebarAdapter);
+        lvSidebarChannels.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+        lvSidebarChannels.setItemsCanFocus(false);
 
         lvSidebarChannels.setOnItemClickListener((parent, view, position, id) -> {
             if (position >= 0 && position < filteredChannels.size()) {
@@ -346,17 +348,21 @@ public final class PlayerActivity extends Activity {
         channelSidebar.bringToFront();
         progressHandler.removeCallbacks(hideControls);
 
-        int currentIdx = -1;
+        int currentIdx = 0;
         for (int i = 0; i < filteredChannels.size(); i++) {
             if (title != null && filteredChannels.get(i).name.equalsIgnoreCase(title.title)) {
                 currentIdx = i;
                 break;
             }
         }
-        if (currentIdx >= 0) {
-            lvSidebarChannels.setSelection(currentIdx);
-        }
-        lvSidebarChannels.requestFocus();
+        final int targetIdx = currentIdx;
+        lvSidebarChannels.post(() -> {
+            lvSidebarChannels.setChoiceMode(ListView.CHOICE_MODE_SINGLE);
+            lvSidebarChannels.setItemChecked(targetIdx, true);
+            lvSidebarChannels.setSelection(targetIdx);
+            lvSidebarChannels.requestFocus();
+            lvSidebarChannels.requestFocusFromTouch();
+        });
     }
 
     public void hideChannelSidebar() {
@@ -406,7 +412,6 @@ public final class PlayerActivity extends Activity {
                     return true;
                 }
                 if (channelSidebar != null && channelSidebar.getVisibility() == View.VISIBLE) {
-                    hideChannelSidebar();
                     return true;
                 }
                 boolean showing = playerControlsOverlay != null && playerControlsOverlay.getVisibility() == View.VISIBLE;
@@ -467,6 +472,23 @@ public final class PlayerActivity extends Activity {
                 showUnlockButton();
             }
             return super.dispatchTouchEvent(event);
+        }
+
+        if (channelSidebar != null && channelSidebar.getVisibility() == View.VISIBLE) {
+            float x = event.getX();
+            float y = event.getY();
+            int[] loc = new int[2];
+            channelSidebar.getLocationOnScreen(loc);
+            boolean inside = (x >= loc[0] && x <= (loc[0] + channelSidebar.getWidth())
+                           && y >= loc[1] && y <= (loc[1] + channelSidebar.getHeight()));
+            if (inside) {
+                return super.dispatchTouchEvent(event);
+            } else {
+                if (event.getAction() == MotionEvent.ACTION_UP) {
+                    hideChannelSidebar();
+                }
+                return true;
+            }
         }
 
         gestureDetector.onTouchEvent(event);
@@ -1054,7 +1076,51 @@ public final class PlayerActivity extends Activity {
         boolean controlsShown = playerControlsOverlay != null && playerControlsOverlay.getVisibility() == View.VISIBLE;
 
         if (sidebarShown) {
-            // Sidebar handles its own D-pad navigation
+            if (k == KeyEvent.KEYCODE_DPAD_UP) {
+                int pos = lvSidebarChannels.getSelectedItemPosition();
+                if (pos > 0) {
+                    lvSidebarChannels.setSelection(pos - 1);
+                    lvSidebarChannels.setItemChecked(pos - 1, true);
+                    return true;
+                } else if (pos == 0) {
+                    btnFilterAll.requestFocus();
+                    return true;
+                }
+            } else if (k == KeyEvent.KEYCODE_DPAD_DOWN) {
+                View cur = getCurrentFocus();
+                if (cur == btnFilterAll || cur == btnFilterSports || cur == btnFilterNational || cur == btnCloseSidebar) {
+                    lvSidebarChannels.requestFocus();
+                    lvSidebarChannels.setSelection(0);
+                    lvSidebarChannels.setItemChecked(0, true);
+                    return true;
+                }
+                int pos = lvSidebarChannels.getSelectedItemPosition();
+                if (pos < filteredChannels.size() - 1) {
+                    int next = pos < 0 ? 0 : pos + 1;
+                    lvSidebarChannels.setSelection(next);
+                    lvSidebarChannels.setItemChecked(next, true);
+                    return true;
+                }
+            } else if (k == KeyEvent.KEYCODE_DPAD_CENTER || k == KeyEvent.KEYCODE_ENTER || k == KeyEvent.KEYCODE_NUMPAD_ENTER) {
+                View cur = getCurrentFocus();
+                if (cur == btnCloseSidebar) {
+                    hideChannelSidebar();
+                    return true;
+                }
+                if (cur == btnFilterAll) { applyFilter("all"); return true; }
+                if (cur == btnFilterSports) { applyFilter("sports"); return true; }
+                if (cur == btnFilterNational) { applyFilter("national"); return true; }
+
+                int pos = lvSidebarChannels.getSelectedItemPosition();
+                if (pos >= 0 && pos < filteredChannels.size()) {
+                    switchChannel(filteredChannels.get(pos));
+                    hideChannelSidebar();
+                    return true;
+                }
+            } else if (k == KeyEvent.KEYCODE_DPAD_RIGHT) {
+                hideChannelSidebar();
+                return true;
+            }
             return super.dispatchKeyEvent(e);
         }
 

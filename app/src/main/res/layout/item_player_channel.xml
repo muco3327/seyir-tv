@@ -8,13 +8,11 @@
     android:paddingTop="12dp"
     android:paddingEnd="14dp"
     android:paddingBottom="12dp"
-    android:layout_marginTop="4dp"
-    android:layout_marginBottom="4dp"
+    android:layout_marginTop="3dp"
+    android:layout_marginBottom="3dp"
     android:layout_marginStart="8dp"
     android:layout_marginEnd="8dp"
-    android:background="@drawable/player_channel_item_selector"
-    android:focusable="true"
-    android:clickable="true">
+    android:background="@drawable/player_channel_item_selector">
 
     <TextView
         android:id="@+id/tv_item_channel_num"
