@@ -385,13 +385,8 @@
                         android:id="@+id/btn_lock"
                         android:layout_width="wrap_content"
                         android:layout_height="44dp"
-                        android:paddingStart="14dp"
-                        android:paddingEnd="14dp"
-                        android:text="🔓 Kilit"
-                        android:textColor="#FFFFFF"
-                        android:textSize="13sp"
-                        android:background="@drawable/player_btn_modern"
-                        android:layout_marginStart="8dp" />
+                        android:visibility="gone"
+                        android:text="🔓 Kilit" />
 
                     <Button
                         android:id="@+id/btn_audio"

@@ -1,6 +1,6 @@
 {
-  "versionCode": 78,
-  "versionName": "0.5.35",
-  "changelog": "Ultra Hızlı Açılış & Kararlılık (v0.5.35):\n1. 22 saniyelik açılış beklemesi tamamen giderildi. Çift katmanlı (Disk + Bellek) anlık önbellek ile açılış süresi 1 saniyenin altına indirildi.\n2. Oracle Gateway yayın akışları arka planda sessizce asenkron senkronize ediliyor.\n3. Bloklayıcı M3U taramaları ve ardışık ağ istekleri optimize edildi.",
-  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.35.apk"
+  "versionCode": 79,
+  "versionName": "0.5.36",
+  "changelog": "Oracle Otonom Tarama & Player Otomatik Gizleme (v0.5.36):\n1. Tüm kanal ve M3U taraması Oracle sunucusuna devredildi (2 dakikada bir otonom tarama ve taze token yenileme).\n2. Oynatıcı kilit butonu kaldırıldı; kontroller 4 saniye sonra otomatik olarak gizleniyor.\n3. Kumandadan Geri tuşuna basıldığında önce açık olan oynatıcı kontrolleri kapanıyor.",
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.36.apk"
 }

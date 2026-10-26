@@ -12,8 +12,15 @@ app.use(cors());
 
 const PORT = 3000;
 
-// Load Verified Channels directly
+// High-performance Keep-Alive Connection Pool
+const httpAgent = new http.Agent({ keepAlive: true, maxSockets: 100, timeout: 60000 });
+const httpsAgent = new https.Agent({ keepAlive: true, maxSockets: 100, timeout: 60000 });
+
+// State & Channels
 let curatedChannels = [];
+let channelStatus = {};
+let lastScanTime = 0;
+let isScanning = false;
 function reloadChannels() {
     try {
         const raw = fs.readFileSync(path.join(__dirname, 'verified_channels.json'), 'utf-8');
@@ -85,6 +92,12 @@ function getHeadersForUrl(targetUrl, u) {
     ) {
         headers['Referer'] = 'https://mahsunsports57.xyz/';
         headers['Origin'] = 'https://mahsunsports57.xyz';
+    } else if (targetUrl.includes('atomsport') || targetUrl.includes('ardastream')) {
+        headers['Referer'] = 'https://www.atomsportv512.top';
+        headers['Origin'] = 'https://www.atomsportv512.top';
+    } else if (targetUrl.includes('cdnlivetv.tv')) {
+        headers['Referer'] = 'https://cdnlivetv.tv/';
+        headers['Origin'] = 'https://cdnlivetv.tv';
     } else if (targetUrl.includes('zeus')) {
         headers['Referer'] = 'https://zeus645423.cfd/';
         headers['Origin'] = 'https://zeus645423.cfd';
@@ -272,10 +285,18 @@ app.get('/', (req, res) => {
         video.crisp-mode { filter: contrast(1.05) saturate(1.06) brightness(1.02); }
 
         /* Video Overlays */
-        #video-top-bar { position: absolute; top: 10px; left: 12px; right: 12px; display: flex; justify-content: space-between; align-items: center; pointer-events: none; z-index: 10; }
+        #video-top-bar { position: absolute; top: 10px; left: 12px; right: 12px; display: flex; justify-content: space-between; align-items: center; z-index: 30; pointer-events: none; transition: opacity 0.3s ease; }
+        #video-top-bar.fade-out { opacity: 0; pointer-events: none; }
+        .top-bar-left, .top-bar-right { display: flex; gap: 6px; align-items: center; pointer-events: auto; }
         .v-badge { font-size: 11px; font-weight: 700; padding: 4px 9px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
         .live-badge { background: #ef4444; color: #fff; }
         .res-badge { background: rgba(0,0,0,0.75); color: #38bdf8; border: 1px solid rgba(56,189,248,0.4); backdrop-filter: blur(4px); }
+        .channel-title-badge { background: rgba(15,23,42,0.85); color: #fff; border: 1px solid rgba(255,255,255,0.15); backdrop-filter: blur(6px); font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 6px; max-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .btn-icon { background: rgba(15,23,42,0.85); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 6px; padding: 5px 9px; font-size: 12px; font-weight: 600; cursor: pointer; backdrop-filter: blur(4px); display: inline-flex; align-items: center; gap: 4px; transition: all 0.15s; }
+        .btn-icon:hover { background: rgba(30,41,59,0.95); }
+        .btn-icon:active { background: #2563eb; }
+        video.fit-cover { object-fit: cover !important; }
 
         /* Channel Info & Controls below video */
         #player-meta { width: 100%; max-width: 1020px; margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
@@ -307,20 +328,124 @@ app.get('/', (req, res) => {
         .ch-tag { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: rgba(56,189,248,0.15); color: #38bdf8; font-weight: 600; }
         .channel-item.active .ch-tag { background: rgba(255,255,255,0.25); color: #fff; }
 
-        /* Mobile specific bottom drawer & layout */
+        /* Mobile Portrait Specific Layout */
         #mobile-nav-bar { display: none; }
-        @media (max-width: 820px) {
+        @media (max-width: 820px) and (orientation: portrait), (max-width: 650px) {
             #app-container { flex-direction: column; }
             #sidebar { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; }
             #sidebar.open { display: flex; }
-            #main-stage { padding: 10px; justify-content: flex-start; }
+            #main-stage { padding: 10px; justify-content: flex-start; padding-bottom: 66px; }
             #video-wrapper { border-radius: 8px; }
             #mobile-nav-bar { display: flex; position: fixed; bottom: 0; left: 0; width: 100%; height: 56px; background: #0f172a; border-top: 1px solid #1e293b; z-index: 50; justify-content: space-around; align-items: center; }
             .mobile-nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: #94a3b8; font-size: 11px; font-weight: 600; cursor: pointer; background: none; border: none; }
             .mobile-nav-btn.active { color: #38bdf8; }
             .mobile-nav-btn svg { width: 20px; height: 20px; margin-bottom: 2px; }
-            #main-stage { padding-bottom: 66px; }
             #close-mobile-sidebar { display: block; padding: 12px; background: #1e293b; color: #fff; text-align: center; font-weight: 700; cursor: pointer; }
+        }
+
+        /* Mobile Landscape Mode (Phone turned sideways - Fullscreen Video) */
+        @media (orientation: landscape) and (max-height: 550px), (orientation: landscape) and (max-width: 1000px) and (max-height: 600px) {
+            html, body {
+                overflow: hidden !important;
+                position: fixed !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                height: 100dvh !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            #app-container {
+                position: fixed !important;
+                inset: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                height: 100dvh !important;
+                overflow: hidden !important;
+            }
+            #sidebar {
+                display: none;
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 320px !important;
+                max-width: 80vw !important;
+                height: 100% !important;
+                height: 100dvh !important;
+                z-index: 200 !important;
+                box-shadow: 6px 0 30px rgba(0,0,0,0.85);
+            }
+            #sidebar.open {
+                display: flex !important;
+            }
+            #main-stage {
+                padding: 0 !important;
+                margin: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                height: 100dvh !important;
+                max-width: 100vw !important;
+                max-height: 100dvh !important;
+                background: #000 !important;
+                overflow: hidden !important;
+                justify-content: center !important;
+                align-items: center !important;
+                position: fixed !important;
+                inset: 0 !important;
+            }
+            #video-wrapper {
+                position: fixed !important;
+                inset: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                height: 100dvh !important;
+                max-width: 100vw !important;
+                max-height: 100dvh !important;
+                aspect-ratio: unset !important;
+                border-radius: 0 !important;
+                box-shadow: none !important;
+                z-index: 50 !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+                background: #000 !important;
+            }
+            video {
+                width: 100% !important;
+                height: 100% !important;
+                object-fit: contain !important;
+            }
+            video.fit-cover {
+                object-fit: cover !important;
+            }
+            #player-meta {
+                display: none !important;
+            }
+            #mobile-nav-bar {
+                display: none !important;
+            }
+            #close-mobile-sidebar {
+                display: block !important;
+                padding: 12px !important;
+                background: #1e293b !important;
+                color: #fff !important;
+                text-align: center !important;
+                font-weight: 700 !important;
+                cursor: pointer !important;
+            }
+        }
+
+        /* Native Fullscreen API adjustments */
+        :fullscreen #video-wrapper, :-webkit-full-screen #video-wrapper {
+            width: 100vw !important;
+            height: 100vh !important;
+            max-width: 100vw !important;
+            max-height: 100vh !important;
+            border-radius: 0 !important;
+            background: #000 !important;
+        }
+        :fullscreen video, :-webkit-full-screen video {
+            width: 100% !important;
+            height: 100% !important;
         }
     </style>
 </head>
@@ -348,8 +473,25 @@ app.get('/', (req, res) => {
             <div id="video-wrapper">
                 <video id="video-player" playsinline controls></video>
                 <div id="video-top-bar">
-                    <span class="v-badge live-badge">● CANLI</span>
-                    <span id="res-badge" class="v-badge res-badge">1080p FHD</span>
+                    <div class="top-bar-left">
+                        <span class="v-badge live-badge">● CANLI</span>
+                        <span id="top-bar-title" class="channel-title-badge">Yayın seçiniz</span>
+                        <span id="res-badge" class="v-badge res-badge">1080p FHD</span>
+                    </div>
+                    <div class="top-bar-right">
+                        <button class="btn-icon" onclick="toggleSidebar()" title="Kanal Listesi">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="15" rx="2" ry="2"></rect><polyline points="17 2 12 7 7 2"></polyline></svg>
+                            <span>Kanallar</span>
+                        </button>
+                        <button id="btn-fit" class="btn-icon" onclick="toggleFit()" title="Ekranı Doldur / Sığdır">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                            <span id="fit-label">Doldur</span>
+                        </button>
+                        <button class="btn-icon" onclick="toggleFullscreen()" title="Tam Ekran">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+                            <span>Tam Ekran</span>
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -374,6 +516,7 @@ app.get('/', (req, res) => {
 
                     <div class="pill-group">
                         <button class="btn-pill" onclick="toggleSidebar()">📺 Kanallar</button>
+                        <button class="btn-pill" onclick="toggleFullscreen()">⛶ Tam Ekran</button>
                     </div>
                 </div>
             </div>
@@ -389,6 +532,10 @@ app.get('/', (req, res) => {
         <button class="mobile-nav-btn" onclick="toggleCrisp()">
             <svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
             Netlik
+        </button>
+        <button class="mobile-nav-btn" onclick="toggleFullscreen()">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+            Tam Ekran
         </button>
     </div>
 
@@ -455,6 +602,8 @@ app.get('/', (req, res) => {
         function playChannel(ch) {
             currentChannel = ch;
             titleEl.textContent = ch.name;
+            const topTitle = document.getElementById('top-bar-title');
+            if (topTitle) topTitle.textContent = ch.name;
             statusEl.textContent = 'Bağlanıyor...';
             statusEl.style.background = '#f59e0b';
 
@@ -545,12 +694,312 @@ app.get('/', (req, res) => {
             sidebar.classList.toggle('open');
             const closeBtn = document.getElementById('close-mobile-sidebar');
             if (closeBtn) closeBtn.style.display = sidebar.classList.contains('open') ? 'block' : 'none';
+            wakeControls();
         }
+
+        // Fullscreen Toggle
+        function toggleFullscreen() {
+            const el = document.getElementById('video-wrapper') || document.documentElement;
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                if (el.requestFullscreen) {
+                    el.requestFullscreen().catch(() => {});
+                } else if (el.webkitRequestFullscreen) {
+                    el.webkitRequestFullscreen();
+                } else if (video.webkitEnterFullscreen) {
+                    video.webkitEnterFullscreen();
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen().catch(() => {});
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                }
+            }
+            wakeControls();
+        }
+
+        // Fit vs Fill (Aspect ratio toggle)
+        function toggleFit() {
+            const isCover = video.classList.toggle('fit-cover');
+            const label = document.getElementById('fit-label');
+            if (label) {
+                label.textContent = isCover ? 'Sığdır' : 'Doldur';
+            }
+            wakeControls();
+        }
+
+        // Auto-hide controls overlay
+        let controlsTimer = null;
+        const videoWrapper = document.getElementById('video-wrapper');
+        const videoTopBar = document.getElementById('video-top-bar');
+
+        function wakeControls() {
+            if (!videoTopBar) return;
+            videoTopBar.classList.remove('fade-out');
+            clearTimeout(controlsTimer);
+            controlsTimer = setTimeout(() => {
+                if (!sidebar.classList.contains('open')) {
+                    videoTopBar.classList.add('fade-out');
+                }
+            }, 3500);
+        }
+
+        videoWrapper.addEventListener('click', (e) => {
+            if (!e.target.closest('button')) {
+                if (videoTopBar.classList.contains('fade-out')) {
+                    wakeControls();
+                } else {
+                    videoTopBar.classList.add('fade-out');
+                }
+            }
+        });
+
+        videoWrapper.addEventListener('mousemove', wakeControls);
+        videoWrapper.addEventListener('touchstart', wakeControls, { passive: true });
+
+        // Double-tap on video to toggle fit / fullscreen
+        let lastTapTime = 0;
+        video.addEventListener('touchend', (e) => {
+            const currentTime = new Date().getTime();
+            const tapLength = currentTime - lastTapTime;
+            if (tapLength < 350 && tapLength > 0) {
+                toggleFit();
+                e.preventDefault();
+            }
+            lastTapTime = currentTime;
+        });
+        video.addEventListener('dblclick', toggleFullscreen);
+
+        // Auto-detect orientation change
+        function checkOrientation() {
+            const isLandscape = (window.innerWidth > window.innerHeight) && (window.innerHeight <= 650);
+            if (isLandscape && screen.orientation && screen.orientation.type && screen.orientation.type.startsWith('landscape')) {
+                // Try entering fullscreen if allowed
+                if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen().catch(() => {});
+                }
+            }
+            wakeControls();
+        }
+        window.addEventListener('resize', checkOrientation);
+        window.addEventListener('orientationchange', () => setTimeout(checkOrientation, 150));
+        if (screen.orientation) {
+            screen.orientation.addEventListener('change', () => setTimeout(checkOrientation, 150));
+        }
+        wakeControls();
     </script>
 </body>
 </html>
     `);
 });
+
+
+// ============================================================================
+// Server-Side Autonomous Playlist Scraper & Rapid Token/Health Refresher (Every 2 min)
+// ============================================================================
+const COMMUNITY_SOURCES = [
+    { name: 'mahsun', url: 'https://raw.githubusercontent.com/kadirsener1/mahsun/main/playlist.m3u' },
+    { name: 'akcagoz', url: 'https://raw.githubusercontent.com/batuhansabri55/AkcagozTV_Canli/main/tr.m3u' },
+    { name: 'lunedor', url: 'https://raw.githubusercontent.com/Lunedor/iptvTR/main/iptv_tum_kanallar.m3u' }
+];
+
+function normalizeChannelName(rawName) {
+    if (!rawName) return '';
+    return rawName.toLowerCase()
+        .replace(/ı/g, 'i')
+        .replace(/ğ/g, 'g')
+        .replace(/ü/g, 'u')
+        .replace(/ş/g, 's')
+        .replace(/ö/g, 'o')
+        .replace(/ç/g, 'c')
+        .replace(/[^a-z0-9]/g, '');
+}
+
+function matchChannelId(rawName) {
+    const n = normalizeChannelName(rawName);
+    if (!n) return null;
+
+    if (n.includes('beinsports1') || n.includes('bein1') || n.includes('beinsport1')) return 'beinsports1';
+    if (n.includes('beinsports2') || n.includes('bein2') || n.includes('beinsport2')) return 'beinsports2';
+    if (n.includes('beinsports3') || n.includes('bein3') || n.includes('beinsport3')) return 'beinsports3';
+    if (n.includes('beinsports4') || n.includes('bein4') || n.includes('beinsport4')) return 'beinsports4';
+    if (n.includes('beinsports5') || n.includes('bein5') || n.includes('beinsport5')) return 'beinsports5';
+    if (n.includes('ssport1') || n.includes('ssportplus') || n === 'ssport') return 'ssport1';
+    if (n.includes('ssport2')) return 'ssport2';
+    if (n.includes('tivibuspor1') || n === 'tivibuspor') return 'tivibuspor1';
+    if (n.includes('tivibuspor2')) return 'tivibuspor2';
+    if (n.includes('tivibuspor3')) return 'tivibuspor3';
+    if (n.includes('tivibuspor4')) return 'tivibuspor4';
+    if (n.includes('smartspor1') || n === 'smartspor') return 'smartspor1';
+    if (n.includes('smartspor2')) return 'smartspor2';
+    if (n.includes('trtsporyildiz')) return 'trtsporyildiz';
+    if (n.includes('trtspor')) return 'trtspor';
+    if (n.includes('aspor')) return 'aspor';
+    if (n.includes('exxen1')) return 'exxen1';
+    if (n.includes('exxen2')) return 'exxen2';
+    if (n.includes('exxen3')) return 'exxen3';
+    if (n.includes('exxen4')) return 'exxen4';
+    if (n.includes('exxen5')) return 'exxen5';
+    if (n.includes('exxen6')) return 'exxen6';
+    if (n.includes('exxen7')) return 'exxen7';
+    if (n.includes('exxen8')) return 'exxen8';
+    if (n.includes('tabiispor1') || n.includes('tabispor1')) return 'tabiispor1';
+    if (n.includes('tabiispor2') || n.includes('tabispor2')) return 'tabiispor2';
+    if (n.includes('tabiispor3') || n.includes('tabispor3')) return 'tabiispor3';
+    if (n === 'trt1') return 'trt1';
+    if (n === 'atv') return 'atv';
+    if (n === 'kanald') return 'kanald';
+    if (n === 'showtv' || n === 'show') return 'showtv';
+    if (n === 'startv' || n === 'star') return 'star';
+    if (n === 'tv8') return 'tv8';
+    return null;
+}
+
+async function testStreamUrl(targetUrl, timeoutMs = 2500) {
+    if (!targetUrl) return false;
+    try {
+        const u = new URL(targetUrl);
+        const headers = getHeadersForUrl(targetUrl, u);
+        const res = await axios({
+            method: 'get',
+            url: targetUrl,
+            headers: headers,
+            timeout: timeoutMs,
+            httpAgent,
+            httpsAgent,
+            maxRedirects: 3,
+            validateStatus: (status) => status >= 200 && status < 400
+        });
+        const ct = res.headers['content-type'] || '';
+        const bodyStr = typeof res.data === 'string' ? res.data : (res.data ? res.data.toString('utf-8') : '');
+        return bodyStr.includes('#EXT') || targetUrl.includes('.m3u8') || targetUrl.includes('index.txt') || ct.includes('mpegurl') || ct.includes('video');
+    } catch (e) {
+        return false;
+    }
+}
+
+async function resolveNestedStreamUrl(urlStr) {
+    if (!urlStr || !urlStr.includes('raw.githubusercontent.com') || !urlStr.endsWith('.m3u8')) {
+        return urlStr;
+    }
+    try {
+        const res = await axios.get(urlStr, { timeout: 3500, httpAgent, httpsAgent });
+        const lines = res.data.toString('utf-8').split('\n');
+        for (const l of lines) {
+            const line = l.trim();
+            if (!line.startsWith('#') && (line.startsWith('http://') || line.startsWith('https://'))) {
+                return line;
+            }
+        }
+    } catch (e) {}
+    return urlStr;
+}
+
+async function scanAndRefreshChannels() {
+    if (isScanning) return;
+    isScanning = true;
+    const startTime = Date.now();
+    console.log(`[Scanner] Autonomous channel & token scan started at ${new Date().toLocaleTimeString()}...`);
+
+    const discoveredByChannel = {};
+
+    // 1. Fetch community playlists
+    for (const src of COMMUNITY_SOURCES) {
+        try {
+            const res = await axios.get(src.url, { timeout: 6000, httpAgent, httpsAgent });
+            const lines = res.data.toString('utf-8').split('\n');
+            let currentName = '';
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (line.startsWith('#EXTINF:')) {
+                    const commaIdx = line.indexOf(',');
+                    currentName = commaIdx !== -1 ? line.substring(commaIdx + 1).trim() : '';
+                } else if (!line.startsWith('#') && (line.startsWith('http://') || line.startsWith('https://'))) {
+                    const matchedId = matchChannelId(currentName);
+                    if (matchedId) {
+                        let streamUrl = line.split('|')[0].trim();
+                        if (!discoveredByChannel[matchedId]) discoveredByChannel[matchedId] = new Set();
+                        discoveredByChannel[matchedId].add(streamUrl);
+                    }
+                }
+            }
+        } catch (err) {
+            console.log(`[Scanner] Failed to fetch source ${src.name}: ${err.message}`);
+        }
+    }
+
+    // 2. Process and health-check channels
+    let onlineCount = 0;
+    for (const ch of curatedChannels) {
+        const urlCandidates = new Set(ch.urls || []);
+        if (discoveredByChannel[ch.id]) {
+            for (const u of discoveredByChannel[ch.id]) {
+                urlCandidates.add(u);
+            }
+        }
+
+        const candidateList = Array.from(urlCandidates);
+        // Resolve nested github URLs in candidate list
+        const resolvedList = [];
+        for (const u of candidateList.slice(0, 8)) {
+            const resolved = await resolveNestedStreamUrl(u);
+            if (!resolvedList.includes(resolved)) resolvedList.push(resolved);
+        }
+
+        // Test candidates concurrently
+        const testResults = await Promise.allSettled(
+            resolvedList.slice(0, 5).map(u => testStreamUrl(u, 2500))
+        );
+
+        const workingUrls = [];
+        const failingUrls = [];
+
+        for (let i = 0; i < testResults.length; i++) {
+            const u = resolvedList[i];
+            if (testResults[i].status === 'fulfilled' && testResults[i].value === true) {
+                workingUrls.push(u);
+            } else {
+                failingUrls.push(u);
+            }
+        }
+
+        // Keep remaining untried candidates at the end
+        for (const u of resolvedList.slice(5)) {
+            failingUrls.push(u);
+        }
+
+        const reordered = [...workingUrls, ...failingUrls];
+        if (reordered.length > 0) {
+            ch.urls = reordered;
+        }
+
+        const isOnline = workingUrls.length > 0;
+        channelStatus[ch.id] = {
+            online: isOnline,
+            checkedAt: Date.now(),
+            workingCount: workingUrls.length,
+            primary: ch.urls[0] || ''
+        };
+        if (isOnline) onlineCount++;
+    }
+
+    lastScanTime = Date.now();
+    isScanning = false;
+    const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+    console.log(`[Scanner] Done in ${duration}s. Online: ${onlineCount}/${curatedChannels.length} channels.`);
+
+    // Persist verified channels to disk
+    try {
+        fs.writeFileSync(path.join(__dirname, 'verified_channels.json'), JSON.stringify(curatedChannels, null, 2), 'utf-8');
+    } catch (e) {
+        console.error('[Scanner] Failed to save verified_channels.json:', e.message);
+    }
+}
+
+// Run scanner every 2 minutes (120,000 ms)
+setInterval(scanAndRefreshChannels, 2 * 60 * 1000);
+setTimeout(scanAndRefreshChannels, 3000);
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Seyir TV Oracle Gateway running on port ${PORT}`);

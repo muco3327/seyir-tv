@@ -103,7 +103,7 @@ public final class PlayerActivity extends Activity {
     };
 
     private final Runnable hideControls = () -> {
-        if (player != null && player.isPlaying() && !insideControls(getCurrentFocus())) {
+        if (player != null && player.isPlaying() && (channelSidebar == null || channelSidebar.getVisibility() != View.VISIBLE)) {
             overlays(false);
         }
     };
@@ -239,7 +239,7 @@ public final class PlayerActivity extends Activity {
         playerTitle.setText(title != null ? title.title : "Seyir TV");
 
         Button[] allButtons = {btnTopBack, btnTopChannels, btnTopClose, btnChannels, btnPrevChannel, btnRewind,
-                btnPlayPause, btnNextSource, btnForward, btnNextChannel, btnResize, btnQuality, btnLock,
+                btnPlayPause, btnNextSource, btnForward, btnNextChannel, btnResize, btnQuality,
                 btnAudio, btnSubtitle, btnSpeed, btnCloseSidebar, btnFilterAll, btnFilterSports, btnFilterNational};
         for (Button b : allButtons) {
             if (b != null) Ui.focus(b);
@@ -262,8 +262,8 @@ public final class PlayerActivity extends Activity {
         btnSubtitle.setOnClickListener(v -> selectTracks(C.TRACK_TYPE_TEXT));
         btnSpeed.setOnClickListener(v -> selectSpeed());
 
-        btnLock.setOnClickListener(v -> lockControls(true));
-        btnFloatingUnlock.setOnClickListener(v -> lockControls(false));
+        if (btnLock != null) btnLock.setVisibility(View.GONE);
+        if (btnFloatingUnlock != null) btnFloatingUnlock.setVisibility(View.GONE);
 
         updateNextSourceButton();
 
@@ -991,7 +991,9 @@ public final class PlayerActivity extends Activity {
 
     private void scheduleHide() {
         progressHandler.removeCallbacks(hideControls);
-        progressHandler.postDelayed(hideControls, 5000);
+        if (player != null && player.isPlaying() && (channelSidebar == null || channelSidebar.getVisibility() != View.VISIBLE)) {
+            progressHandler.postDelayed(hideControls, 4000);
+        }
     }
 
     private void showError(String code) {
@@ -1185,6 +1187,7 @@ public final class PlayerActivity extends Activity {
                 return true;
             }
         } else {
+            scheduleHide();
             if (k == KeyEvent.KEYCODE_DPAD_UP && insideBottomPanel(getCurrentFocus())) {
                 btnTopBack.requestFocus();
                 return true;
@@ -1198,12 +1201,13 @@ public final class PlayerActivity extends Activity {
     }
 
     @Override public void onBackPressed() {
-        if (isLocked) {
-            showUnlockButton();
-            return;
-        }
         if (channelSidebar != null && channelSidebar.getVisibility() == View.VISIBLE) {
             hideChannelSidebar();
+            return;
+        }
+        boolean controlsShown = playerControlsOverlay != null && playerControlsOverlay.getVisibility() == View.VISIBLE;
+        if (controlsShown) {
+            overlays(false);
             return;
         }
         closePlayer();
