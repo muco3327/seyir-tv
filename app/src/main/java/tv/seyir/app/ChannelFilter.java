@@ -40,10 +40,10 @@ final class ChannelFilter {
         if (!n.matches(".*bein\\s*sports?.*")) return false;
         boolean country = n.matches(".*(?:\\bturkey\\b|\\btr\\b).*")
             || g.matches(".*\\b(tr|turkey|turkiye|turkish)\\b.*");
-        boolean localGroup = g.equals("spor") || g.startsWith("spor-") || g.equals("atom spor") || g.equals("tr spor") || g.equals("bein-tv247");
+        boolean localGroup = g.equals("spor") || g.startsWith("spor-") || g.equals("atom spor") || g.equals("tr spor") || g.equals("bein-tv247") || g.equals("tr-spor") || g.startsWith("tr-") || g.contains("derbi") || g.contains("super lig");
         String clean = n.replaceAll("\\[[^]]*]", " ")
             .replaceAll("\\b(turkey|tr|hd|fhd|uhd|hq|sd|1080p|720p)\\b", " ")
-            .replaceAll("(?:[- ]+(?:atom|zeus|cdn|mahsun|forestgump|tv247|ace|tal|talip|tul)(?:\\s+1)?)$", "")
+            .replaceAll("(?:[- /]+(?:atom|zeus|cdn|mahsun|forestgump|tv247|ace|tal|talip|tul|mobil)(?:\\s+1)?)$", "")
             .replaceAll("[^a-z0-9]", "");
         return (country || localGroup) && clean.matches("beinsports?(?:[1-5]|max[12]|haber)");
     }

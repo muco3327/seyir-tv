@@ -291,7 +291,7 @@ public final class SportsManager {
                     while ((line = reader.readLine()) != null) {
                         line = line.trim();
                         // HLS entries are renditions/segments, not standalone channel URLs.
-                        if (line.startsWith("#EXT-X-")) return urlStr;
+                        if (line.startsWith("#EXT-X-TARGETDURATION") || line.endsWith(".ts")) return urlStr;
                         if (line.startsWith("#EXTVLCOPT:")) {
                             if (line.contains("http-user-agent=")) {
                                 headers.put("User-Agent", line.substring(line.indexOf("=") + 1).trim());

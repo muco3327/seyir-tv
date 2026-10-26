@@ -46,6 +46,17 @@ public class ChannelFilterTest {
         assertFalse(ChannelFilter.allows("Random Cinema","General"));
         assertFalse(ChannelFilter.allows("FR: FilmBox HD","Movies"));
     }
+    @Test public void preservesTurkishBeinVariantsAcrossAggregatedLists() {
+        assertTrue(ChannelFilter.allows("BEİN SPORTS 1", "??BEİNSPORTS DERBİ ÖZEL??"));
+        assertTrue(ChannelFilter.allows("beIN SPORTS 1 ", "TR-SPOR"));
+        assertTrue(ChannelFilter.allows("TR: beIN SPORTS 1 ", "TR-SPOR"));
+        assertTrue(ChannelFilter.allows("beIN SPORTS 2", "TR-SPOR"));
+        assertTrue(ChannelFilter.allows("beIN SPORTS 3", "TR-SPOR"));
+        assertTrue(ChannelFilter.allows("beIN SPORTS 4", "TR-SPOR"));
+        assertTrue(ChannelFilter.allows("beIN SPORTS 5", "TR-SPOR"));
+        assertTrue(ChannelFilter.allows("TR: beIN SPORTS 1 /MOBIL", "TR-SPOR"));
+    }
+
     @Test public void preservesTabiiChannels() {
         for(String name:new String[]{"TABİİ SPOR", "Tabii Spor 1", "Tabii Spor 2", "Tabii Spor 8", "TR:TABII SPOR UHD", "TR:TABII SPOR 1 HD", "TABİ SPOR", "TABİİ TV"})
             assertTrue(name, ChannelFilter.allows(name, "TabiiSpor"));

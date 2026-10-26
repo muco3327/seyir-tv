@@ -1,6 +1,6 @@
 {
-  "versionCode": 69,
-  "versionName": "0.5.26",
-  "changelog": "Tabii Spor (1-8) ve Tabii TV eklendi! Kanal onay filtresi (ChannelFilter) ve kategori motoru güncellendi; UEFA maçları için Tabii Spor kanalları doğrudan resmi TRT Akamai CDN yedekleriyle birlikte listeye dahil edildi.",
-  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.26.apk"
+  "versionCode": 70,
+  "versionName": "0.5.27",
+  "changelog": "beIN Sports ve Canlı Spor Kanalları Arama Motoru Genişletildi!\n1. Güncel ve aktif beIN Sports yayınları içeren yeni GitHub IPTV havuzları (AkcagozTV, Yusufdkci, Lunedor/iptvTR, Cortexia TV vb.) eklendi.\n2. GitHub dinamik arama sorguları ve tarama kapsamı genişletildi (spor, canlı tv, canli, tv vb.).\n3. İç içe (nested) GitHub oynatma listelerindeki yönlendirme ve çözme hatası giderildi (master playlist başlıkları artık linki kesmiyor).\n4. Farklı grup adlandırmalarındaki (TR-SPOR, Derbi Özel vb.) beIN kanalları onay filtresine dahil edildi.",
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.27.apk"
 }

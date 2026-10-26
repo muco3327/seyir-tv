@@ -18,17 +18,26 @@ public class GithubScanner {
     // These fixed sources are deliberately loaded before GitHub discovery so a
     // temporary GitHub/API failure can never replace the working base catalog.
     private static final String[] CURATED_LISTS = {
+            "https://raw.githubusercontent.com/batuhansabri55/AkcagozTV_Canli/main/tr.m3u",
             "https://raw.githubusercontent.com/kadirsener1/mahsun/main/playlist.m3u",
             "https://raw.githubusercontent.com/omerdenizhan/IPTV-M3U/refs/heads/main/m3u/turkiye.m3u",
-            "https://raw.githubusercontent.com/omerdenizhan/IPTV-M3U/refs/heads/main/m3u/turkiye-iptv-org.m3u",
+            "https://raw.githubusercontent.com/Lunedor/iptvTR/main/iptv_tum_kanallar.m3u",
+            "https://raw.githubusercontent.com/Lunedor/iptvTR/main/fortv.m3u",
+            "https://raw.githubusercontent.com/Yusufdkci/iptv/main/liste.m3u",
+            "https://raw.githubusercontent.com/GhostFelina/cortexia-tv-public/main/public/TV-tr.m3u",
             "https://raw.githubusercontent.com/myiptv2/iptv-playlist/main/kanallar.m3u",
             "https://raw.githubusercontent.com/Tahir2020/TR_Avrupa/main/playlist/playerlist.m3u",
-            "https://iptv-org.github.io/iptv/countries/tr.m3u"
+            "https://raw.githubusercontent.com/iptv-org/iptv/master/streams/tr.m3u"
     };
 
     // GitHub search queries for discovering additional playlists
     private static final String[] SEARCH_QUERIES = {
-            "iptv turkey m3u"
+            "iptv turkey m3u",
+            "canli tv m3u",
+            "turk iptv m3u",
+            "iptv tr m3u",
+            "iptv spor m3u",
+            "turkiye iptv playlist"
     };
 
     private static final String[] EXCLUDE_KEYWORDS = {"adult", "xxx", "nsfw"};
@@ -80,7 +89,7 @@ public class GithubScanner {
             try {
                 if (callback != null) callback.onProgress("GitHub taranyor: " + q);
                 String encodedQuery = URLEncoder.encode(q + " pushed:>" + sinceDate, "UTF-8");
-                String searchUrl = "https://api.github.com/search/repositories?q=" + encodedQuery + "&sort=updated&order=desc&per_page=5";
+                String searchUrl = "https://api.github.com/search/repositories?q=" + encodedQuery + "&sort=updated&order=desc&per_page=8";
 
                 List<JSONObject> repos = fetchGithubSearchRepos(searchUrl);
                 if (repos == null) {
@@ -106,7 +115,7 @@ public class GithubScanner {
                         String pathLower = path.toLowerCase(Locale.ROOT);
                         long size = fileItem.optLong("size", 0L);
 
-                        if ((pathLower.endsWith(".m3u") || pathLower.endsWith(".m3u8")) && size > 1024L) {
+                        if ((pathLower.endsWith(".m3u") || pathLower.endsWith(".m3u8")) && size > 300L) {
                             boolean exclude = false;
                             for (String kw : EXCLUDE_KEYWORDS) {
                                 if (pathLower.contains(kw)) { exclude = true; break; }
@@ -117,7 +126,7 @@ public class GithubScanner {
                             boolean relevant = pathLower.contains("tr") || pathLower.contains("turk")
                                     || pathLower.contains("turkey") || pathLower.contains("turkiye")
                                     || pathLower.contains("playlist") || pathLower.contains("channels")
-                                    || pathLower.contains("live");
+                                    || pathLower.contains("live") || pathLower.contains("spor") || pathLower.contains("canli") || pathLower.contains("tv");
                             if (!relevant) continue;
 
                             String rawUrl = "https://raw.githubusercontent.com/" + repoFullName + "/" + branch + "/" + path;
