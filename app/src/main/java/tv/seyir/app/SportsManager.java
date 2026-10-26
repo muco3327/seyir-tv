@@ -38,6 +38,17 @@ public final class SportsManager {
         }
     }
 
+    public static int getUrlQualityScore(String u) {
+        if (u == null) return 0;
+        String lower = u.toLowerCase(Locale.ROOT);
+        if (lower.contains("4k") || lower.contains("uhd") || lower.contains("2160")) return 1000;
+        if (lower.contains("cdnlive") || lower.contains("tvnow") || lower.contains("zeus") || lower.contains("chunk") || lower.contains("1080") || lower.contains("fhd") || lower.contains("corestream") || lower.contains("atom")) return 800;
+        if (lower.contains("720") || lower.contains("hd") || lower.contains("mahsun") || lower.contains("tv247") || lower.contains("forestgump")) return 600;
+        if (lower.contains("play_token") || lower.contains("live.php") || lower.contains("tomtv") || lower.contains("deat1") || lower.contains("camon1")) return 400;
+        if (lower.contains("andro") || lower.contains("mobil") || lower.contains("mobile") || lower.contains("sd") || lower.contains("480") || lower.contains("360")) return 100;
+        return 500;
+    }
+
     public static boolean needsProxy(String url) {
         if (url == null) return false;
         String lower = url.toLowerCase(Locale.ROOT);
@@ -491,6 +502,10 @@ public final class SportsManager {
                         }
                     }
                 }
+
+                String masterUrl = (!urls.isEmpty() && urls.get(0).contains("150.230.29.27:3000/channel/")) ? urls.remove(0) : null;
+                urls.sort((u1, u2) -> Integer.compare(getUrlQualityScore(u2), getUrlQualityScore(u1)));
+                if (masterUrl != null) urls.add(0, masterUrl);
 
                 Map<String, String> headers = new HashMap<>();
                 JSONObject hObj = obj.optJSONObject("headers");

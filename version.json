@@ -1,6 +1,6 @@
 {
-  "versionCode": 81,
-  "versionName": "0.5.38",
-  "changelog": "Hızlı Zapping, Kesintisiz Otomatik Geçiş & Boyut Optimizasyonu (v0.5.38):\n1. R8/ProGuard kod optimizasyonu ile APK boyutu yarı yarıya düşürüldü (~2 MB).\n2. beIN Sports 1-5 ve Max kanallarının filtre engeli kaldırıldı; tüm kaynaklar aktif edildi.\n3. Kumandadan Yukarı/Aşağı tuşları ile Hızlı Zapping (doğrudan kanal geçişi) eklendi.\n4. Donma, takılma ve bağlantı hatalarında otomatik çalışan yedek kaynağa geçiş (Silent Failover) sağlandı.\n5. Oynatıcı üst bilgi çubuğuna ve HUD'a canlı program ve maç akış bilgisi (EPG) eklendi.",
-  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.38.apk"
+  "versionCode": 82,
+  "versionName": "0.5.39",
+  "changelog": "UHD & Full HD (1080p) Kalite Önceliği (v0.5.39):\n1. Kanal akış sıralaması UHD -> FHD (1080p 50fps) -> HD (720p) -> SD olarak yeniden düzenlendi.\n2. Düşük çözünürlüklü mobil akışlar en sona atıldı; 1080p net yayınlar birincil yapıldı.\n3. ExoPlayer başlangıç bant genişliği 15 Mbps'ye çıkarıldı ve otomatik 1080p video kilidi eklendi.\n4. beIN Sports 1 ve tüm kanallar Full HD kalitesine yükseltildi.",
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.39.apk"
 }

@@ -66,6 +66,16 @@ app.get('/api/version', (req, res) => {
     }
 });
 
+function getQualityScore(url) {
+    const u = (url || '').toLowerCase();
+    if (u.includes('4k') || u.includes('uhd') || u.includes('2160')) return 1000;
+    if (u.includes('cdnlive') || u.includes('tvnow') || u.includes('zeus') || u.includes('chunk') || u.includes('1080') || u.includes('fhd') || u.includes('corestream') || u.includes('atom')) return 800;
+    if (u.includes('720') || u.includes('hd') || u.includes('mahsun') || u.includes('tv247') || u.includes('forestgump')) return 600;
+    if (u.includes('play_token') || u.includes('live.php') || u.includes('tomtv') || u.includes('deat1') || u.includes('camon1')) return 400;
+    if (u.includes('andro') || u.includes('mobil') || u.includes('mobile') || u.includes('sd') || u.includes('480') || u.includes('360')) return 100;
+    return 500;
+}
+
 function isSegmentUrl(url) {
     return Boolean(
         url.match(/\.(ts|jpg|jpeg|png|aac|m4s)(\?|$)/i) ||
@@ -123,8 +133,9 @@ app.get('/channel/:id.m3u8', async (req, res) => {
     res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', '*');
 
-    for (let i = 0; i < ch.urls.length; i++) {
-        const targetUrl = ch.urls[i];
+    const sortedUrls = [...ch.urls].sort((a, b) => getQualityScore(b) - getQualityScore(a));
+    for (let i = 0; i < sortedUrls.length; i++) {
+        const targetUrl = sortedUrls[i];
         try {
             const u = new URL(targetUrl);
             const headers = getHeadersForUrl(targetUrl, u);
@@ -939,7 +950,7 @@ async function scanAndRefreshChannels() {
             }
         }
 
-        const candidateList = Array.from(urlCandidates);
+        const candidateList = Array.from(urlCandidates).sort((a, b) => getQualityScore(b) - getQualityScore(a));
         // Resolve nested github URLs in candidate list
         const resolvedList = [];
         for (const u of candidateList.slice(0, 8)) {
@@ -969,6 +980,8 @@ async function scanAndRefreshChannels() {
             failingUrls.push(u);
         }
 
+        workingUrls.sort((a, b) => getQualityScore(b) - getQualityScore(a));
+        failingUrls.sort((a, b) => getQualityScore(b) - getQualityScore(a));
         const reordered = [...workingUrls, ...failingUrls];
         if (reordered.length > 0) {
             ch.urls = reordered;

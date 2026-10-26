@@ -12,6 +12,7 @@ import androidx.media3.datasource.*;
 import androidx.media3.exoplayer.*;
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory;
 import androidx.media3.ui.PlayerView;
+import androidx.media3.exoplayer.upstream.DefaultBandwidthMeter;
 import androidx.media3.ui.AspectRatioFrameLayout;
 import org.json.JSONObject;
 import java.util.*;
@@ -781,6 +782,7 @@ public final class PlayerActivity extends Activity {
         liveRecovery.reset();
         position = 0;
         shouldPlay = true;
+        fallbackList.sort((u1, u2) -> Integer.compare(SportsManager.getUrlQualityScore(u2), SportsManager.getUrlQualityScore(u1)));
         updateNextSourceButton();
         playerStatusBadge.setText("Kanal açılıyor…");
         updateEpgInfo(ch.name);
@@ -854,7 +856,12 @@ public final class PlayerActivity extends Activity {
                 playbackData = () -> new RefreshingPlaylistDataSource(httpData.createDataSource(), new PlaylistRoute(request.url));
             }
 
+            DefaultBandwidthMeter bandwidthMeter = new DefaultBandwidthMeter.Builder(this)
+                .setInitialBitrateEstimate(15_000_000)
+                .build();
+
             player = new ExoPlayer.Builder(this, new DefaultRenderersFactory(this).setEnableDecoderFallback(true))
+                .setBandwidthMeter(bandwidthMeter)
                 .setMediaSourceFactory(new DefaultMediaSourceFactory(playbackData))
                 .setSeekBackIncrementMs(10000)
                 .setSeekForwardIncrementMs(10000)
@@ -908,6 +915,35 @@ public final class PlayerActivity extends Activity {
                 }
                 @Override public void onVideoSizeChanged(VideoSize videoSize) {
                     updateQualityLabel();
+                }
+                @Override public void onTracksChanged(Tracks tracks) {
+                    updateQualityLabel();
+                    if (selectedQualityHeight == 0 && player != null) {
+                        TrackSelectionOverride bestOverride = null;
+                        int maxScore = -1;
+                        for (Tracks.Group group : tracks.getGroups()) {
+                            if (group.getType() == C.TRACK_TYPE_VIDEO) {
+                                for (int i = 0; i < group.length; i++) {
+                                    if (group.isTrackSupported(i)) {
+                                        Format f = group.getTrackFormat(i);
+                                        int score = (f.height * 10000) + (f.bitrate > 0 ? f.bitrate / 1000 : 0);
+                                        if (score > maxScore) {
+                                            maxScore = score;
+                                            bestOverride = new TrackSelectionOverride(group.getMediaTrackGroup(), i);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if (bestOverride != null) {
+                            player.setTrackSelectionParameters(
+                                player.getTrackSelectionParameters().buildUpon()
+                                    .setOverrideForType(bestOverride)
+                                    .setForceHighestSupportedBitrate(true)
+                                    .build()
+                            );
+                        }
+                    }
                 }
                 @Override public void onPlayerError(PlaybackException e) {
                     if (playerBufferingLayout != null) playerBufferingLayout.setVisibility(View.GONE);
