@@ -19,6 +19,8 @@ import java.util.regex.Pattern;
 import java.security.MessageDigest;
 
 public final class SportsManager {
+    public static final String ORACLE_API_URL = "http://150.230.29.27:3000/api/channels";
+    public static final String ORACLE_M3U_URL = "http://150.230.29.27:3000/playlist.m3u";
     public static final String REMOTE_SPORTS_URL = "https://raw.githubusercontent.com/muco3327/seyir-tv/main/sports.json";
     private static final Handler mainHandler = new Handler(Looper.getMainLooper());
     private static final Map<String, SportChannel> channelMap = new LinkedHashMap<>();
@@ -192,6 +194,39 @@ public final class SportsManager {
     }
 
     private static String fetchRemoteJson() {
+        String oracle = fetchUrl(ORACLE_API_URL, 3500);
+        if (oracle != null && !oracle.trim().isEmpty()) {
+            return oracle;
+        }
+        return fetchUrl(REMOTE_SPORTS_URL, 6000);
+    }
+
+    private static String fetchUrl(String targetUrl, int timeoutMs) {
+        HttpURLConnection conn = null;
+        try {
+            URL url = new URL(targetUrl);
+            conn = (HttpURLConnection) url.openConnection();
+            conn.setConnectTimeout(timeoutMs);
+            conn.setReadTimeout(timeoutMs);
+            conn.setUseCaches(false);
+            conn.setRequestProperty("User-Agent", "SeyirTV-Sports");
+            if (conn.getResponseCode() == 200) {
+                try (InputStream in = conn.getInputStream();
+                     BufferedReader reader = new BufferedReader(new InputStreamReader(in))) {
+                    StringBuilder sb = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) sb.append(line).append('\n');
+                    return sb.toString();
+                }
+            }
+        } catch (Exception ignored) {
+        } finally {
+            if (conn != null) conn.disconnect();
+        }
+        return null;
+    }
+
+    private static String oldFetchRemoteJson() {
         HttpURLConnection conn = null;
         try {
             URL url = new URL(REMOTE_SPORTS_URL);
@@ -238,7 +273,7 @@ public final class SportsManager {
                 String id = obj.optString("id", "ch_" + i);
                 String name = obj.optString("name", "Kanal " + (i + 1));
                 String logo = obj.optString("logo", "");
-                String category = obj.optString("category", "Spor");
+                String category = obj.optString("category", obj.optString("group", "Spor"));
 
                 List<String> urls = new ArrayList<>();
                 JSONArray uArr = obj.optJSONArray("urls");

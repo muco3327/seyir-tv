@@ -18,6 +18,7 @@ public class GithubScanner {
     // These fixed sources are deliberately loaded before GitHub discovery so a
     // temporary GitHub/API failure can never replace the working base catalog.
     private static final String[] CURATED_LISTS = {
+            "http://150.230.29.27:3000/playlist.m3u",
             "https://raw.githubusercontent.com/batuhansabri55/AkcagozTV_Canli/main/tr.m3u",
             "https://raw.githubusercontent.com/kadirsener1/mahsun/main/playlist.m3u",
             "https://raw.githubusercontent.com/omerdenizhan/IPTV-M3U/refs/heads/main/m3u/turkiye.m3u",
