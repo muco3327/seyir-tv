@@ -63,17 +63,14 @@ public class GithubScanner {
         // GitHub repository discovery and is kept usable when the API is down.
         if (callback != null) callback.onProgress("Topluluk IPTV listeleri kontrol ediliyor...");
         for (String listUrl : CURATED_LISTS) {
-            if (isUrlAccessible(listUrl)) {
-                discoveredUrls.add(listUrl);
-                seenUrls.add(listUrl);
-                if (callback != null) callback.onProgress("Liste bulundu: " + listUrl.substring(listUrl.lastIndexOf('/') + 1));
-            }
+            discoveredUrls.add(listUrl);
+            seenUrls.add(listUrl);
         }
-        final int curatedCount = discoveredUrls.size();
-        if (callback != null) {
-            callback.onProgress(curatedCount > 0
-                    ? "Sabit kaynaklar hazır: " + curatedCount + " liste. GitHub ek kaynak taraması başlatılıyor..."
-                    : "Sabit kaynaklara ulaşılamadı. GitHub ek kaynak taraması deneniyor...");
+        if (!discoveredUrls.isEmpty()) {
+            cachedUrls = new ArrayList<>(discoveredUrls);
+            lastScanTime = System.currentTimeMillis();
+            if (callback != null) callback.onProgress("Sabit IPTV listeleri hazır: " + discoveredUrls.size());
+            return new ArrayList<>(cachedUrls);
         }
 
         // Phase 2: GitHub search for additional playlists. A failure here is
@@ -150,7 +147,7 @@ public class GithubScanner {
         }
 
         if (callback != null && githubSearchFailed) {
-            callback.onProgress(curatedCount > 0
+            callback.onProgress(!discoveredUrls.isEmpty()
                     ? "GitHub ek kaynak taraması başarısız oldu; sabit listeler kullanılacak."
                     : "GitHub ek kaynak taraması başarısız oldu; kullanılabilir liste bulunamadı.");
         }

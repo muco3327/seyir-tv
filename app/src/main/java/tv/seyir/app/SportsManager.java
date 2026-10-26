@@ -7,11 +7,15 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.regex.Matcher;
@@ -140,32 +144,134 @@ public final class SportsManager {
 
     private static String appendHeadersToUrl(String url, Map<String, String> headers) { return StreamRequest.encode(url, headers); }
 
+    private static final String DISK_CACHE_FILE = "channels_cache_v2.json";
+
+    private static String loadDiskCache(Context context) {
+        try {
+            File file = new File(context.getFilesDir(), DISK_CACHE_FILE);
+            if (!file.exists() || file.length() == 0) return null;
+            try (FileInputStream in = new FileInputStream(file);
+                 BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8))) {
+                StringBuilder sb = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) sb.append(line).append('\n');
+                return sb.toString();
+            }
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private static void saveDiskCache(Context context, String json) {
+        if (json == null || json.trim().isEmpty()) return;
+        try {
+            File file = new File(context.getFilesDir(), DISK_CACHE_FILE);
+            try (FileOutputStream out = new FileOutputStream(file)) {
+                out.write(json.getBytes(StandardCharsets.UTF_8));
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
     public static void loadChannels(Context context, boolean forceRefresh, Callback callback, StatusCallback statusListener) {
+        final Context appContext = context.getApplicationContext();
+        final int generation = loadGeneration.incrementAndGet();
+
+        // FAST TIER 0: In-memory cache (0ms)
         if (!forceRefresh && cachedList != null && !cachedList.isEmpty()) {
             callback.onLoaded(new ArrayList<>(cachedList));
             return;
         }
 
-        if (forceRefresh) {
-            GithubScanner.clearCache();
+        // FAST TIER 1: On-disk cache (10-15ms)
+        if (!forceRefresh) {
+            String diskJson = loadDiskCache(appContext);
+            if (diskJson != null && !diskJson.trim().isEmpty()) {
+                List<SportChannel> diskChannels = parseJson(diskJson);
+                if (!diskChannels.isEmpty()) {
+                    synchronized (SportsManager.class) {
+                        channelMap.clear();
+                        for (SportChannel ch : diskChannels) {
+                            for (String u : ch.urls) channelMap.put(u, ch);
+                            channelMap.put(ch.id, ch);
+                        }
+                        cachedList = diskChannels;
+                    }
+                    callback.onLoaded(new ArrayList<>(diskChannels));
+                    fetchBackgroundUpdate(appContext, generation, callback);
+                    return;
+                }
+            }
+
+            // FAST TIER 2: Asset sports.json (5ms, if first run ever)
+            String assetJson = loadAssetJson(appContext);
+            if (assetJson != null && !assetJson.trim().isEmpty()) {
+                List<SportChannel> assetChannels = parseJson(assetJson);
+                if (!assetChannels.isEmpty()) {
+                    synchronized (SportsManager.class) {
+                        channelMap.clear();
+                        for (SportChannel ch : assetChannels) {
+                            for (String u : ch.urls) channelMap.put(u, ch);
+                            channelMap.put(ch.id, ch);
+                        }
+                        cachedList = assetChannels;
+                    }
+                    callback.onLoaded(new ArrayList<>(assetChannels));
+                    fetchBackgroundUpdate(appContext, generation, callback);
+                    return;
+                }
+            }
         }
 
-        final int generation = loadGeneration.incrementAndGet();
+        // Full load on refresh or when no cache available
+        if (forceRefresh) GithubScanner.clearCache();
+        performFullLoad(appContext, generation, forceRefresh, callback, statusListener);
+    }
+
+    private static void fetchBackgroundUpdate(Context appContext, int generation, Callback callback) {
+        loader.execute(() -> {
+            if (generation != loadGeneration.get()) return;
+            String json = fetchRemoteJson();
+            if (json == null || json.trim().isEmpty()) return;
+
+            List<SportChannel> freshChannels = parseJson(json);
+            if (freshChannels.isEmpty() || generation != loadGeneration.get()) return;
+
+            saveDiskCache(appContext, json);
+            synchronized (SportsManager.class) {
+                channelMap.clear();
+                for (SportChannel ch : freshChannels) {
+                    for (String u : ch.urls) channelMap.put(u, ch);
+                    channelMap.put(ch.id, ch);
+                }
+                cachedList = freshChannels;
+            }
+            mainHandler.post(() -> {
+                if (generation == loadGeneration.get()) {
+                    callback.onLoaded(new ArrayList<>(freshChannels));
+                }
+            });
+        });
+    }
+
+    private static void performFullLoad(Context appContext, int generation, boolean forceRefresh, Callback callback, StatusCallback statusListener) {
         final StatusCallback statusCallback = statusListener == null ? null : message -> {
             if (generation == loadGeneration.get()) statusListener.onStatus(message);
         };
-        final Context appContext = context.getApplicationContext();
         loader.execute(() -> {
             if (generation != loadGeneration.get()) return;
-            Map<String, SportChannel> aggregated = new LinkedHashMap<>();
-            Set<String> seenUrls = new HashSet<>();
+            if (statusCallback != null) mainHandler.post(() -> statusCallback.onStatus("Yayın kaynakları taranıyor…"));
 
-            // 1. Yerel / JSON Yükle
-            if (statusCallback != null) mainHandler.post(() -> statusCallback.onStatus("Yerel liste yukleniyor..."));
             String json = fetchRemoteJson();
             if (json == null || json.trim().isEmpty()) {
                 json = loadAssetJson(appContext);
             }
+            if (json != null && !json.trim().isEmpty()) {
+                saveDiskCache(appContext, json);
+            }
+
+            Map<String, SportChannel> aggregated = new LinkedHashMap<>();
+            Set<String> seenUrls = new HashSet<>();
 
             List<SportChannel> baseChannels = parseJson(json);
             for (SportChannel ch : baseChannels) {
@@ -176,9 +282,7 @@ public final class SportsManager {
                 if (aggregated.containsKey(cleanKey)) {
                     SportChannel existing = aggregated.get(cleanKey);
                     for (String u : ch.urls) {
-                        if (!existing.urls.contains(u)) {
-                            existing.urls.add(u);
-                        }
+                        if (!existing.urls.contains(u)) existing.urls.add(u);
                     }
                 } else {
                     aggregated.put(cleanKey, ch);
@@ -186,36 +290,24 @@ public final class SportsManager {
                 seenUrls.addAll(ch.urls);
             }
 
-            // 2. Github Tarama
-            if (statusCallback != null) mainHandler.post(() -> statusCallback.onStatus("IPTV listeleri taraniyor..."));
-            List<String> m3uUrls = GithubScanner.scanPlaylists(msg -> {
-                if (statusCallback != null) mainHandler.post(() -> statusCallback.onStatus(msg));
-            });
-
-            // 3. M3U İndirme ve Birleştirme
-            for (String m3uUrl : m3uUrls) {
-                if (generation != loadGeneration.get()) return;
-                String shortName = m3uUrl.substring(m3uUrl.lastIndexOf('/') + 1);
-                if (statusCallback != null) mainHandler.post(() -> statusCallback.onStatus("Liste ayrıştırılıyor: " + shortName));
-                
-                parseM3uToAggregator(m3uUrl, aggregated, seenUrls);
+            if (forceRefresh) {
+                List<String> m3uUrls = GithubScanner.scanPlaylists(msg -> {
+                    if (statusCallback != null) mainHandler.post(() -> statusCallback.onStatus(msg));
+                });
+                for (String m3uUrl : m3uUrls) {
+                    if (generation != loadGeneration.get()) return;
+                    parseM3uToAggregator(m3uUrl, aggregated, seenUrls);
+                }
             }
 
             List<SportChannel> channels = new ArrayList<>(aggregated.values());
             if (generation != loadGeneration.get()) return;
-            if (statusCallback != null) mainHandler.post(() -> {
-                if (generation == loadGeneration.get()) statusCallback.onStatus(channels.isEmpty()
-                    ? "Kanal listeleri yüklenemedi. Bağlantını kontrol edip yeniden dene."
-                    : channels.size() + " kanal listelendi. Yayınlar açılırken kontrol edilir.");
-            });
 
             if (!channels.isEmpty()) {
                 synchronized (SportsManager.class) {
                     channelMap.clear();
                     for (SportChannel ch : channels) {
-                        for (String u : ch.urls) {
-                            channelMap.put(u, ch);
-                        }
+                        for (String u : ch.urls) channelMap.put(u, ch);
                         channelMap.put(ch.id, ch);
                     }
                     cachedList = channels;
@@ -223,7 +315,9 @@ public final class SportsManager {
             }
 
             List<SportChannel> result = channels.isEmpty() && cachedList != null ? cachedList : channels;
-            mainHandler.post(() -> { if (generation == loadGeneration.get()) callback.onLoaded(result); });
+            mainHandler.post(() -> {
+                if (generation == loadGeneration.get()) callback.onLoaded(result);
+            });
         });
     }
 
@@ -417,7 +511,7 @@ public final class SportsManager {
         return list;
     }
 
-    private static String resolveNestedStreamUrl(String urlStr, Map<String, String> headers) {
+    public static String resolveNestedStreamUrl(String urlStr, Map<String, String> headers) {
         if (urlStr == null || !urlStr.contains("raw.githubusercontent.com") || urlStr.contains("/catcast/")) {
             return urlStr;
         }
@@ -530,10 +624,7 @@ public final class SportsManager {
                                     currentHeaders.putAll(request.headers);
                                 }
 
-                                // Resolve nested GitHub M3U files (e.g. Mahsun channels pointing to Fastly CDN)
-                                if (streamUrl.contains("raw.githubusercontent.com") && streamUrl.endsWith(".m3u8")) {
-                                    streamUrl = resolveNestedStreamUrl(streamUrl, currentHeaders);
-                                }
+// Deferred nested GitHub M3U resolution to player playback time
 
                                 if (streamUrl.contains("cdnlivetv.tv")) {
                                     if (!currentHeaders.containsKey("Origin")) currentHeaders.put("Origin", "https://cdnlivetv.tv");

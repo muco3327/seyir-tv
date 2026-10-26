@@ -1,6 +1,6 @@
 {
-  "versionCode": 77,
-  "versionName": "0.5.34",
-  "changelog": "Açılış Yükleme (Loading/Splash) Ekranı & Kararlılık (v0.5.34):\n1. İlk açılışta taslak kutular ve ham ayrıştırma metinleri yerine modern, şık bir Yükleme Ekranı eklendi.\n2. M3U listesi, kaynak taraması ve yayın akışı hazırlıkları arka planda sessizce yürütülüyor.\n3. Kanallar hazır olduğunda ana ekrana yumuşak geçiş sağlandı.",
-  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.34.apk"
+  "versionCode": 78,
+  "versionName": "0.5.35",
+  "changelog": "Ultra Hızlı Açılış & Kararlılık (v0.5.35):\n1. 22 saniyelik açılış beklemesi tamamen giderildi. Çift katmanlı (Disk + Bellek) anlık önbellek ile açılış süresi 1 saniyenin altına indirildi.\n2. Oracle Gateway yayın akışları arka planda sessizce asenkron senkronize ediliyor.\n3. Bloklayıcı M3U taramaları ve ardışık ağ istekleri optimize edildi.",
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.35.apk"
 }

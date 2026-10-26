@@ -87,10 +87,16 @@ public class TvHomeActivity extends Activity {
         render(false);
         SportsManager.loadChannels(this, refresh, result -> {
             if (!alive() || generation != loadGeneration) return;
+            boolean firstLoad = channels.isEmpty();
             channels = new ArrayList<>(result); loading = false;
-            render(true);
-            shell.setAlpha(0f); shell.animate().alpha(1f).setDuration(220).start();
-            SportsManager.probeStartupChannels(channels, () -> { if (alive()) render(false); });
+            if (firstLoad) {
+                render(true);
+                shell.setAlpha(0f); shell.animate().alpha(1f).setDuration(200).start();
+                SportsManager.probeStartupChannels(channels, () -> { if (alive()) render(false); });
+            } else {
+                savedScroll = scroll.getScrollY();
+                render(true);
+            }
         }, message -> {
             if (!alive() || generation != loadGeneration) return;
             String friendly = formatFriendlyStatus(message);

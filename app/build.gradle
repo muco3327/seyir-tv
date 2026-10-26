@@ -13,8 +13,8 @@ android {
         applicationId 'tv.seyir.app'
         minSdk 26
         targetSdk 35
-        versionCode 77
-        versionName '0.5.34'
+        versionCode 78
+        versionName '0.5.35'
         testInstrumentationRunner 'android.test.InstrumentationTestRunner'
     }
     compileOptions {

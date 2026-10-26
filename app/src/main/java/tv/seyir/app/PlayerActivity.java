@@ -612,17 +612,23 @@ public final class PlayerActivity extends Activity {
         StreamRequest request = new StreamRequest(targetUrl, headers);
         pendingProbe = probeExecutor.submit(() -> {
             StreamProbe.Result probe = null;
+            StreamRequest effective = request;
             try {
-                probe = StreamProbe.inspect(request, request.headers);
+                String resolved = SportsManager.resolveNestedStreamUrl(request.url, request.headers);
+                if (resolved != null && !resolved.equals(request.url)) {
+                    effective = new StreamRequest(resolved, request.headers);
+                }
+                probe = StreamProbe.inspect(effective, effective.headers);
             } catch (Exception ignored) {
             }
             final StreamProbe.Result p = probe;
+            final StreamRequest playRequest = effective;
             runOnUiThread(() -> {
                 if (closing || isFinishing() || isDestroyed() || gen != probeGeneration) return;
                 probing = false;
-                probedUrl = p != null && p.resolvedUrl != null ? p.resolvedUrl : request.url;
+                probedUrl = p != null && p.resolvedUrl != null ? p.resolvedUrl : playRequest.url;
                 probedMime = p != null ? p.mime : null;
-                initPlayer(request);
+                initPlayer(playRequest);
             });
         });
     }
