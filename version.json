@@ -1,6 +1,6 @@
 {
-  "versionCode": 70,
-  "versionName": "0.5.27",
-  "changelog": "beIN Sports ve Canlı Spor Kanalları Arama Motoru Genişletildi!\n1. Güncel ve aktif beIN Sports yayınları içeren yeni GitHub IPTV havuzları (AkcagozTV, Yusufdkci, Lunedor/iptvTR, Cortexia TV vb.) eklendi.\n2. GitHub dinamik arama sorguları ve tarama kapsamı genişletildi (spor, canlı tv, canli, tv vb.).\n3. İç içe (nested) GitHub oynatma listelerindeki yönlendirme ve çözme hatası giderildi (master playlist başlıkları artık linki kesmiyor).\n4. Farklı grup adlandırmalarındaki (TR-SPOR, Derbi Özel vb.) beIN kanalları onay filtresine dahil edildi.",
-  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.27.apk"
+  "versionCode": 72,
+  "versionName": "0.5.29",
+  "changelog": "Oracle Cloud IPTV Proxy ve HTTP 403 / Yönlendirme Düzeltmeleri:\n1. 403 hatası alan tüm canlı yayınlar otomatik Oracle Proxy köprüsüne aktarılıyor.\n2. StreamProbe yönlendirme (302/307) ve modern User-Agent desteği ile güçlendirildi.\n3. beIN Sports ve spor kanalları için birincil Oracle bağlantıları eklendi.",
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.29.apk"
 }
