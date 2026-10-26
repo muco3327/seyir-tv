@@ -78,7 +78,7 @@ final class ChannelFilter {
         if (NATIONAL.matcher(clean).matches()) return true;
         if (clean.matches("(?:aspor|htspor|trtspor|trtsporyildiz|tabiispor|tabispor|tabiitv|tabitv|tabii|tabi|ssport|ssportplus|tivibuspor|smartspor|spor smart|sporsmart|exxen|ekolsports|tjktv)[0-9]*")) return true;
         if (clean.equals("beinsportshaber")) return true;
-        if (clean.matches("bein(?:sports?|connect)(?:max)?[0-9]*(?:hd|sd|fhd|uhd|hq|4k)?")) return turkish;
+        if (clean.matches("bein(?:sports?|connect)(?:max)?[0-9]*(?:hd|sd|fhd|uhd|hq|4k)?")) return true;
         if (clean.matches("(?:sinematv|sinema|sinemayerli|sinemaaile|sinemaaksiyon|sinemakomedi|sinemayuzbir|sinemafantastik|sinemakorku|yesilcam|filmbox|tivibusinema)[0-9]*(?:tv|hd)?")) return true;
         return turkish && clean.matches("(?:beinmovies|beinsinema|moviesmart|filmbox|cinemax)(?:premiere|premier|action|stars|family|fest|turk|comedy|classic|gold|platin|premium|extra|plus)*[0-9]*(?:hd|uhd)?");
     }
@@ -87,7 +87,7 @@ final class ChannelFilter {
         if (!n.matches(".*bein\\s*sports?.*")) return false;
         boolean country = n.matches(".*(?:\\bturkey\\b|\\btr\\b).*")
             || g.matches(".*\\b(tr|turkey|turkiye|turkish)\\b.*");
-        boolean localGroup = g.equals("spor") || g.startsWith("spor-") || g.equals("atom spor") || g.equals("tr spor") || g.equals("bein-tv247") || g.equals("tr-spor") || g.startsWith("tr-") || g.contains("derbi") || g.contains("super lig");
+        boolean localGroup = g.contains("spor") || g.contains("bein") || g.startsWith("tr-") || g.contains("derbi") || g.contains("super lig");
         String clean = n.replaceAll("\\[[^]]*]", " ")
             .replaceAll("\\b(turkey|tr|hd|fhd|uhd|hq|sd|1080p|720p)\\b", " ")
             .replaceAll("(?:[- /]+(?:atom|zeus|cdn|mahsun|forestgump|tv247|ace|tal|talip|tul|mobil)(?:\\s+1)?)$", "")

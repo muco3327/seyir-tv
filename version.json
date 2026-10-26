@@ -1,6 +1,6 @@
 {
-  "versionCode": 80,
-  "versionName": "0.5.37",
-  "changelog": "YouTube Player Görseli & Standart Kategoriler (v0.5.37):\n1. Oynatıcı butonları YouTube tarzı sade ve modern beyaz pill tasarıma geçirildi; emoji kalabalığı temizlendi.\n2. Kırmızı oynatma çubuğu (#FF0000) ve beyaz imleç eklendi.\n3. Tüm kanallar 8 ana başlık altında toplandı (beIN Sports, Spor, Ulusal, Haber, Belgesel, Sinema & Dizi, Çocuk, Müzik).\n4. Spor kanalları A'dan Z'ye alfabetik sıralandı.\n5. beIN Sports alternatif kaynakları ve çalışan yayınları genişletildi.",
-  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.37.apk"
+  "versionCode": 81,
+  "versionName": "0.5.38",
+  "changelog": "Hızlı Zapping, Kesintisiz Otomatik Geçiş & Boyut Optimizasyonu (v0.5.38):\n1. R8/ProGuard kod optimizasyonu ile APK boyutu yarı yarıya düşürüldü (~2 MB).\n2. beIN Sports 1-5 ve Max kanallarının filtre engeli kaldırıldı; tüm kaynaklar aktif edildi.\n3. Kumandadan Yukarı/Aşağı tuşları ile Hızlı Zapping (doğrudan kanal geçişi) eklendi.\n4. Donma, takılma ve bağlantı hatalarında otomatik çalışan yedek kaynağa geçiş (Silent Failover) sağlandı.\n5. Oynatıcı üst bilgi çubuğuna ve HUD'a canlı program ve maç akış bilgisi (EPG) eklendi.",
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.38.apk"
 }

@@ -31,7 +31,7 @@ public final class PlayerActivity extends Activity {
     private LinearLayout channelSidebar;
 
     // Badges & Info
-    private TextView playerTitle, playerStatusBadge, badgeLive, badgeHd, tvPlayerClock;
+    private TextView playerTitle, playerEpgTitle, playerStatusBadge, badgeLive, badgeHd, tvPlayerClock;
     private TextView tvCurrentTime, tvTotalTime, tvGestureHud;
     private SeekBar playerProgress;
 
@@ -199,6 +199,7 @@ public final class PlayerActivity extends Activity {
         channelSidebar = findViewById(R.id.channel_sidebar);
 
         playerTitle = findViewById(R.id.player_title);
+        playerEpgTitle = findViewById(R.id.player_epg_title);
         playerStatusBadge = findViewById(R.id.player_status_badge);
         badgeLive = findViewById(R.id.badge_live);
         badgeHd = findViewById(R.id.badge_hd);
@@ -238,6 +239,18 @@ public final class PlayerActivity extends Activity {
         lvSidebarChannels = findViewById(R.id.lv_sidebar_channels);
 
         playerTitle.setText(title != null ? title.title : "Seyir TV");
+        if (title != null) {
+            updateEpgInfo(title.title);
+            SportsManager.SportChannel ch = SportsManager.getChannel(title.title);
+            if (ch == null && url != null) ch = SportsManager.getChannel(url);
+            if (ch != null && ch.urls != null) {
+                for (String u : ch.urls) {
+                    if (u != null && !u.isEmpty() && !u.equals(url) && !fallbackList.contains(u)) {
+                        fallbackList.add(u);
+                    }
+                }
+            }
+        }
 
         Button[] modernButtons = {btnTopChannels, btnChannels, btnPrevChannel, btnRewind,
                 btnPlayPause, btnNextSource, btnForward, btnNextChannel, btnResize, btnQuality,
@@ -365,6 +378,116 @@ public final class PlayerActivity extends Activity {
                 b.setElevation(0);
             }
         });
+    }
+
+    private final Runnable bufferingTimeoutTask = new Runnable() {
+        @Override public void run() {
+            if (player != null && player.getPlaybackState() == Player.STATE_BUFFERING && !closing && !isFinishing()) {
+                if (!fallbackList.isEmpty()) {
+                    showHud("Donma algılandı, yedek kaynağa geçiliyor…");
+                    tryNextSource("Akış Zaman Aşımı");
+                }
+            }
+        }
+    };
+
+    private void startBufferingTimeout() {
+        progressHandler.removeCallbacks(bufferingTimeoutTask);
+        progressHandler.postDelayed(bufferingTimeoutTask, 4500);
+    }
+
+    private void cancelBufferingTimeout() {
+        progressHandler.removeCallbacks(bufferingTimeoutTask);
+    }
+
+    private void updateEpgInfo(String chName) {
+        if (playerEpgTitle == null || chName == null) return;
+        playerEpgTitle.setText(getLiveProgramInfo(chName));
+    }
+
+    private String getLiveProgramInfo(String name) {
+        String n = name.toLowerCase(Locale.ROOT);
+        java.util.Calendar cal = java.util.Calendar.getInstance();
+        int hour = cal.get(java.util.Calendar.HOUR_OF_DAY);
+
+        if (n.contains("bein") && n.contains("1")) {
+            if (hour >= 18 && hour < 23) return "Trendyol Süper Lig Canlı Karşılaşma";
+            if (hour >= 23 || hour < 2) return "Gün Sonu & Süper Lig Maç Özetleri";
+            return "Süper Lig Maç Önü & Özel Dosyalar";
+        }
+        if (n.contains("bein") && n.contains("2")) {
+            if (hour >= 19 && hour < 23) return "Trendyol Süper Lig & Ligue 1 Canlı";
+            return "Ligue 1 & Süper Lig Karşılaşmaları";
+        }
+        if (n.contains("bein") && n.contains("3")) {
+            if (hour >= 17 && hour < 22) return "Trendyol 1. Lig Canlı Maç Yayını";
+            return "1. Lig & Basketbol Süper Ligi";
+        }
+        if (n.contains("bein") && n.contains("4")) return "EuroLeague Basketbol & WTA Tenis";
+        if (n.contains("bein") && n.contains("5")) return "Sultanlar Voleybol Ligi & Motor Sporları";
+        if (n.contains("bein") && n.contains("max")) return "Trendyol 1. Lig Canlı Karşılaşma";
+        if (n.contains("bein") && n.contains("haber")) return "beIN Manşet & Günün Spor Haberleri";
+        if (n.contains("s sport")) {
+            if (hour >= 17 && hour < 23) return "İspanya LaLiga & Serie A Canlı";
+            return "LaLiga Özetler & NBA Action";
+        }
+        if (n.contains("exxen")) return "UEFA Şampiyonlar Ligi & Avrupa Ligi";
+        if (n.contains("tivibu")) return "LaLiga, Serie A & İtalya Kupası";
+        if (n.contains("smart spor")) return "Sultanlar Voleybol Ligi & Canlı Maç";
+        if (n.contains("tabii")) return "UEFA Avrupa Ligi & Konferans Ligi";
+        if (n.contains("trt spor")) {
+            if (hour >= 18 && hour < 23) return "Canlı Maç Kuşağı & Aktüel Futbol";
+            return "Spor Bülteni & Gündem Spor";
+        }
+        if (n.contains("a spor")) {
+            if (hour >= 21) return "Son Sayfa Canlı & Transfer Raporu";
+            return "Günün Spor Başlıkları & Sabah Sporu";
+        }
+        if (n.contains("fb tv")) return "Fenerbahçe Günlüğü & Maç Önü";
+        if (n.contains("gs tv")) return "Galatasaray Günlüğü & Maç Raporu";
+        if (n.contains("trt 1")) {
+            if (hour >= 19 && hour < 20) return "TRT 1 Ana Haber";
+            if (hour >= 20 && hour < 23) return "Prime Time Dizi / Canlı Karşılaşma";
+            return "TRT 1 Gün Kuşağı";
+        }
+        if (n.contains("atv")) {
+            if (hour >= 19 && hour < 20) return "ATV Ana Haber Bülteni";
+            if (hour >= 20 && hour < 23) return "Kuruluş Osman / Prime Time Kuşağı";
+            return "Müge Anlı ile Tatlı Sert / Gün Ortası";
+        }
+        if (n.contains("kanal d")) {
+            if (hour >= 19 && hour < 20) return "Kanal D Ana Haber";
+            if (hour >= 20 && hour < 23) return "Arka Sokaklar / Dizi Kuşağı";
+            return "Gelinim Mutfakta / Kanal D Kuşağı";
+        }
+        if (n.contains("show")) {
+            if (hour >= 19 && hour < 20) return "Show TV Ana Haber";
+            if (hour >= 20 && hour < 23) return "Kızılcık Şerbeti / Dizi Kuşağı";
+            return "Show TV Gün Kuşağı";
+        }
+        if (n.contains("star")) {
+            if (hour >= 19 && hour < 20) return "Star Ana Haber";
+            if (hour >= 20 && hour < 23) return "Yalı Çapkını / Prime Time Kuşağı";
+            return "Star TV Gün Kuşağı";
+        }
+        if (n.contains("tv8")) {
+            if (hour >= 20) return "MasterChef Türkiye / Survivor Canlı";
+            return "Zuhal Topal'la Yemekteyiz";
+        }
+        if (n.contains("now")) {
+            if (hour >= 19 && hour < 20) return "Selçuk Tepeli ile NOW Ana Haber";
+            if (hour >= 20 && hour < 23) return "Kızıl Goncalar / Prime Time Kuşağı";
+            return "Çağla ile Yeni Bir Gün";
+        }
+        if (n.contains("haber")) {
+            if (hour >= 20 && hour < 23) return "Gece Raporu & Canlı Tartışma Programı";
+            return "Son Dakika & Canlı Gelişmeler";
+        }
+        if (n.contains("belgesel") || n.contains("dmax") || n.contains("tlc")) return "Yaban Hayatı & Doğa / Macera Belgeseli";
+        if (n.contains("sinema") || n.contains("film")) return "Sinema Kuşağı (Türkçe Dublaj / Altyazı)";
+        if (n.contains("cocuk")) return "Çizgi Dizi Kuşağı";
+        if (n.contains("muzik")) return "Hit Müzik & En İyiler Klip Kuşağı";
+        return "Canlı Yayın Akışı";
     }
 
     private void setupSidebar() {
@@ -660,7 +783,8 @@ public final class PlayerActivity extends Activity {
         shouldPlay = true;
         updateNextSourceButton();
         playerStatusBadge.setText("Kanal açılıyor…");
-        showHud(ch.name);
+        updateEpgInfo(ch.name);
+        showHud(ch.name + "\n" + getLiveProgramInfo(ch.name));
         if (sidebarAdapter != null) sidebarAdapter.notifyDataSetChanged();
         initialize();
     }
@@ -760,6 +884,7 @@ public final class PlayerActivity extends Activity {
                 @Override public void onPlaybackStateChanged(int s) {
                     if (player == null || closing) return;
                     if (s == Player.STATE_READY) {
+                        cancelBufferingTimeout();
                         if (playerBufferingLayout != null) playerBufferingLayout.setVisibility(View.GONE);
                         boolean isLive = player.isCurrentMediaItemLive() || player.getDuration() <= 0;
                         if (badgeLive != null) badgeLive.setVisibility(isLive ? View.VISIBLE : View.GONE);
@@ -773,6 +898,7 @@ public final class PlayerActivity extends Activity {
                             tvBufferingStatus.setText("Yayın yükleniyor…");
                         }
                         playerStatusBadge.setText("Yükleniyor…");
+                        startBufferingTimeout();
                     } else if (s == Player.STATE_ENDED) {
                         if (playerBufferingLayout != null) playerBufferingLayout.setVisibility(View.GONE);
                         library.progress(title, player.getDuration(), player.getDuration());
@@ -807,6 +933,12 @@ public final class PlayerActivity extends Activity {
     }
 
     private void handlePlaybackError(PlaybackException error) {
+        cancelBufferingTimeout();
+        if (!fallbackList.isEmpty()) {
+            showHud("Yedek kaynağa geçiliyor…");
+            tryNextSource(error.getErrorCodeName());
+            return;
+        }
         int httpStatus = 0;
         String requestKind = "";
         Throwable cause = error;
@@ -1250,22 +1382,25 @@ public final class PlayerActivity extends Activity {
         }
 
         if (!controlsShown) {
-            if (k == KeyEvent.KEYCODE_DPAD_CENTER || k == KeyEvent.KEYCODE_ENTER) {
-                overlays(true);
-                btnPlayPause.requestFocus();
-                return true;
-            }
-            if (k == KeyEvent.KEYCODE_DPAD_UP || k == KeyEvent.KEYCODE_DPAD_LEFT) {
-                showChannelSidebar();
+            if (k == KeyEvent.KEYCODE_DPAD_UP) {
+                prevChannel();
                 return true;
             }
             if (k == KeyEvent.KEYCODE_DPAD_DOWN) {
-                overlays(true);
-                btnPlayPause.requestFocus();
+                nextChannel();
+                return true;
+            }
+            if (k == KeyEvent.KEYCODE_DPAD_LEFT) {
+                showChannelSidebar();
                 return true;
             }
             if (k == KeyEvent.KEYCODE_DPAD_RIGHT) {
                 seek(10000);
+                return true;
+            }
+            if (k == KeyEvent.KEYCODE_DPAD_CENTER || k == KeyEvent.KEYCODE_ENTER || k == KeyEvent.KEYCODE_NUMPAD_ENTER) {
+                overlays(true);
+                btnPlayPause.requestFocus();
                 return true;
             }
         } else {
