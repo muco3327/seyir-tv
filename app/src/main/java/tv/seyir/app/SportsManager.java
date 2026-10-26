@@ -126,7 +126,7 @@ public final class SportsManager {
         
         cleaned = cleaned.replaceAll("(?i)^[A-Z0-9]{1,4}\\s*[:|\\-]\\s*", "");
         cleaned = cleaned.replaceAll("\\[.*?\\]|\\(.*?\\)", "");
-        cleaned = cleaned.replaceAll("(?i)\\b(Turkey|FHD|UHD|4K|HD|SD|HEVC|H\\.265|1080p|720p|VIP|Premium)\\b", "");
+        cleaned = cleaned.replaceAll("(?i)\\b(Turkey|FHD|UHD|4K|HD|SD|HEVC|H\\.265|1080p|720p|VIP|Premium|Mobil|Mobile)\\b", "");
         cleaned = cleaned.replaceAll("(?i)bein\\s*sports?", "beinsports");
         cleaned = cleaned.replaceAll("(?i)s\\s*sports?", "ssport");
         cleaned = cleaned.replaceAll("(?i)trt\\s*sports?", "trtspor");
@@ -232,6 +232,12 @@ public final class SportsManager {
         }
     }
 
+    public static List<SportChannel> getCachedChannels() {
+        synchronized (SportsManager.class) {
+            return cachedList != null ? new ArrayList<>(cachedList) : Collections.emptyList();
+        }
+    }
+
     private static String fetchRemoteJson() {
         String oracle = fetchUrl(ORACLE_API_URL, 8000);
         if (oracle != null && !oracle.trim().isEmpty()) {
@@ -315,6 +321,10 @@ public final class SportsManager {
                 String category = obj.optString("category", obj.optString("group", "Spor"));
 
                 List<String> urls = new ArrayList<>();
+                // 1. Resilient failover master endpoint via Oracle Gateway
+                if (id != null && !id.isEmpty() && !id.startsWith("ch_")) {
+                    urls.add("http://150.230.29.27:3000/channel/" + id + ".m3u8");
+                }
                 JSONArray uArr = obj.optJSONArray("urls");
                 if (uArr != null) {
                     for (int j = 0; j < uArr.length(); j++) {

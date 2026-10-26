@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/player_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#000000">
@@ -11,77 +12,124 @@
         android:layout_height="match_parent"
         android:background="#000000"
         android:keepScreenOn="true"
-        app:surface_type="texture_view"
+        app:surface_type="surface_view"
         app:resize_mode="fit"
         app:use_controller="false"
         app:show_buffering="when_playing" />
 
+    <!-- Center HUD for Brightness / Volume / Seek Gestures -->
+    <TextView
+        android:id="@+id/tv_gesture_hud"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:background="@drawable/player_floating_panel"
+        android:paddingStart="24dp"
+        android:paddingTop="14dp"
+        android:paddingEnd="24dp"
+        android:paddingBottom="14dp"
+        android:textColor="#FFFFFF"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:visibility="gone"
+        android:elevation="20dp" />
+
+    <!-- Screen Lock Overlay Button -->
+    <Button
+        android:id="@+id/btn_floating_unlock"
+        android:layout_width="wrap_content"
+        android:layout_height="44dp"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:background="@drawable/player_pill_button"
+        android:text="🔒 Kilidi Aç"
+        android:textColor="#FFFFFF"
+        android:textSize="13sp"
+        android:visibility="gone"
+        android:elevation="30dp" />
+
+    <!-- Top Control Bar -->
     <LinearLayout
         android:id="@+id/player_top_panel"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="14dp"
-        android:layout_marginEnd="16dp"
-        android:padding="10dp"
+        android:layout_marginStart="14dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginEnd="14dp"
+        android:padding="8dp"
         android:background="@drawable/player_floating_panel"
-        android:elevation="8dp">
+        android:elevation="12dp">
 
         <Button
             android:id="@+id/btn_top_back"
             android:layout_width="wrap_content"
-            android:layout_height="44dp"
-            android:text="‹ Geri"
+            android:layout_height="40dp"
+            android:text="◀ Geri"
             android:textColor="#FFFFFF"
             android:textSize="14sp"
+            android:textStyle="bold"
             android:background="@drawable/player_pill_button"
-            android:minWidth="92dp" />
+            android:minWidth="76dp" />
 
         <TextView
             android:id="@+id/player_title"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:paddingStart="16dp"
-            android:paddingEnd="14dp"
+            android:paddingStart="14dp"
+            android:paddingEnd="10dp"
             android:textColor="#FFFFFF"
-            android:textSize="18sp"
+            android:textSize="17sp"
             android:textStyle="bold"
             android:maxLines="1"
             android:ellipsize="end" />
+
+        <Button
+            android:id="@+id/btn_channels"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:text="📺 Kanallar"
+            android:textColor="#FFFFFF"
+            android:textSize="13sp"
+            android:background="@drawable/player_pill_button"
+            android:layout_marginEnd="8dp" />
 
         <TextView
             android:id="@+id/player_status_badge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:padding="8dp"
+            android:padding="6dp"
             android:background="@drawable/player_pill_button"
-            android:textColor="#64E5C0"
-            android:textSize="13sp"
+            android:textColor="#34D399"
+            android:textSize="12sp"
+            android:textStyle="bold"
             android:text="Bağlanıyor…" />
     </LinearLayout>
 
+    <!-- Bottom Control Bar -->
     <LinearLayout
         android:id="@+id/player_bottom_panel"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:orientation="vertical"
-        android:layout_marginStart="16dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="14dp"
-        android:padding="12dp"
+        android:layout_marginStart="14dp"
+        android:layout_marginEnd="14dp"
+        android:layout_marginBottom="12dp"
+        android:padding="10dp"
         android:background="@drawable/player_floating_panel"
-        android:elevation="10dp">
+        android:elevation="14dp">
 
+        <!-- Progress Seekbar row (shown for VOD/catch-up, or CANLI label) -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:paddingBottom="8dp">
+            android:paddingBottom="6dp">
 
             <TextView
                 android:id="@+id/tv_current_time"
@@ -89,26 +137,27 @@
                 android:layout_height="wrap_content"
                 android:textColor="#FFFFFF"
                 android:textSize="12sp"
-                android:text="00:00" />
+                android:text="CANLI" />
 
             <SeekBar
                 android:id="@+id/player_progress"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="10dp"
-                android:layout_marginEnd="10dp"
+                android:layout_marginStart="8dp"
+                android:layout_marginEnd="8dp"
                 android:max="1000" />
 
             <TextView
                 android:id="@+id/tv_total_time"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="#9CAEC3"
+                android:textColor="#94A3B8"
                 android:textSize="12sp"
-                android:text="00:00" />
+                android:text="🔴 CANLI" />
         </LinearLayout>
 
+        <!-- Tools Row -->
         <HorizontalScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -122,73 +171,126 @@
                 android:gravity="center_vertical">
 
                 <Button
-                android:id="@+id/btn_rewind"
+                    android:id="@+id/btn_prev_channel"
                     android:layout_width="wrap_content"
-                    android:layout_height="44dp"
+                    android:layout_height="40dp"
+                    android:text="⏮ Önceki"
+                    android:textColor="#FFFFFF"
+                    android:textSize="12sp"
+                    android:background="@drawable/player_pill_button" />
+
+                <Button
+                    android:id="@+id/btn_rewind"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
                     android:text="⏪ 10s"
-                    android:visibility="gone" />
+                    android:textColor="#FFFFFF"
+                    android:textSize="12sp"
+                    android:background="@drawable/player_pill_button"
+                    android:layout_marginStart="6dp" />
 
                 <Button
                     android:id="@+id/btn_play_pause"
                     android:layout_width="wrap_content"
-                    android:layout_height="44dp"
+                    android:layout_height="40dp"
                     android:text="❚❚ Duraklat"
-                    android:layout_marginStart="8dp" />
+                    android:textColor="#FFFFFF"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:background="@drawable/player_pill_button"
+                    android:layout_marginStart="6dp" />
 
                 <Button
-                android:id="@+id/btn_forward"
+                    android:id="@+id/btn_forward"
                     android:layout_width="wrap_content"
-                    android:layout_height="44dp"
+                    android:layout_height="40dp"
                     android:text="10s ⏩"
-                    android:layout_marginStart="8dp"
-                    android:visibility="gone" />
-
-                                <Button
-                    android:id="@+id/btn_next_source"
-                    android:layout_width="wrap_content"
-                    android:layout_height="44dp"
-                    android:text="🔄 Sonraki Kaynak"
-                    android:layout_marginStart="8dp"
-                    android:visibility="gone" />
+                    android:textColor="#FFFFFF"
+                    android:textSize="12sp"
+                    android:background="@drawable/player_pill_button"
+                    android:layout_marginStart="6dp" />
 
                 <Button
-                    android:id="@+id/btn_resize"
+                    android:id="@+id/btn_next_channel"
                     android:layout_width="wrap_content"
-                    android:layout_height="44dp"
-                    android:text="📺 Boyut: Sığdır"
-                    android:layout_marginStart="8dp"
-                    android:visibility="gone" />
+                    android:layout_height="40dp"
+                    android:text="Sonraki ⏭"
+                    android:textColor="#FFFFFF"
+                    android:textSize="12sp"
+                    android:background="@drawable/player_pill_button"
+                    android:layout_marginStart="6dp" />
 
                 <Button
                     android:id="@+id/btn_quality"
                     android:layout_width="wrap_content"
-                    android:layout_height="44dp"
-                    android:text="⚙️ Kalite: Otomatik"
-                    android:layout_marginStart="8dp"
-                    android:visibility="gone" />
+                    android:layout_height="40dp"
+                    android:text="⚙️ Kalite: 1080p"
+                    android:textColor="#38BDF8"
+                    android:textSize="12sp"
+                    android:background="@drawable/player_pill_button"
+                    android:layout_marginStart="6dp" />
+
+                <Button
+                    android:id="@+id/btn_resize"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:text="📐 Boyut: Sığdır"
+                    android:textColor="#FFFFFF"
+                    android:textSize="12sp"
+                    android:background="@drawable/player_pill_button"
+                    android:layout_marginStart="6dp" />
+
+                <Button
+                    android:id="@+id/btn_next_source"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:text="🔄 Kaynak Değiştir"
+                    android:textColor="#FBBF24"
+                    android:textSize="12sp"
+                    android:background="@drawable/player_pill_button"
+                    android:layout_marginStart="6dp" />
+
+                <Button
+                    android:id="@+id/btn_lock"
+                    android:layout_width="wrap_content"
+                    android:layout_height="40dp"
+                    android:text="🔓 Kilit"
+                    android:textColor="#FFFFFF"
+                    android:textSize="12sp"
+                    android:background="@drawable/player_pill_button"
+                    android:layout_marginStart="6dp" />
 
                 <Button
                     android:id="@+id/btn_audio"
                     android:layout_width="wrap_content"
-                    android:layout_height="44dp"
+                    android:layout_height="40dp"
                     android:text="🔊 Ses Dili"
-                    android:layout_marginStart="8dp"
+                    android:textColor="#FFFFFF"
+                    android:textSize="12sp"
+                    android:background="@drawable/player_pill_button"
+                    android:layout_marginStart="6dp"
                     android:visibility="gone" />
 
                 <Button
                     android:id="@+id/btn_subtitle"
                     android:layout_width="wrap_content"
-                    android:layout_height="44dp"
+                    android:layout_height="40dp"
                     android:text="💬 Altyazı"
-                    android:layout_marginStart="8dp"
+                    android:textColor="#FFFFFF"
+                    android:textSize="12sp"
+                    android:background="@drawable/player_pill_button"
+                    android:layout_marginStart="6dp"
                     android:visibility="gone" />
 
                 <Button
                     android:id="@+id/btn_speed"
                     android:layout_width="wrap_content"
-                    android:layout_height="44dp"
+                    android:layout_height="40dp"
                     android:text="⚡ 1.0×"
-                    android:layout_marginStart="8dp"
+                    android:textColor="#FFFFFF"
+                    android:textSize="12sp"
+                    android:background="@drawable/player_pill_button"
+                    android:layout_marginStart="6dp"
                     android:visibility="gone" />
             </LinearLayout>
         </HorizontalScrollView>

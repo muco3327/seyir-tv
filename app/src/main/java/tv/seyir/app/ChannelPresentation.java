@@ -10,7 +10,7 @@ final class ChannelPresentation {
         n = n.replaceAll("\\[[^]]*]|\\([^)]*\\)", " ");
         // TRT 4K is a separate service, not the UHD version of TRT 1.
         boolean trt4k = n.matches("(?i)TRT\\s*4K(?:\\s.*)?");
-        n = n.replaceAll("(?i)\\b(?:FULL\\s*HD|FHD|UHD|HD|SD|HQ|2160[PI]|1080[PI]|720[PI]|576[PI]|480[PI]|HEVC|H[.]?265|50FPS|60FPS|VIP|PREMIUM)\\b", " ");
+        n = n.replaceAll("(?i)\\b(?:FULL\\s*HD|FHD|UHD|HD|SD|HQ|MOBIL|MOBILE|2160[PI]|1080[PI]|720[PI]|576[PI]|480[PI]|HEVC|H[.]?265|50FPS|60FPS|VIP|PREMIUM)\\b", " ");
         if (!trt4k) n = n.replaceAll("(?i)\\b4K\\b", " ");
         n = n.replaceAll("(?i)bein\\s*sports?", "beIN Sports ")
             .replaceAll("(?i)bein\\s*connect", "beIN Connect ")

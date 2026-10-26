@@ -1,9 +1,10 @@
 package tv.seyir.app;
 
 import android.app.*;
+import android.content.Context;
+import android.media.AudioManager;
 import android.os.*;
 import android.view.*;
-import android.webkit.CookieManager;
 import android.widget.*;
 import androidx.media3.common.*;
 import androidx.media3.datasource.*;
@@ -21,9 +22,11 @@ public final class PlayerActivity extends Activity {
     private TitleItem title;
     private Library library;
     private LinearLayout topPanel, bottomPanel;
-    private TextView playerTitle, playerStatusBadge, tvCurrentTime, tvTotalTime;
+    private TextView playerTitle, playerStatusBadge, tvCurrentTime, tvTotalTime, tvGestureHud;
     private SeekBar playerProgress;
     private Button btnTopBack, btnRewind, btnPlayPause, btnNextSource, btnForward, btnResize, btnQuality, btnAudio, btnSubtitle, btnSpeed;
+    private Button btnChannels, btnPrevChannel, btnNextChannel, btnLock, btnFloatingUnlock;
+
     private String url;
     private final Map<String,String> headers = new HashMap<>();
     private final Map<String,String> initialHeaders = new HashMap<>();
@@ -41,17 +44,37 @@ public final class PlayerActivity extends Activity {
     private int resizeModeIndex = 0;
     private static final int[] RESIZE_MODES = {
         AspectRatioFrameLayout.RESIZE_MODE_FIT,
+        AspectRatioFrameLayout.RESIZE_MODE_FILL,
         AspectRatioFrameLayout.RESIZE_MODE_ZOOM,
-        AspectRatioFrameLayout.RESIZE_MODE_FILL
+        AspectRatioFrameLayout.RESIZE_MODE_FIXED_WIDTH
     };
     private static final String[] RESIZE_LABELS = {
-        "📺 Boyut: Sığdır",
-        "📺 Boyut: Yakınlaştır",
-        "📺 Boyut: Ekrana Yay"
+        "📐 Boyut: Sığdır (Fit)",
+        "📐 Boyut: Ekrana Yay (Fill)",
+        "📐 Boyut: Yakınlaştır (Zoom)",
+        "📐 Boyut: 16:9 Sabit"
     };
     private final Handler progressHandler = new Handler(Looper.getMainLooper());
+    private final Handler hudHandler = new Handler(Looper.getMainLooper());
     private int selectedQualityHeight = 0;
     private float currentSpeed = 1.0f;
+
+    // Gestures and Lock Support
+    private boolean isLocked = false;
+    private AudioManager audioManager;
+    private GestureDetector gestureDetector;
+    private float touchStartX, touchStartY;
+    private boolean isTrackingBrightness = false, isTrackingVolume = false;
+    private float initialBrightness = 0.5f;
+    private int initialVolume = 0, maxVolume = 15;
+
+    private final Runnable hideHudRunnable = () -> {
+        if (tvGestureHud != null) tvGestureHud.setVisibility(View.GONE);
+    };
+
+    private final Runnable hideUnlockBtn = () -> {
+        if (btnFloatingUnlock != null) btnFloatingUnlock.setVisibility(View.GONE);
+    };
 
     private final Runnable hideControls = () -> {
         if (player != null && player.isPlaying() && !insideControls(getCurrentFocus())) overlays(false);
@@ -63,13 +86,16 @@ public final class PlayerActivity extends Activity {
                 liveRecovery.playing(player.isPlaying(), SystemClock.elapsedRealtime());
                 boolean isLive = player.isCurrentMediaItemLive() || player.getDuration() <= 0;
                 if (isLive) {
-                    tvCurrentTime.setText("CANLI YAYIN");
+                    tvCurrentTime.setText("CANLI");
                     tvTotalTime.setText("🔴 CANLI");
                     playerProgress.setEnabled(false);
                     playerProgress.setProgress(1000);
                     btnRewind.setVisibility(View.GONE);
                     btnForward.setVisibility(View.GONE);
                 } else {
+                    btnRewind.setVisibility(View.VISIBLE);
+                    btnForward.setVisibility(View.VISIBLE);
+                    playerProgress.setEnabled(true);
                     long pos = player.getCurrentPosition();
                     long dur = player.getDuration();
                     if (dur > 0 && !userScrubbing) {
@@ -87,6 +113,11 @@ public final class PlayerActivity extends Activity {
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+        audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        if (audioManager != null) {
+            maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+        }
+
         try {
             title = TitleItem.read(new JSONObject(getIntent().getStringExtra("item")), Source.SPORTS);
             url = getIntent().getStringExtra("url");
@@ -120,6 +151,7 @@ public final class PlayerActivity extends Activity {
         setContentView(R.layout.activity_player);
         hideBars();
         bindViews();
+        setupGestures();
     }
 
     private void bindViews() {
@@ -131,27 +163,36 @@ public final class PlayerActivity extends Activity {
         tvCurrentTime = findViewById(R.id.tv_current_time);
         tvTotalTime = findViewById(R.id.tv_total_time);
         playerProgress = findViewById(R.id.player_progress);
+        tvGestureHud = findViewById(R.id.tv_gesture_hud);
+        btnFloatingUnlock = findViewById(R.id.btn_floating_unlock);
 
         btnTopBack = findViewById(R.id.btn_top_back);
+        btnChannels = findViewById(R.id.btn_channels);
+        btnPrevChannel = findViewById(R.id.btn_prev_channel);
         btnRewind = findViewById(R.id.btn_rewind);
         btnPlayPause = findViewById(R.id.btn_play_pause);
         btnForward = findViewById(R.id.btn_forward);
+        btnNextChannel = findViewById(R.id.btn_next_channel);
         btnNextSource = findViewById(R.id.btn_next_source);
-        updateNextSourceButton();
         btnResize = findViewById(R.id.btn_resize);
         btnQuality = findViewById(R.id.btn_quality);
+        btnLock = findViewById(R.id.btn_lock);
         btnAudio = findViewById(R.id.btn_audio);
         btnSubtitle = findViewById(R.id.btn_subtitle);
         btnSpeed = findViewById(R.id.btn_speed);
 
         playerTitle.setText(title != null ? title.title : "Seyir TV");
 
-        Button[] allButtons = {btnTopBack, btnRewind, btnPlayPause, btnNextSource, btnForward, btnResize, btnQuality, btnAudio, btnSubtitle, btnSpeed};
+        Button[] allButtons = {btnTopBack, btnChannels, btnPrevChannel, btnRewind, btnPlayPause, btnNextSource,
+                btnForward, btnNextChannel, btnResize, btnQuality, btnLock, btnAudio, btnSubtitle, btnSpeed};
         for (Button b : allButtons) {
-            Ui.focus(b);
+            if (b != null) Ui.focus(b);
         }
 
         btnTopBack.setOnClickListener(v -> closePlayer());
+        btnChannels.setOnClickListener(v -> showChannelsDialog());
+        btnPrevChannel.setOnClickListener(v -> prevChannel());
+        btnNextChannel.setOnClickListener(v -> nextChannel());
         btnRewind.setOnClickListener(v -> seek(-10000));
         btnPlayPause.setOnClickListener(v -> togglePlay());
         btnForward.setOnClickListener(v -> seek(10000));
@@ -161,6 +202,11 @@ public final class PlayerActivity extends Activity {
         btnAudio.setOnClickListener(v -> selectTracks(C.TRACK_TYPE_AUDIO));
         btnSubtitle.setOnClickListener(v -> selectTracks(C.TRACK_TYPE_TEXT));
         btnSpeed.setOnClickListener(v -> selectSpeed());
+
+        btnLock.setOnClickListener(v -> lockControls(true));
+        btnFloatingUnlock.setOnClickListener(v -> lockControls(false));
+
+        updateNextSourceButton();
 
         playerProgress.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -184,59 +230,236 @@ public final class PlayerActivity extends Activity {
         });
     }
 
-    private void initialize() {
-        if (player != null || url == null || closing || isFinishing() || video == null) return;
-        try {
-            StreamRequest request = new StreamRequest(url, url.equals(initialUrl) ? initialHeaders : null);
-            headers.clear();
-            headers.putAll(request.headers);
-            if (url != null && url.contains("cdnlivetv.tv")) {
-                if (!headers.containsKey("Origin")) headers.put("Origin", "https://cdnlivetv.tv");
-                if (!headers.containsKey("Referer")) headers.put("Referer", "https://cdnlivetv.tv/");
+    private void setupGestures() {
+        gestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onSingleTapConfirmed(MotionEvent e) {
+                if (isLocked) {
+                    showUnlockButton();
+                    return true;
+                }
+                boolean showing = bottomPanel != null && bottomPanel.getVisibility() == View.VISIBLE;
+                overlays(!showing);
+                return true;
             }
-            
-            String ua = headers.containsKey("User-Agent") ? headers.get("User-Agent") : "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36";
-            if (title.source == Source.SPORTS && !url.equals(probedUrl)) {
-                if (probing) return;
-                probing = true;
-                int generation = ++probeGeneration;
-                String candidate = url;
-                Map<String, String> probeHeaders = new HashMap<>(headers);
-                probeHeaders.put("User-Agent", ua);
-                String cookie = CookieManager.getInstance().getCookie(request.url);
-                if (cookie != null) probeHeaders.put("Cookie", cookie);
-                playerStatusBadge.setText("Yayın bağlantısı kontrol ediliyor…");
-                pendingProbe = probeExecutor.submit(() -> {
-                    try {
-                        StreamProbe.Result probeResult = StreamProbe.inspect(request, probeHeaders);
-                        progressHandler.post(() -> {
-                            if (generation != probeGeneration || closing || isFinishing() || isDestroyed()) return;
-                            probing = false;
-                            url = probeResult.resolvedUrl;
-                            probedUrl = probeResult.resolvedUrl;
-                            probedMime = probeResult.mime;
-                            initialize();
-                        });
-                    } catch (Exception error) {
-                        progressHandler.post(() -> {
-                            if (generation != probeGeneration || closing || isFinishing() || isDestroyed()) return;
-                            probing = false;
-                            tryNextSource(error.getMessage() == null ? "Yayın sunucusuna ulaşılamadı." : error.getMessage());
-                        });
+
+            @Override
+            public boolean onDoubleTap(MotionEvent e) {
+                if (isLocked) return false;
+                int screenWidth = getResources().getDisplayMetrics().widthPixels;
+                if (e.getX() < screenWidth / 2f) {
+                    seek(-10000);
+                    showHud("⏪ -10 sn");
+                } else {
+                    seek(10000);
+                    showHud("⏩ +10 sn");
+                }
+                return true;
+            }
+        });
+    }
+
+    private void showHud(String text) {
+        if (tvGestureHud == null) return;
+        hudHandler.removeCallbacks(hideHudRunnable);
+        tvGestureHud.setText(text);
+        tvGestureHud.setVisibility(View.VISIBLE);
+        hudHandler.postDelayed(hideHudRunnable, 1100);
+    }
+
+    private void showUnlockButton() {
+        if (btnFloatingUnlock != null) {
+            btnFloatingUnlock.setVisibility(View.VISIBLE);
+            progressHandler.removeCallbacks(hideUnlockBtn);
+            progressHandler.postDelayed(hideUnlockBtn, 3000);
+        }
+    }
+
+    private void lockControls(boolean lock) {
+        isLocked = lock;
+        if (lock) {
+            overlays(false);
+            showUnlockButton();
+            showHud("🔒 Ekran Kilitlendi");
+        } else {
+            if (btnFloatingUnlock != null) btnFloatingUnlock.setVisibility(View.GONE);
+            overlays(true);
+            showHud("🔓 Kilit Açıldı");
+        }
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent event) {
+        if (isLocked) {
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                showUnlockButton();
+            }
+            return super.dispatchTouchEvent(event);
+        }
+
+        gestureDetector.onTouchEvent(event);
+
+        int screenWidth = getResources().getDisplayMetrics().widthPixels;
+        int screenHeight = getResources().getDisplayMetrics().heightPixels;
+
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                touchStartX = event.getX();
+                touchStartY = event.getY();
+                isTrackingBrightness = touchStartX < (screenWidth * 0.45f);
+                isTrackingVolume = touchStartX > (screenWidth * 0.55f);
+                if (audioManager != null) {
+                    initialVolume = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC);
+                }
+                WindowManager.LayoutParams lp = getWindow().getAttributes();
+                initialBrightness = lp.screenBrightness < 0 ? 0.5f : lp.screenBrightness;
+                break;
+
+            case MotionEvent.ACTION_MOVE:
+                float deltaY = touchStartY - event.getY();
+                float percent = deltaY / (screenHeight * 0.70f);
+                if (Math.abs(deltaY) > 30) {
+                    if (isTrackingBrightness) {
+                        float newB = Math.max(0.01f, Math.min(1.0f, initialBrightness + percent));
+                        WindowManager.LayoutParams wlp = getWindow().getAttributes();
+                        wlp.screenBrightness = newB;
+                        getWindow().setAttributes(wlp);
+                        showHud("☀️ Parlaklık: %" + (int)(newB * 100));
+                    } else if (isTrackingVolume && audioManager != null) {
+                        int deltaVol = (int)(percent * maxVolume);
+                        int newVol = Math.max(0, Math.min(maxVolume, initialVolume + deltaVol));
+                        audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, newVol, 0);
+                        showHud("🔊 Ses: %" + (int)(newVol * 100 / maxVolume));
                     }
-                });
-                return;
+                }
+                break;
+
+            case MotionEvent.ACTION_UP:
+            case MotionEvent.ACTION_CANCEL:
+                isTrackingBrightness = false;
+                isTrackingVolume = false;
+                break;
+        }
+
+        return super.dispatchTouchEvent(event);
+    }
+
+    private void showChannelsDialog() {
+        List<SportsManager.SportChannel> channels = SportsManager.getCachedChannels();
+        if (channels.isEmpty()) {
+            Toast.makeText(this, "Kanal listesi yükleniyor, lütfen bekleyin...", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        String[] items = new String[channels.size()];
+        for (int i = 0; i < channels.size(); i++) {
+            SportsManager.SportChannel c = channels.get(i);
+            boolean active = title != null && (c.name.equalsIgnoreCase(title.title) || (c.urls != null && c.urls.contains(url)));
+            items[i] = (active ? "▶ " : "    ") + c.name + " (" + c.category + ")";
+        }
+        new AlertDialog.Builder(this)
+            .setTitle("📺 Kanal Seç (" + channels.size() + " Kanal)")
+            .setItems(items, (dialog, which) -> switchChannel(channels.get(which)))
+            .setNegativeButton("Kapat", null)
+            .show();
+    }
+
+    private void prevChannel() {
+        List<SportsManager.SportChannel> channels = SportsManager.getCachedChannels();
+        if (channels.isEmpty() || title == null) return;
+        int currentIdx = -1;
+        for (int i = 0; i < channels.size(); i++) {
+            if (channels.get(i).name.equalsIgnoreCase(title.title)) { currentIdx = i; break; }
+        }
+        int prevIdx = currentIdx <= 0 ? channels.size() - 1 : currentIdx - 1;
+        switchChannel(channels.get(prevIdx));
+    }
+
+    private void nextChannel() {
+        List<SportsManager.SportChannel> channels = SportsManager.getCachedChannels();
+        if (channels.isEmpty() || title == null) return;
+        int currentIdx = -1;
+        for (int i = 0; i < channels.size(); i++) {
+            if (channels.get(i).name.equalsIgnoreCase(title.title)) { currentIdx = i; break; }
+        }
+        int nextIdx = (currentIdx + 1) % channels.size();
+        switchChannel(channels.get(nextIdx));
+    }
+
+    private void switchChannel(SportsManager.SportChannel ch) {
+        if (ch == null || ch.urls == null || ch.urls.isEmpty()) return;
+        release();
+        title = new TitleItem(Source.SPORTS, ch.name, ch.urls.get(0), ch.logo, "");
+        playerTitle.setText(ch.name);
+        fallbackList.clear();
+        for (int i = 1; i < ch.urls.size(); i++) {
+            fallbackList.add(ch.urls.get(i));
+        }
+        url = ch.urls.get(0);
+        initialUrl = url;
+        headers.clear();
+        if (ch.headers != null) headers.putAll(ch.headers);
+        liveRecovery.reset();
+        position = 0;
+        shouldPlay = true;
+        updateNextSourceButton();
+        playerStatusBadge.setText("Kanal açılıyor…");
+        showHud("📺 " + ch.name);
+        initialize();
+    }
+
+    @Override protected void onResume() {
+        super.onResume();
+        hideBars();
+        if (player == null && !closing) initialize();
+    }
+
+    @Override protected void onPause() {
+        super.onPause();
+        release();
+    }
+
+    private void initialize() {
+        if (closing || isFinishing() || isDestroyed()) return;
+        playerStatusBadge.setText("Bağlanıyor…");
+        scheduleHide();
+        startProbe(url);
+    }
+
+    private void startProbe(String targetUrl) {
+        int gen = ++probeGeneration;
+        probing = true;
+        if (pendingProbe != null) pendingProbe.cancel(true);
+        StreamRequest request = new StreamRequest(targetUrl, headers);
+        pendingProbe = probeExecutor.submit(() -> {
+            StreamProbe.Result probe = null;
+            try {
+                probe = StreamProbe.inspect(request, request.headers);
+            } catch (Exception ignored) {
             }
-            DefaultHttpDataSource.Factory http = new DefaultHttpDataSource.Factory().setUserAgent(ua).setDefaultRequestProperties(headers)
-                .setConnectTimeoutMs(8000).setReadTimeoutMs(10000).setAllowCrossProtocolRedirects(true);
-            ResolvingDataSource.Factory data = new ResolvingDataSource.Factory(http, spec -> {
-                String reqCookie = CookieManager.getInstance().getCookie(spec.uri.toString());
-                return reqCookie != null ? spec.withAdditionalHeaders(Collections.singletonMap("Cookie", reqCookie)) : spec;
+            final StreamProbe.Result p = probe;
+            runOnUiThread(() -> {
+                if (closing || isFinishing() || isDestroyed() || gen != probeGeneration) return;
+                probing = false;
+                probedUrl = p != null && p.resolvedUrl != null ? p.resolvedUrl : request.url;
+                probedMime = p != null ? p.mime : null;
+                initPlayer(request);
             });
-            DataSource.Factory playbackData = data;
-            if (title.source == Source.SPORTS && StreamProbe.HLS.equals(probedMime)) {
-                PlaylistRoute route = new PlaylistRoute(request.url);
-                playbackData = () -> new RefreshingPlaylistDataSource(data.createDataSource(), route);
+        });
+    }
+
+    private void initPlayer(StreamRequest request) {
+        try {
+            release();
+            DefaultHttpDataSource.Factory httpData = new DefaultHttpDataSource.Factory()
+                .setUserAgent(request.headers.getOrDefault("User-Agent", "SeyirTV-Player"))
+                .setConnectTimeoutMs(8000)
+                .setReadTimeoutMs(8000)
+                .setAllowCrossProtocolRedirects(true);
+            if (!request.headers.isEmpty()) httpData.setDefaultRequestProperties(request.headers);
+
+            DataSource.Factory playbackData = httpData;
+            if (title.source == Source.SPORTS) {
+                playbackData = () -> new RefreshingPlaylistDataSource(httpData.createDataSource(), new PlaylistRoute(request.url));
             }
 
             player = new ExoPlayer.Builder(this, new DefaultRenderersFactory(this).setEnableDecoderFallback(true))
@@ -249,6 +472,7 @@ public final class PlayerActivity extends Activity {
             player.setTrackSelectionParameters(player.getTrackSelectionParameters().buildUpon()
                 .setPreferredAudioLanguage("tr")
                 .setPreferredTextLanguage("tr")
+                .setForceHighestSupportedBitrate(true)
                 .build());
 
             video.setPlayer(player);
@@ -327,8 +551,6 @@ public final class PlayerActivity extends Activity {
             || error.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT;
         long delay = title.source == Source.SPORTS && recoverable ? liveRecovery.nextDelay() : -1;
         if (delay < 0) { tryNextSource(detail); return; }
-        // Reopen the original channel URL, not an expired redirected playlist or old segment.
-        // Preserve the detected format so recovery does not create an extra server session.
         release();
         position = 0;
         playerStatusBadge.setText("Bağlantı yenileniyor… " + detail);
@@ -363,21 +585,8 @@ public final class PlayerActivity extends Activity {
 
     private void updateQualityLabel() {
         if (btnQuality == null) return;
-        int currentH = player != null ? player.getVideoSize().height : 0;
-        btnQuality.setText(currentH > 0 ? "⚙️ Görüntü: " + currentH + "p" : "⚙️ Kalite");
-    }
-
-    private void showStreamInfo() {
-        Format format = player == null ? null : player.getVideoFormat();
-        String resolution = format != null && format.height > 0 ? format.width + " × " + format.height : "Henüz bilinmiyor";
-        int bitrate = format == null ? -1 : format.averageBitrate;
-        String rate = bitrate > 0 ? String.format(Locale.ROOT,"%.2f Mbit/sn",bitrate / 1000000.0) : "Kaynak bildirmiyor";
-        String fps = format != null && format.frameRate > 0 ? String.format(Locale.ROOT,"%.1f",format.frameRate) : "Kaynak bildirmiyor";
-        new AlertDialog.Builder(this).setTitle("Yayın bilgisi")
-            .setMessage("Kanal etiketi: " + ChannelQuality.tier(title.title) + "\nGerçek çözünürlük: " + resolution
-                + "\nBildirilen ortalama bit hızı: " + rate + "\nKare hızı: " + fps
-                + "\n\n1080p tek başına netlik garantisi değildir. Düşük bit hızı, kaynak sıkıştırması veya düşük çözünürlükten büyütme piksellenmeye neden olabilir.")
-            .setPositiveButton("Tamam",null).show();
+        int currentH = player != null && player.getVideoSize().height > 0 ? player.getVideoSize().height : selectedQualityHeight;
+        btnQuality.setText(currentH > 0 ? "⚙️ " + currentH + "p" + (currentH >= 1080 ? " FHD" : (currentH >= 720 ? " HD" : "")) : "⚙️ Kalite: 1080p");
     }
 
     private void selectQuality() {
@@ -386,7 +595,7 @@ public final class PlayerActivity extends Activity {
         List<Integer> heights = new ArrayList<>();
         List<TrackSelectionOverride> overrides = new ArrayList<>();
 
-        labels.add("● Otomatik (Önerilen)");
+        labels.add("● Otomatik (1080p Maksimum)");
         heights.add(0);
         overrides.add(null);
 
@@ -396,9 +605,9 @@ public final class PlayerActivity extends Activity {
                     if (group.isTrackSupported(i)) {
                         Format f = group.getTrackFormat(i);
                         if (f.height > 0) {
-                            String desc = f.height + "p" + (f.height >= 2160 ? " (UHD)" : f.height >= 1080 ? " (FHD)" : f.height >= 720 ? " (HD)" : " (SD)");
-                            if (f.averageBitrate > 0) desc += String.format(Locale.ROOT," · %.2f Mbit/sn",f.averageBitrate/1000000.0);
-                            if (f.frameRate > 0) desc += String.format(Locale.ROOT," · %.0f fps",f.frameRate);
+                            String desc = f.height + "p" + (f.height >= 2160 ? " (UHD 4K)" : f.height >= 1080 ? " (Full HD)" : f.height >= 720 ? " (HD)" : " (SD)");
+                            if (f.averageBitrate > 0) desc += String.format(Locale.ROOT," · %.1f Mbps", f.averageBitrate/1000000.0);
+                            if (f.frameRate > 0) desc += String.format(Locale.ROOT," · %.0f fps", f.frameRate);
                             labels.add(desc);
                             heights.add(f.height);
                             overrides.add(new TrackSelectionOverride(group.getMediaTrackGroup(), i));
@@ -407,18 +616,13 @@ public final class PlayerActivity extends Activity {
                 }
             }
         }
-        if (labels.size() <= 1) {
-            new AlertDialog.Builder(this).setTitle("Görüntü kalitesi")
-                .setMessage("Bu yayında tek bir çözünürlük sunuluyor (Otomatik).")
-                .setPositiveButton("Tamam", null).setNeutralButton("Yayın bilgisi",(d,w)->showStreamInfo()).show();
-            return;
-        }
-        new AlertDialog.Builder(this).setTitle("Görüntü kalitesi seç")
+        new AlertDialog.Builder(this).setTitle("⚙️ Görüntü Kalitesi Seç")
             .setItems(labels.toArray(new String[0]), (d, w) -> {
                 if (player == null) return;
                 TrackSelectionParameters.Builder p = player.getTrackSelectionParameters().buildUpon().clearOverridesOfType(C.TRACK_TYPE_VIDEO);
                 if (w == 0) {
                     selectedQualityHeight = 0;
+                    p.setForceHighestSupportedBitrate(true);
                 } else {
                     selectedQualityHeight = heights.get(w);
                     p.setOverrideForType(overrides.get(w));
@@ -426,7 +630,7 @@ public final class PlayerActivity extends Activity {
                 player.setTrackSelectionParameters(p.build());
                 updateQualityLabel();
                 scheduleHide();
-            }).setNeutralButton("Yayın bilgisi",(d,w)->showStreamInfo()).show();
+            }).show();
     }
 
     private void selectTracks(int type) {
@@ -449,11 +653,10 @@ public final class PlayerActivity extends Activity {
             }
         }
         if (labels.size() <= 1) {
-            new AlertDialog.Builder(this).setTitle(type == C.TRACK_TYPE_AUDIO ? "Ses dili" : "Altyazı")
-                .setMessage("Bu yayında seçilebilir alternatif parça bulunamadı.").setPositiveButton("Tamam", null).show();
+            Toast.makeText(this, "Bu yayında alternatif parça bulunamadı", Toast.LENGTH_SHORT).show();
             return;
         }
-        new AlertDialog.Builder(this).setTitle(type == C.TRACK_TYPE_AUDIO ? "Ses dili seç" : "Altyazı seç")
+        new AlertDialog.Builder(this).setTitle(type == C.TRACK_TYPE_AUDIO ? "🔊 Ses Dili Seç" : "💬 Altyazı Seç")
             .setItems(labels.toArray(new String[0]), (d, w) -> {
                 if (player == null) return;
                 TrackSelectionParameters.Builder p = player.getTrackSelectionParameters().buildUpon()
@@ -461,8 +664,6 @@ public final class PlayerActivity extends Activity {
                     .setTrackTypeDisabled(type, type == C.TRACK_TYPE_TEXT && w == 0);
                 if (w > 0) p.setOverrideForType(overrides.get(w));
                 player.setTrackSelectionParameters(p.build());
-                if (type == C.TRACK_TYPE_AUDIO) btnAudio.setText("🔊 Ses: " + labels.get(w));
-                else btnSubtitle.setText("💬 Altyazı: " + labels.get(w));
                 scheduleHide();
             }).show();
     }
@@ -470,7 +671,7 @@ public final class PlayerActivity extends Activity {
     private void selectSpeed() {
         float[] speeds = {0.75f, 1.0f, 1.25f, 1.5f, 2.0f};
         String[] speedLabels = {"0.75×", "1.0× (Normal)", "1.25×", "1.5×", "2.0×"};
-        new AlertDialog.Builder(this).setTitle("Oynatma hızı")
+        new AlertDialog.Builder(this).setTitle("⚡ Oynatma Hızı")
             .setItems(speedLabels, (d, w) -> {
                 currentSpeed = speeds[w];
                 if (player != null) player.setPlaybackSpeed(currentSpeed);
@@ -481,7 +682,7 @@ public final class PlayerActivity extends Activity {
 
     private void updateNextSourceButton() {
         if (btnNextSource != null) {
-            btnNextSource.setVisibility(fallbackList.isEmpty() ? android.view.View.GONE : android.view.View.VISIBLE);
+            btnNextSource.setVisibility(fallbackList.isEmpty() ? View.GONE : View.VISIBLE);
         }
     }
 
@@ -490,26 +691,34 @@ public final class PlayerActivity extends Activity {
             String nextUrl = fallbackList.remove(0);
             if (nextUrl != null && !nextUrl.trim().isEmpty() && !nextUrl.equals(url)) {
                 url = nextUrl;
-                playerStatusBadge.setText("Yedek sunucu (Ses/Goruntu senkronu icin)... ");
+                playerStatusBadge.setText("Yedek kaynak açılıyor…");
+                showHud("🔄 Yedek Kaynak");
                 release();
                 initialize();
                 updateNextSourceButton();
                 return;
             }
         }
+        Toast.makeText(this, "Alternatif kaynak bulunamadı", Toast.LENGTH_SHORT).show();
     }
 
     private void cycleResizeMode() {
         resizeModeIndex = (resizeModeIndex + 1) % RESIZE_MODES.length;
         video.setResizeMode(RESIZE_MODES[resizeModeIndex]);
         btnResize.setText(RESIZE_LABELS[resizeModeIndex]);
+        showHud(RESIZE_LABELS[resizeModeIndex]);
         scheduleHide();
     }
 
     private void togglePlay() {
         if (player == null) return;
-        if (player.getPlayWhenReady()) player.pause();
-        else player.play();
+        if (player.getPlayWhenReady()) {
+            player.pause();
+            showHud("❚❚ Duraklatıldı");
+        } else {
+            player.play();
+            showHud("▶ Oynatılıyor");
+        }
         overlays(true);
         scheduleHide();
     }
@@ -518,29 +727,23 @@ public final class PlayerActivity extends Activity {
         if (player == null) return;
         long end = player.getDuration();
         long target = Math.max(0, player.getCurrentPosition() + delta);
-        if (end > 0) target = Math.min(end, target);
+        if (end > 0) target = Math.min(target, end);
         player.seekTo(target);
         overlays(true);
-        tvCurrentTime.setText(formatTime(target));
         scheduleHide();
     }
 
     private static String formatTime(long ms) {
-        if (ms <= 0) return "00:00";
-        long totalSec = ms / 1000;
-        long sec = totalSec % 60;
-        long min = (totalSec / 60) % 60;
-        long hour = totalSec / 3600;
-        if (hour > 0) return String.format(Locale.ROOT, "%d:%02d:%02d", hour, min, sec);
-        return String.format(Locale.ROOT, "%02d:%02d", min, sec);
+        long s = ms / 1000;
+        long m = s / 60;
+        s %= 60;
+        long h = m / 60;
+        m %= 60;
+        return h > 0 ? String.format(Locale.ROOT, "%02d:%02d:%02d", h, m, s) : String.format(Locale.ROOT, "%02d:%02d", m, s);
     }
 
     private boolean insideControls(View view) {
-        while (view != null) {
-            if (view == topPanel || view == bottomPanel) return true;
-            view = view.getParent() instanceof View ? (View) view.getParent() : null;
-        }
-        return false;
+        return insideTopPanel(view) || insideBottomPanel(view);
     }
 
     private boolean insideTopPanel(View view) {
@@ -560,7 +763,13 @@ public final class PlayerActivity extends Activity {
     }
 
     private void hideBars() {
-        getWindow().getDecorView().setSystemUiVisibility(5894);
+        getWindow().getDecorView().setSystemUiVisibility(
+            View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+            | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+            | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+            | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+            | View.SYSTEM_UI_FLAG_FULLSCREEN
+            | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY);
     }
 
     private void overlays(boolean show) {
@@ -587,10 +796,10 @@ public final class PlayerActivity extends Activity {
         if (isFinishing() || isDestroyed()) return;
         overlays(true);
         playerStatusBadge.setText("Hata: " + code);
-        new AlertDialog.Builder(this).setTitle("Video açılamadı")
-            .setMessage("Hata kodu: " + code + "\nFarklı bir oynatma kaynağı deneyebilirsiniz.")
-            .setPositiveButton("Kaynağa dön", (d, w) -> closePlayer())
-            .setNegativeButton("Tekrar dene", (d, w) -> {
+        new AlertDialog.Builder(this).setTitle("Yayın Açılamadı")
+            .setMessage("Kaynak yanıt vermedi (" + code + ").\nFarklı bir kaynak veya kanal deneyebilirsiniz.")
+            .setPositiveButton("Kanal Listesi", (d, w) -> showChannelsDialog())
+            .setNegativeButton("Tekrar Dene", (d, w) -> {
                 release();
                 liveRecovery.reset();
                 if (title.source == Source.SPORTS) position = 0;
@@ -629,6 +838,19 @@ public final class PlayerActivity extends Activity {
         if (e.getAction() != KeyEvent.ACTION_DOWN) return super.dispatchKeyEvent(e);
         scheduleHide();
 
+        if (k == KeyEvent.KEYCODE_CHANNEL_UP || k == KeyEvent.KEYCODE_PAGE_UP) {
+            nextChannel();
+            return true;
+        }
+        if (k == KeyEvent.KEYCODE_CHANNEL_DOWN || k == KeyEvent.KEYCODE_PAGE_DOWN) {
+            prevChannel();
+            return true;
+        }
+        if (k == KeyEvent.KEYCODE_PROG_GREEN || k == KeyEvent.KEYCODE_GUIDE) {
+            showChannelsDialog();
+            return true;
+        }
+
         if (k == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) { if (e.getRepeatCount() == 0) togglePlay(); return true; }
         if (k == KeyEvent.KEYCODE_MEDIA_PLAY) { player.play(); btnPlayPause.setText("❚❚ Duraklat"); return true; }
         if (k == KeyEvent.KEYCODE_MEDIA_PAUSE) { player.pause(); btnPlayPause.setText("▶ Oynat"); return true; }
@@ -653,8 +875,7 @@ public final class PlayerActivity extends Activity {
                 return true;
             }
             if (k == KeyEvent.KEYCODE_DPAD_UP) {
-                overlays(true);
-                btnTopBack.requestFocus();
+                showChannelsDialog();
                 return true;
             }
             if (k == KeyEvent.KEYCODE_DPAD_RIGHT) { seek(e.getRepeatCount() > 4 ? 30000 : 10000); return true; }
@@ -673,21 +894,11 @@ public final class PlayerActivity extends Activity {
     }
 
     @Override public void onBackPressed() {
+        if (isLocked) {
+            showUnlockButton();
+            return;
+        }
         if (bottomPanel != null && bottomPanel.getVisibility() == View.VISIBLE) overlays(false);
         else closePlayer();
-    }
-
-    @Override public void onWindowFocusChanged(boolean focus) {
-        super.onWindowFocusChanged(focus);
-        if (focus) hideBars();
-    }
-
-    @Override protected void onStart() { super.onStart(); initialize();
-                updateNextSourceButton(); }
-    @Override protected void onStop() { release(); super.onStop(); }
-    @Override protected void onDestroy() { release(); probeExecutor.shutdownNow(); super.onDestroy(); }
-    @Override protected void onSaveInstanceState(Bundle state) {
-        state.putLong("position", player == null ? position : player.getCurrentPosition());
-        super.onSaveInstanceState(state);
     }
 }

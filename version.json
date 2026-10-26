@@ -1,6 +1,6 @@
 {
-  "versionCode": 73,
-  "versionName": "0.5.30",
-  "changelog": "Oracle Cloud IPTV Proxy ve HTTP 502 / Canlı Yayın İyileştirmeleri:\n1. HTTP 502 hatası giderildi (süresi dolan canlı HLS segmentleri otomatik atlanıyor).\n2. beIN Sports (1-5), S Sport (1-2), Tivibu Spor (1-3) ve Smart Spor (1-2) doğrudan çalışan kaynaklarla güncellendi.\n3. Oracle Proxy köprüsüne otomatik yönlendirme ve Referer güvenliği eklendi.",
-  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.30.apk"
+  "versionCode": 74,
+  "versionName": "0.5.31",
+  "changelog": "Görüntü Kalitesi ve Oyuncu İyileştirmeleri (v0.5.31):\n1. TV ekranında pikselleşmeyi önlemek için düşük kaliteli 'Mobil' (360p) yayınlar filtrelendi.\n2. beIN Sports ve spor kanalları yüksek çözünürlüklü HD/FHD kaynaklara bağlandı.\n3. Oynatıcı içi hızlı 'Kanallar' menüsü, en boy oranı ve 1080p/720p netlik seçici eklendi.",
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.31.apk"
 }

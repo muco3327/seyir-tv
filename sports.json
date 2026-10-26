@@ -2,99 +2,172 @@
   {
     "id": "beinsports1",
     "name": "beIN Sports 1",
-    "category": "Spor",
+    "category": "beIN Sports",
     "urls": [
+      "https://zeus645423.cfd/b1/index.txt",
       "https://andro.evrenesoglu217.click/checklist/androstreamlivebs1.m3u8",
+      "https://ladyboy.ardatvgs.cfd//beintv/tracks-v1a1/mono.m3u8",
       "https://atom.han686314.workers.dev/bein-sports-1.m3u8"
     ]
   },
   {
     "id": "beinsports2",
     "name": "beIN Sports 2",
-    "category": "Spor",
+    "category": "beIN Sports",
     "urls": [
+      "https://zeus645423.cfd/b2/index.txt",
       "https://andro.evrenesoglu217.click/checklist/androstreamlivebs2.m3u8"
     ]
   },
   {
     "id": "beinsports3",
     "name": "beIN Sports 3",
-    "category": "Spor",
+    "category": "beIN Sports",
     "urls": [
+      "https://zeus645423.cfd/b3/index.txt",
       "https://andro.evrenesoglu217.click/checklist/androstreamlivebs3.m3u8"
     ]
   },
   {
     "id": "beinsports4",
     "name": "beIN Sports 4",
-    "category": "Spor",
+    "category": "beIN Sports",
     "urls": [
+      "https://zeus645423.cfd/b4/index.txt",
       "https://andro.evrenesoglu217.click/checklist/androstreamlivebs4.m3u8"
     ]
   },
   {
     "id": "beinsports5",
     "name": "beIN Sports 5",
-    "category": "Spor",
+    "category": "beIN Sports",
     "urls": [
-      "https://andro.evrenesoglu217.click/checklist/androstreamlivebs5.m3u8",
-      "https://purple-fog-7608.han686314.workers.dev/androstreamlivebs5.m3u8"
+      "https://zeus645423.cfd/b5/index.txt",
+      "https://andro.evrenesoglu217.click/checklist/androstreamlivebs5.m3u8"
     ]
   },
   {
     "id": "ssport1",
     "name": "S Sport 1",
-    "category": "Spor",
+    "category": "S Sport",
     "urls": [
+      "https://zeus645423.cfd/s1/index.txt",
       "https://andro.evrenesoglu217.click/checklist/androstreamlivess1.m3u8"
     ]
   },
   {
     "id": "ssport2",
     "name": "S Sport 2",
-    "category": "Spor",
+    "category": "S Sport",
     "urls": [
+      "https://zeus645423.cfd/s2/index.txt",
       "https://andro.evrenesoglu217.click/checklist/androstreamlivess2.m3u8"
+    ]
+  },
+  {
+    "id": "tivibuspor",
+    "name": "Tivibu Spor",
+    "category": "Tivibu Spor",
+    "urls": [
+      "https://zeus645423.cfd/tivibu/index.txt"
     ]
   },
   {
     "id": "tivibuspor1",
     "name": "Tivibu Spor 1",
-    "category": "Spor",
+    "category": "Tivibu Spor",
     "urls": [
+      "https://zeus645423.cfd/tivibu1/index.txt",
       "https://andro.evrenesoglu217.click/checklist/androstreamlivets1.m3u8"
     ]
   },
   {
     "id": "tivibuspor2",
     "name": "Tivibu Spor 2",
-    "category": "Spor",
+    "category": "Tivibu Spor",
     "urls": [
+      "https://zeus645423.cfd/tivibu2/index.txt",
       "https://andro.evrenesoglu217.click/checklist/androstreamlivets2.m3u8"
     ]
   },
   {
     "id": "tivibuspor3",
     "name": "Tivibu Spor 3",
-    "category": "Spor",
+    "category": "Tivibu Spor",
     "urls": [
-      "https://andro.evrenesoglu217.click/checklist/androstreamlivets3.m3u8"
+      "https://andro.evrenesoglu217.click/checklist/androstreamlivets3.m3u8",
+      "https://zeus645423.cfd/tivibu3/index.txt"
     ]
   },
   {
     "id": "smartspor1",
     "name": "Smart Spor 1",
-    "category": "Spor",
+    "category": "Smart Spor",
     "urls": [
+      "https://zeus645423.cfd/smart1/index.txt",
       "https://andro.evrenesoglu217.click/checklist/androstreamlivesm1.m3u8"
     ]
   },
   {
     "id": "smartspor2",
     "name": "Smart Spor 2",
-    "category": "Spor",
+    "category": "Smart Spor",
     "urls": [
+      "https://zeus645423.cfd/smart2/index.txt",
       "https://andro.evrenesoglu217.click/checklist/androstreamlivesm2.m3u8"
+    ]
+  },
+  {
+    "id": "tabiispor",
+    "name": "Tabii Spor",
+    "category": "Tabii Spor",
+    "urls": [
+      "https://zeus645423.cfd/tabiispor/index.txt"
+    ]
+  },
+  {
+    "id": "tabiispor1",
+    "name": "Tabii Spor 1",
+    "category": "Tabii Spor",
+    "urls": [
+      "https://zeus645423.cfd/tabii1/index.txt",
+      "https://pz4qt7nw1mr9sh2vl5xk8jg3y.medya.trt.com.tr/master_1080p.m3u8"
+    ]
+  },
+  {
+    "id": "tabiispor2",
+    "name": "Tabii Spor 2",
+    "category": "Tabii Spor",
+    "urls": [
+      "https://zeus645423.cfd/tabii2/index.txt",
+      "https://mr8bv4kl1nq7sh9tw2xp5zj6g.medya.trt.com.tr/master_1080p.m3u8"
+    ]
+  },
+  {
+    "id": "tabiispor3",
+    "name": "Tabii Spor 3",
+    "category": "Tabii Spor",
+    "urls": [
+      "https://zeus645423.cfd/tabii3/index.txt",
+      "https://mR4vL7nQ2sH9tW5xP1zK3gJ8b.medya.trt.com.tr/master_1080p.m3u8"
+    ]
+  },
+  {
+    "id": "tabiispor4",
+    "name": "Tabii Spor 4",
+    "category": "Tabii Spor",
+    "urls": [
+      "https://zeus645423.cfd/tabii4/index.txt",
+      "https://sh7tq2nw5mr1vl9xp4zk3gj8k.medya.trt.com.tr/master_1080p.m3u8"
+    ]
+  },
+  {
+    "id": "tabiispor5",
+    "name": "Tabii Spor 5",
+    "category": "Tabii Spor",
+    "urls": [
+      "https://zeus645423.cfd/tabii5/index.txt",
+      "https://vL2nQ8sH4tW1mR7xP5zK9gJ3y.medya.trt.com.tr/master_1080p.m3u8"
     ]
   },
   {
@@ -102,23 +175,26 @@
     "name": "TRT 1",
     "category": "Ulusal",
     "urls": [
-      "https://trt.daioncdn.net/trt-1/master.m3u8?app=web"
+      "https://trt.daioncdn.net/trt-1/master.m3u8?app=web",
+      "https://tv-trt1.medya.trt.com.tr/master_720.m3u8"
     ]
   },
   {
     "id": "trtspor",
     "name": "TRT Spor",
-    "category": "Spor",
+    "category": "Ulusal Spor",
     "urls": [
-      "https://trt.daioncdn.net/trtspor/master.m3u8?app=web&platform=trtspor"
+      "https://trt.daioncdn.net/trtspor/master.m3u8?app=web&platform=trtspor",
+      "https://tv-trtspor2.medya.trt.com.tr/master_720.m3u8"
     ]
   },
   {
     "id": "aspor",
     "name": "A Spor",
-    "category": "Spor",
+    "category": "Ulusal Spor",
     "urls": [
-      "https://rnttwmjcin.turknet.ercdn.net/lcpmvefbyo/aspor/aspor.m3u8"
+      "https://rnttwmjcin.turknet.ercdn.net/lcpmvefbyo/aspor/aspor.m3u8",
+      "https://rnttwmjcin.turknet.ercdn.net/lcpmvefbyo/aspor/aspor_720p.m3u8"
     ]
   },
   {
@@ -161,7 +237,7 @@
     "name": "TV 8.5",
     "category": "Ulusal",
     "urls": [
-      "https://tv8.daioncdn.net/tv8bucuk/tv8bucuk_720p.m3u8?sig=3e1e7e77bd21da485aa2c59a649bcb17&sid=6t07ysfz9eyd&app=bf58ab52-4865-4c81-b223-26b41009801e&ce=3"
+      "https://tv8.daioncdn.net/tv8bucuk/tv8bucuk.m3u8?app=tv8bucuk_web&ce=3"
     ]
   },
   {

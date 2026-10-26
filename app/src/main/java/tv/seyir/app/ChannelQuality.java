@@ -9,7 +9,7 @@ final class ChannelQuality {
         if (n.matches(".*(?:2160P|UHD|4K).*")) return "2160p";
         if (n.matches(".*(?:1080[PI]|FHD|FULL\\s*HD).*")) return "1080p";
         if (n.contains("720P")) return "720p";
-        if (n.matches(".*(?:576[PI]|480[PI]|\\bSD\\b).*")) return "SD";
+        if (n.matches(".*(?:576[PI]|480[PI]|\\bSD\\b|\\bMOBIL\\b|\\bMOBILE\\b).*")) return "SD";
         if (n.matches(".*\\bHD\\b.*")) return "HD";
         if (n.matches(".*\\bHQ\\b.*")) return "HQ";
         return "unknown";

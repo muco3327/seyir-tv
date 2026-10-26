@@ -18,6 +18,7 @@ final class ChannelFilter {
         String n = normalized(name), g = normalized(group);
         if (FOREIGN.matcher(n + " " + g).find() || n.matches("^(fr|uk|us|en|ar|es|de|it|pt|pl|ru|nl)bein.*")) return false;
         if ((n + " " + g).matches(".*\\b(adult|xxx|nsfw)\\b.*")) return false;
+        if ((n + " " + g).matches(".*\\b(mobil|mobile)\\b.*")) return false;
         if (allowsBeinVariant(n, g)) return true;
         // Explicitly requested provider variants use Spor rather than a country tag.
         if (n.matches("bein\\s*sports?\\s*[1-5]\\s*[- ]\\s*(atom|zeus)")
