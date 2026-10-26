@@ -69,20 +69,49 @@ app.get('/api/version', (req, res) => {
 function getQualityScore(url) {
     const u = (url || '').toLowerCase();
     if (u.includes('4k') || u.includes('uhd') || u.includes('2160')) return 1000;
-    if (u.includes('cdnlive') || u.includes('tvnow') || u.includes('zeus') || u.includes('chunk') || u.includes('1080') || u.includes('fhd') || u.includes('corestream') || u.includes('atom')) return 800;
-    if (u.includes('720') || u.includes('hd') || u.includes('mahsun') || u.includes('tv247') || u.includes('forestgump')) return 600;
-    if (u.includes('play_token') || u.includes('live.php') || u.includes('tomtv') || u.includes('deat1') || u.includes('camon1')) return 400;
+    // Verified 1080p FHD streams
+    if (
+        u.includes('77238') || u.includes('237081') || u.includes('87') || u.includes('31407') ||
+        u.includes('223134') || u.includes('223135') || u.includes('80') || u.includes('77') ||
+        u.includes('232183') || u.includes('76') || u.includes('94871') || u.includes('1105083') ||
+        u.includes('1108685') || u.includes('16536') || u.includes('16390') || u.includes('52750') ||
+        u.includes('26969') || u.includes('41227') || u.includes('4817') || u.includes('50157') ||
+        u.includes('988849') || u.includes('988867') || u.includes('1080') || u.includes('fhd')
+    ) return 950;
+    // 720p HD streams
+    if (
+        u.includes('720') || u.includes('hd') || u.includes('89') || u.includes('116675') ||
+        u.includes('31408') || u.includes('31409') || u.includes('81') || u.includes('172690') ||
+        u.includes('79') || u.includes('233930') || u.includes('94872') || u.includes('15169') ||
+        u.includes('ardastream')
+    ) return 800;
+    // Standard IPTV
+    if (u.includes('deat1') || u.includes('camon1') || u.includes('eempiree') || u.includes('tomtv') || u.includes('nexus') || u.includes('corestream') || u.includes('atom') || u.includes('cdnlive') || u.includes('tvnow')) return 600;
+    // 576p SD (Zeus is 576p)
+    if (u.includes('zeus') || u.includes('576') || u.includes('/84') || u.includes('/8?output=ts')) return 300;
+    // 480p SD (Andro)
     if (u.includes('andro') || u.includes('mobil') || u.includes('mobile') || u.includes('sd') || u.includes('480') || u.includes('360')) return 100;
-    return 500;
+    return 400;
 }
 
 function isSegmentUrl(url) {
+    if (!url) return false;
+    const u = url.toLowerCase();
     return Boolean(
-        url.match(/\.(ts|jpg|jpeg|png|aac|m4s)(\?|$)/i) ||
-        url.includes('_seg_') ||
-        url.includes('/segment') ||
-        url.includes('.cfd/c/') ||
-        url.includes('/c/')
+        u.match(/\.(ts|jpg|jpeg|png|aac|m4s)(\?|$)/i) ||
+        u.includes('output=ts') ||
+        u.includes('extension=ts') ||
+        u.includes('format=ts') ||
+        u.includes('_seg_') ||
+        u.includes('/segment') ||
+        u.includes('.cfd/c/') ||
+        u.includes('/c/') ||
+        u.includes('tomtv') ||
+        u.includes('deat1') ||
+        u.includes('camon1') ||
+        u.includes('eempiree') ||
+        u.includes('nexusconnects') ||
+        u.includes('live.php')
     );
 }
 
@@ -136,6 +165,9 @@ app.get('/channel/:id.m3u8', async (req, res) => {
     const sortedUrls = [...ch.urls].sort((a, b) => getQualityScore(b) - getQualityScore(a));
     for (let i = 0; i < sortedUrls.length; i++) {
         const targetUrl = sortedUrls[i];
+        if (isSegmentUrl(targetUrl) && !targetUrl.includes('.m3u8') && !targetUrl.includes('index.txt')) {
+            return res.redirect('/proxy?url=' + encodeURIComponent(targetUrl));
+        }
         try {
             const u = new URL(targetUrl);
             const headers = getHeadersForUrl(targetUrl, u);

@@ -1,6 +1,6 @@
 {
-  "versionCode": 82,
-  "versionName": "0.5.39",
-  "changelog": "UHD & Full HD (1080p) Kalite Önceliği (v0.5.39):\n1. Kanal akış sıralaması UHD -> FHD (1080p 50fps) -> HD (720p) -> SD olarak yeniden düzenlendi.\n2. Düşük çözünürlüklü mobil akışlar en sona atıldı; 1080p net yayınlar birincil yapıldı.\n3. ExoPlayer başlangıç bant genişliği 15 Mbps'ye çıkarıldı ve otomatik 1080p video kilidi eklendi.\n4. beIN Sports 1 ve tüm kanallar Full HD kalitesine yükseltildi.",
-  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.39.apk"
+  "versionCode": 83,
+  "versionName": "0.5.40",
+  "changelog": "FHD (1080p) Doğrulama & Sabit Kanal Sayısı (v0.5.40):\n1. İstemci tarafı M3U taraması (GithubScanner) devre dışı bırakıldı; beIN Sports kanal dalgalanması (8 vs 49) tamamen önlendi.\n2. Tüm beIN Sports (1-5, Max 1-2, Haber) ve S Sport kanallarında gerçek 1920x1080 Full HD yayınlar 1. sıraya taşındı.\n3. 576p SD (Zeus) ve 480p SD (Andro) en alt acil durum yedeğine çekildi.\n4. Oracle Gateway doğrudan 1920x1080 Full HD stream yönlendirmesiyle senkronize edildi.",
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.40.apk"
 }

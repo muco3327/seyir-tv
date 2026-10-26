@@ -42,11 +42,41 @@ public final class SportsManager {
         if (u == null) return 0;
         String lower = u.toLowerCase(Locale.ROOT);
         if (lower.contains("4k") || lower.contains("uhd") || lower.contains("2160")) return 1000;
-        if (lower.contains("cdnlive") || lower.contains("tvnow") || lower.contains("zeus") || lower.contains("chunk") || lower.contains("1080") || lower.contains("fhd") || lower.contains("corestream") || lower.contains("atom")) return 800;
-        if (lower.contains("720") || lower.contains("hd") || lower.contains("mahsun") || lower.contains("tv247") || lower.contains("forestgump")) return 600;
-        if (lower.contains("play_token") || lower.contains("live.php") || lower.contains("tomtv") || lower.contains("deat1") || lower.contains("camon1")) return 400;
-        if (lower.contains("andro") || lower.contains("mobil") || lower.contains("mobile") || lower.contains("sd") || lower.contains("480") || lower.contains("360")) return 100;
-        return 500;
+        // Verified 1080p FHD streams
+        if (lower.contains("77238") || lower.contains("237081") || lower.contains("87")
+                || lower.contains("31407") || lower.contains("223134") || lower.contains("223135")
+                || lower.contains("80") || lower.contains("77") || lower.contains("232183")
+                || lower.contains("76") || lower.contains("94871") || lower.contains("1105083")
+                || lower.contains("1108685") || lower.contains("16536") || lower.contains("16390")
+                || lower.contains("52750") || lower.contains("26969") || lower.contains("41227")
+                || lower.contains("4817") || lower.contains("50157") || lower.contains("988849")
+                || lower.contains("988867") || lower.contains("1080") || lower.contains("fhd")) {
+            return 950;
+        }
+        // 720p HD streams
+        if (lower.contains("720") || lower.contains("hd") || lower.contains("89")
+                || lower.contains("116675") || lower.contains("31408") || lower.contains("31409")
+                || lower.contains("81") || lower.contains("172690") || lower.contains("79")
+                || lower.contains("233930") || lower.contains("94872") || lower.contains("15169")
+                || lower.contains("ardastream")) {
+            return 800;
+        }
+        // Standard IPTV
+        if (lower.contains("deat1") || lower.contains("camon1") || lower.contains("eempiree")
+                || lower.contains("tomtv") || lower.contains("nexus") || lower.contains("corestream")
+                || lower.contains("atom") || lower.contains("cdnlive") || lower.contains("tvnow")) {
+            return 600;
+        }
+        // 576p SD (Zeus is 576p)
+        if (lower.contains("zeus") || lower.contains("576") || lower.contains("/84") || lower.contains("/8?output=ts")) {
+            return 300;
+        }
+        // 480p SD (Andro)
+        if (lower.contains("andro") || lower.contains("mobil") || lower.contains("mobile")
+                || lower.contains("sd") || lower.contains("480") || lower.contains("360")) {
+            return 100;
+        }
+        return 400;
     }
 
     public static boolean needsProxy(String url) {
@@ -289,7 +319,8 @@ public final class SportsManager {
                 if (!ChannelFilter.allows(ch.name, ch.category)) continue;
                 String cleanKey = cleanChannelName(ch.name);
                 if (cleanKey.isEmpty()) cleanKey = md5(ch.name);
-                cleanKey = ChannelQuality.groupKey(cleanKey, ch.name);
+                // Single card per canonical channel; quality alternatives are stored in urls list
+                if (ch.id != null && !ch.id.isEmpty()) cleanKey = ch.id;
                 if (aggregated.containsKey(cleanKey)) {
                     SportChannel existing = aggregated.get(cleanKey);
                     for (String u : ch.urls) {
@@ -301,15 +332,8 @@ public final class SportsManager {
                 seenUrls.addAll(ch.urls);
             }
 
-            if (forceRefresh) {
-                List<String> m3uUrls = GithubScanner.scanPlaylists(msg -> {
-                    if (statusCallback != null) mainHandler.post(() -> statusCallback.onStatus(msg));
-                });
-                for (String m3uUrl : m3uUrls) {
-                    if (generation != loadGeneration.get()) return;
-                    parseM3uToAggregator(m3uUrl, aggregated, seenUrls);
-                }
-            }
+            // Scraping disabled: client strictly consumes curated master channels to prevent channel count fluctuation
+            // forceRefresh only updates from remote sports.json / Oracle cache
 
             List<SportChannel> channels = new ArrayList<>(aggregated.values());
             if (generation != loadGeneration.get()) return;
@@ -505,7 +529,10 @@ public final class SportsManager {
 
                 String masterUrl = (!urls.isEmpty() && urls.get(0).contains("150.230.29.27:3000/channel/")) ? urls.remove(0) : null;
                 urls.sort((u1, u2) -> Integer.compare(getUrlQualityScore(u2), getUrlQualityScore(u1)));
-                if (masterUrl != null) urls.add(0, masterUrl);
+                if (masterUrl != null) {
+                    int insertIndex = Math.min(1, urls.size());
+                    urls.add(insertIndex, masterUrl);
+                }
 
                 Map<String, String> headers = new HashMap<>();
                 JSONObject hObj = obj.optJSONObject("headers");
