@@ -48,6 +48,18 @@ app.get('/api/channels/status', (req, res) => {
 });
 
 // Version endpoint (Fallback for Seyir TV updater)
+// Direct APK download endpoint (Fast fallback for TV app)
+app.get('/api/apk', (req, res) => {
+    let p = path.join(__dirname, 'Seyir-TV.apk');
+    if (!fs.existsSync(p)) p = path.join(__dirname, '..', 'dist', 'Seyir-TV.apk');
+    if (fs.existsSync(p)) {
+        res.setHeader('Content-Type', 'application/vnd.android.package-archive');
+        res.setHeader('Content-Disposition', 'attachment; filename="Seyir-TV-0.5.40.apk"');
+        return res.sendFile(p);
+    }
+    res.redirect('https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.40.apk');
+});
+
 app.get('/api/version', (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     try {
