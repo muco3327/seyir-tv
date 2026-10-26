@@ -1,6 +1,6 @@
 {
-  "versionCode": 76,
-  "versionName": "0.5.33",
-  "changelog": "Kapsamlı Kararlılık, D-Pad Gezinme ve Güncelleme İyileştirmeleri (v0.5.33):\n1. GitHub güncelleme CDN bağlantısı doğrudan bağlandı, HTTP 403 engeli giderildi.\n2. Oynatıcı içi kanal listesinde D-Pad kategori geçişleri (Tümü -> Spor -> Ulusal) ve sağ tuş basılı tutma / kategori sonu ile kapanma düzeltildi.\n3. Sistem açılışında otomatik çalışan kanal taraması (Health Check) eklendi.\n4. Kanal afişine tıklandığında ekran kaymasını önleyen modern 'Yayın & Çözünürlük Seçici' (FHD/HD/SD) modal dialog eklendi.\n5. Oracle Gateway bağlantı havuzu (Keep-Alive) ve otomatik segment yeniden deneme (retry) ile yayın donmaları önlendi.",
-  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.33.apk"
+  "versionCode": 77,
+  "versionName": "0.5.34",
+  "changelog": "Açılış Yükleme (Loading/Splash) Ekranı & Kararlılık (v0.5.34):\n1. İlk açılışta taslak kutular ve ham ayrıştırma metinleri yerine modern, şık bir Yükleme Ekranı eklendi.\n2. M3U listesi, kaynak taraması ve yayın akışı hazırlıkları arka planda sessizce yürütülüyor.\n3. Kanallar hazır olduğunda ana ekrana yumuşak geçiş sağlandı.",
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.34.apk"
 }

@@ -2,11 +2,13 @@ package tv.seyir.app;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.res.ColorStateList;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
 import android.util.LruCache;
@@ -18,6 +20,7 @@ import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -42,7 +45,7 @@ public class TvHomeActivity extends Activity {
     private SharedPreferences prefs;
     private ScrollView scroll;
     private LinearLayout shell, content;
-    private TextView status;
+    private TextView status, loadingStatusView;
     private String mode = "favorites", category = "", query = "", expanded = "", focusKey = "";
     private int savedScroll, loadGeneration, imageGeneration;
     private boolean loading, returning;
@@ -86,11 +89,31 @@ public class TvHomeActivity extends Activity {
             if (!alive() || generation != loadGeneration) return;
             channels = new ArrayList<>(result); loading = false;
             render(true);
-            content.setAlpha(0f); content.animate().alpha(1f).setDuration(180).start();
+            shell.setAlpha(0f); shell.animate().alpha(1f).setDuration(220).start();
             SportsManager.probeStartupChannels(channels, () -> { if (alive()) render(false); });
         }, message -> {
-            if (alive() && loading && generation == loadGeneration && status != null) status.setText(message);
+            if (!alive() || generation != loadGeneration) return;
+            String friendly = formatFriendlyStatus(message);
+            if (loadingStatusView != null) loadingStatusView.setText(friendly);
+            if (status != null && !channels.isEmpty()) status.setText(friendly);
         });
+    }
+
+    private String formatFriendlyStatus(String raw) {
+        if (raw == null || raw.isEmpty()) return "Kanal listeleri hazırlanıyor…";
+        String lower = raw.toLowerCase(java.util.Locale.ROOT);
+        if (lower.contains("yerel")) return "Yerel kanal listesi yükleniyor…";
+        if (lower.contains("taraniyor") || lower.contains("iptv")) return "Yayın sunucuları taranıyor…";
+        if (lower.contains("ayrıştırılıyor") || lower.contains("liste ayr") || lower.contains(".m3u")) return "Kanal akışları düzenleniyor…";
+        if (lower.contains("premium") || lower.contains("dogrulaniyor")) {
+            int openParen = raw.indexOf('(');
+            int closeParen = raw.indexOf(')');
+            if (openParen != -1 && closeParen != -1 && closeParen > openParen) {
+                return "Yayın bağlantıları kontrol ediliyor " + raw.substring(openParen, closeParen + 1) + "…";
+            }
+            return "Yayın bağlantıları kontrol ediliyor…";
+        }
+        return "Kanal listeleri hazırlanıyor…";
     }
 
     private Set<String> favoriteKeys() {
@@ -119,6 +142,7 @@ public class TvHomeActivity extends Activity {
 
     private void render(boolean restore) {
         if (!alive()) return;
+        if (channels.isEmpty() && loading) { renderLoadingScreen(); return; }
         int generation = ++imageGeneration;
         shell.removeAllViews(); focusViews.clear();
         // Header belongs to the page's ScrollView; it never obscures the channel grid.
@@ -138,7 +162,7 @@ public class TvHomeActivity extends Activity {
         TextView h = HomeStyle.text(this, title, 23, HomeStyle.WHITE, true); h.setSingleLine(true);
         h.setEllipsize(android.text.TextUtils.TruncateAt.END);
         heading.addView(h, new LinearLayout.LayoutParams(0, -2, 1));
-        status = HomeStyle.text(this, loading ? "Kanallar hazırlanıyor…" : groups.size() + " kanal", 12, HomeStyle.MUTED, false);
+        status = HomeStyle.text(this, loading ? "Kanallar güncelleniyor…" : groups.size() + " kanal", 12, HomeStyle.MUTED, false);
         status.setMaxLines(1); status.setEllipsize(android.text.TextUtils.TruncateAt.END);
         heading.addView(status, new LinearLayout.LayoutParams(dp(160), -2)); status.setGravity(Gravity.END);
         TextView filter = HomeStyle.button(this, "Kategoriler", !category.isEmpty() && mode.equals("channels"), this::categories);
@@ -319,16 +343,16 @@ public class TvHomeActivity extends Activity {
     }
 
     private void emptyState() {
-        if (loading) { loadingCards(); return; }
+        if (loading) return;
         LinearLayout empty = HomeStyle.column(this); empty.setPadding(dp(28), dp(34), dp(28), dp(34));
         empty.setBackground(HomeStyle.shape(this, HomeStyle.PANEL, 0, 20));
         ImageView symbol = new ImageView(this);
         symbol.setImageDrawable(new HomeIcon(mode.equals("favorites") ? "star" : "search", HomeStyle.ACCENT));
         LinearLayout.LayoutParams symbolParams = new LinearLayout.LayoutParams(dp(38), dp(38)); symbolParams.bottomMargin = dp(18);
         empty.addView(symbol, symbolParams);
-        String title = loading ? "Kanallar yükleniyor" : mode.equals("favorites") ? "Sevdiğin kanallar burada" : "Kanal bulunamadı";
+        String title = mode.equals("favorites") ? "Sevdiğin kanallar burada" : "Kanal bulunamadı";
         empty.addView(HomeStyle.text(this, title, 22, HomeStyle.WHITE, true));
-        String subtitle = loading ? "Liste hazır olduğunda burada görünecek." : mode.equals("favorites") ? "Kanallar bölümünde bir kartta OK tuşunu basılı tutarak favorilerine ekleyebilirsin." : mode.equals("search") ? "Farklı bir kanal adıyla tekrar ara." : "Başka bir kategori seçebilir veya Ayarlar’dan listeyi yenileyebilirsin.";
+        String subtitle = mode.equals("favorites") ? "Kanallar bölümünde bir kartta OK tuşunu basılı tutarak favorilerine ekleyebilirsin." : mode.equals("search") ? "Farklı bir kanal adıyla tekrar ara." : "Başka bir kategori seçebilir veya Ayarlar’dan listeyi yenileyebilirsin.";
         TextView description = HomeStyle.text(this, subtitle, 14, HomeStyle.MUTED, false); description.setPadding(0, dp(12), 0, dp(20)); empty.addView(description);
         if (!loading) {
             TextView b = HomeStyle.button(this, mode.equals("search") ? "Yeniden ara" : "Kanal ekle", true, () -> {
@@ -339,22 +363,58 @@ public class TvHomeActivity extends Activity {
         content.addView(empty);
     }
 
-    private void loadingCards() {
-        int width = Math.round(getResources().getDisplayMetrics().widthPixels / getResources().getDisplayMetrics().density);
-        int columns = Math.max(2, Math.min(6, (width - 60) / 190));
-        for (int r = 0; r < 2; r++) {
-            LinearLayout row = HomeStyle.row(this);
-            for (int i = 0; i < columns; i++) {
-                LinearLayout placeholder = HomeStyle.column(this); placeholder.setPadding(dp(12), dp(12), dp(12), dp(12));
-                placeholder.setBackground(HomeStyle.shape(this, HomeStyle.PANEL, 0, 20));
-                View logo = new View(this); logo.setBackground(HomeStyle.shape(this, Color.rgb(48, 50, 57), 0, 16));
-                placeholder.addView(logo, new LinearLayout.LayoutParams(-1, dp(110)));
-                View name = new View(this); name.setBackground(HomeStyle.shape(this, Color.rgb(48, 50, 57), 0, 6));
-                LinearLayout.LayoutParams line = new LinearLayout.LayoutParams(dp(100), dp(12)); line.gravity = Gravity.CENTER; line.topMargin = dp(12); placeholder.addView(name, line);
-                LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(0, dp(172), 1); p.setMargins(i == 0 ? 0 : dp(9), 0, i == columns - 1 ? 0 : dp(9), dp(18)); row.addView(placeholder, p);
-            }
-            content.addView(row);
+    private void renderLoadingScreen() {
+        shell.removeAllViews();
+        focusViews.clear();
+
+        LinearLayout box = HomeStyle.column(this);
+        box.setGravity(Gravity.CENTER);
+        box.setPadding(dp(30), dp(70), dp(30), dp(50));
+
+        TextView brand = HomeStyle.text(this, "seyir tv", 44, HomeStyle.ACCENT, true);
+        brand.setGravity(Gravity.CENTER);
+        box.addView(brand);
+
+        TextView subBrand = HomeStyle.text(this, "Canlı TV & Spor Akışları", 15, HomeStyle.MUTED, false);
+        subBrand.setGravity(Gravity.CENTER);
+        subBrand.setPadding(0, dp(6), 0, dp(32));
+        box.addView(subBrand);
+
+        ProgressBar progress = new ProgressBar(this);
+        progress.setIndeterminate(true);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            progress.setIndeterminateTintList(ColorStateList.valueOf(HomeStyle.ACCENT));
         }
+        LinearLayout.LayoutParams pbParams = new LinearLayout.LayoutParams(dp(52), dp(52));
+        pbParams.gravity = Gravity.CENTER;
+        pbParams.bottomMargin = dp(24);
+        box.addView(progress, pbParams);
+
+        TextView title = HomeStyle.text(this, "Seyir TV Hazırlanıyor…", 21, HomeStyle.WHITE, true);
+        title.setGravity(Gravity.CENTER);
+        box.addView(title);
+
+        TextView subtitle = HomeStyle.text(this, "Yayın akışları ve güncel kanallar hazırlanıyor, lütfen bekleyin.", 14, HomeStyle.MUTED, false);
+        subtitle.setGravity(Gravity.CENTER);
+        subtitle.setPadding(0, dp(6), 0, dp(12));
+        box.addView(subtitle);
+
+        loadingStatusView = HomeStyle.text(this, "Yayın kaynakları taranıyor…", 13, Color.rgb(180, 195, 215), false);
+        loadingStatusView.setGravity(Gravity.CENTER);
+        box.addView(loadingStatusView);
+
+        LinearLayout tipBox = HomeStyle.row(this);
+        tipBox.setBackground(HomeStyle.shape(this, HomeStyle.PANEL, 0, 16));
+        tipBox.setPadding(dp(20), dp(10), dp(20), dp(10));
+        TextView tip = HomeStyle.text(this, "💡 İlk açılışta kanalların düzenlenmesi birkaç saniye sürebilir.", 12, HomeStyle.MUTED, false);
+        tip.setGravity(Gravity.CENTER);
+        tipBox.addView(tip);
+        LinearLayout.LayoutParams tipParams = new LinearLayout.LayoutParams(-2, -2);
+        tipParams.topMargin = dp(36);
+        tipParams.gravity = Gravity.CENTER;
+        box.addView(tipBox, tipParams);
+
+        shell.addView(box, new LinearLayout.LayoutParams(-1, -1));
     }
 
     private void switchMode(String next) {
