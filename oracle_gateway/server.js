@@ -28,6 +28,17 @@ app.get('/api/channels', (req, res) => {
     res.json(curatedChannels);
 });
 
+// Version endpoint
+app.get('/api/version', (req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.json({
+        versionCode: 74,
+        versionName: "0.5.31",
+        changelog: "Görüntü Kalitesi ve Oyuncu İyileştirmeleri (v0.5.31):\n1. TV ekranında pikselleşmeyi önlemek için düşük kaliteli 'Mobil' (360p) yayınlar filtrelendi.\n2. beIN Sports ve spor kanalları yüksek çözünürlüklü HD/FHD kaynaklara bağlandı.\n3. Oynatıcı içi hızlı 'Kanallar' menüsü, en boy oranı ve 1080p/720p netlik seçici eklendi.",
+        apkUrl: "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.31.apk"
+    });
+});
+
 function isSegmentUrl(url) {
     return Boolean(
         url.match(/\.(ts|jpg|jpeg|png|aac|m4s)(\?|$)/i) ||
@@ -482,13 +493,32 @@ app.get('/', (req, res) => {
                 });
                 hlsPlayer.on(Hls.Events.ERROR, (e, data) => {
                     if (data.fatal) {
-                        clearTimeout(fallbackTimer);
-                        console.warn('HLS Fatal Error, switching source...', data.details);
-                        if (urlIndex < (ch.urls.length - 1)) {
-                            playChannel(ch, urlIndex + 1);
+                        switch (data.type) {
+                            case Hls.ErrorTypes.NETWORK_ERROR:
+                                console.warn('HLS Network Error, attempting recovery...');
+                                hlsPlayer.startLoad();
+                                break;
+                            case Hls.ErrorTypes.MEDIA_ERROR:
+                                console.warn('HLS Media Error, attempting recovery...');
+                                hlsPlayer.recoverMediaError();
+                                break;
+                            default:
+                                clearTimeout(fallbackTimer);
+                                console.warn('Fatal HLS Error, switching source...');
+                                if (urlIndex < (ch.urls.length - 1)) {
+                                    playChannel(ch, urlIndex + 1);
+                                } else {
+                                    statusEl.innerText = 'Yayın Hatası';
+                                    statusEl.style.background = '#ef4444';
+                                }
+                                break;
+                        }
+                    } else if (data.details === 'bufferStalledError') {
+                        console.warn('Buffer stalled, nudging video...');
+                        if (video.paused) {
+                            video.play().catch(() => {});
                         } else {
-                            statusEl.innerText = 'Yayın Hatası';
-                            statusEl.style.background = '#ef4444';
+                            video.currentTime += 0.1;
                         }
                     }
                 });

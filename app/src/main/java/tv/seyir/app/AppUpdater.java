@@ -33,7 +33,8 @@ import java.util.concurrent.Executors;
 public final class AppUpdater {
     public static final String GITHUB_OWNER = "muco3327";
     public static final String GITHUB_REPO = "seyir-tv";
-    public static final String VERSION_URL = "https://api.github.com/repos/" + GITHUB_OWNER + "/" + GITHUB_REPO + "/contents/version.json?ref=main";
+    public static final String PRIMARY_VERSION_URL = "https://raw.githubusercontent.com/" + GITHUB_OWNER + "/" + GITHUB_REPO + "/main/version.json";
+    public static final String FALLBACK_VERSION_URL = "http://150.230.29.27:3000/api/version";
     public static final String DEFAULT_APK_URL = "https://raw.githubusercontent.com/" + GITHUB_OWNER + "/" + GITHUB_REPO + "/main/dist/Seyir-TV.apk";
 
     private static final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -42,24 +43,18 @@ public final class AppUpdater {
 
     private AppUpdater() {}
 
-    public static void check(Activity activity, boolean manual) {
-        if (activity == null || activity.isFinishing()) return;
-        updateChecks.execute(() -> {
-            try {
-                URL url = new URL(VERSION_URL + "&check=" + java.util.UUID.randomUUID());
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setConnectTimeout(8000);
-                conn.setReadTimeout(8000);
-                conn.setRequestProperty("User-Agent", "SeyirTV-Updater");
-                conn.setRequestProperty("Accept", "application/vnd.github.raw+json");
-                conn.setUseCaches(false);
-                conn.setRequestProperty("Cache-Control", "no-cache, no-store");
-                conn.setRequestProperty("Pragma", "no-cache");
+    private static String fetchJson(String urlString) {
+        try {
+            URL url = new URL(urlString + (urlString.contains("?") ? "&" : "?") + "t=" + System.currentTimeMillis());
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setConnectTimeout(6000);
+            conn.setReadTimeout(6000);
+            conn.setRequestProperty("User-Agent", "SeyirTV-Updater");
+            conn.setUseCaches(false);
+            conn.setRequestProperty("Cache-Control", "no-cache, no-store");
+            conn.setRequestProperty("Pragma", "no-cache");
 
-                if (conn.getResponseCode() != 200) {
-                    throw new Exception("HTTP " + conn.getResponseCode());
-                }
-
+            if (conn.getResponseCode() == 200) {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(conn.getInputStream()));
                 StringBuilder sb = new StringBuilder();
                 String line;
@@ -68,12 +63,30 @@ public final class AppUpdater {
                 }
                 reader.close();
                 conn.disconnect();
+                return sb.toString();
+            }
+            conn.disconnect();
+        } catch (Exception ignored) {}
+        return null;
+    }
 
-                JSONObject json = new JSONObject(sb.toString());
+    public static void check(Activity activity, boolean manual) {
+        if (activity == null || activity.isFinishing()) return;
+        updateChecks.execute(() -> {
+            try {
+                String raw = fetchJson(PRIMARY_VERSION_URL);
+                if (raw == null || raw.trim().isEmpty()) {
+                    raw = fetchJson(FALLBACK_VERSION_URL);
+                }
+                if (raw == null || raw.trim().isEmpty()) {
+                    throw new Exception("Güncelleme sunucusuna ulaşılamadı.");
+                }
+
+                JSONObject json = new JSONObject(raw);
                 int remoteCode = json.optInt("versionCode", 0);
                 if (remoteCode <= 0) throw new Exception("Sunucudan geçerli sürüm bilgisi alınamadı.");
                 String remoteName = json.optString("versionName", "Bilinmeyen");
-                String changelog = json.optString("changelog", "Performans ve hata duzeltmeleri.");
+                String changelog = json.optString("changelog", "Performans ve hata düzeltmeleri.");
                 String apkUrl = json.optString("apkUrl", DEFAULT_APK_URL);
 
                 PackageManager pm = activity.getPackageManager();
@@ -88,14 +101,14 @@ public final class AppUpdater {
                     } else if (manual) {
                         Toast.makeText(activity, remoteCode == currentCode
                             ? "Seyir TV güncel (v" + currentName + ")"
-                            : "Kurulu: " + currentName + " · Sunucudaki: " + remoteName + ". Daha yeni paket henüz görünmüyor.", Toast.LENGTH_LONG).show();
+                            : "Kurulu: v" + currentName + " · Sunucu: v" + remoteName, Toast.LENGTH_LONG).show();
                     }
                 });
             } catch (Exception e) {
                 mainHandler.post(() -> {
                     if (activity.isFinishing()) return;
                     if (manual) {
-                        Toast.makeText(activity, "Guncelleme denetlenemedi: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                        Toast.makeText(activity, "Güncelleme denetlenemedi: " + e.getMessage(), Toast.LENGTH_LONG).show();
                     }
                 });
             }

@@ -1076,18 +1076,24 @@ public final class PlayerActivity extends Activity {
         boolean controlsShown = playerControlsOverlay != null && playerControlsOverlay.getVisibility() == View.VISIBLE;
 
         if (sidebarShown) {
+            View cur = getCurrentFocus();
+
             if (k == KeyEvent.KEYCODE_DPAD_UP) {
+                if (cur == btnFilterAll || cur == btnFilterSports || cur == btnFilterNational || cur == btnCloseSidebar) {
+                    return true;
+                }
                 int pos = lvSidebarChannels.getSelectedItemPosition();
                 if (pos > 0) {
                     lvSidebarChannels.setSelection(pos - 1);
                     lvSidebarChannels.setItemChecked(pos - 1, true);
                     return true;
-                } else if (pos == 0) {
-                    btnFilterAll.requestFocus();
+                } else {
+                    if ("sports".equals(currentFilter)) btnFilterSports.requestFocus();
+                    else if ("national".equals(currentFilter)) btnFilterNational.requestFocus();
+                    else btnFilterAll.requestFocus();
                     return true;
                 }
             } else if (k == KeyEvent.KEYCODE_DPAD_DOWN) {
-                View cur = getCurrentFocus();
                 if (cur == btnFilterAll || cur == btnFilterSports || cur == btnFilterNational || cur == btnCloseSidebar) {
                     lvSidebarChannels.requestFocus();
                     lvSidebarChannels.setSelection(0);
@@ -1101,8 +1107,40 @@ public final class PlayerActivity extends Activity {
                     lvSidebarChannels.setItemChecked(next, true);
                     return true;
                 }
+                return true;
+            } else if (k == KeyEvent.KEYCODE_DPAD_LEFT) {
+                if (cur == btnCloseSidebar) {
+                    btnFilterNational.requestFocus();
+                    return true;
+                } else if (cur == btnFilterNational) {
+                    btnFilterSports.requestFocus();
+                    return true;
+                } else if (cur == btnFilterSports) {
+                    btnFilterAll.requestFocus();
+                    return true;
+                }
+                return true;
+            } else if (k == KeyEvent.KEYCODE_DPAD_RIGHT) {
+                if (cur == btnFilterAll) {
+                    btnFilterSports.requestFocus();
+                    return true;
+                } else if (cur == btnFilterSports) {
+                    btnFilterNational.requestFocus();
+                    return true;
+                } else if (cur == btnFilterNational) {
+                    btnCloseSidebar.requestFocus();
+                    return true;
+                } else if (cur == btnCloseSidebar) {
+                    hideChannelSidebar();
+                    return true;
+                } else {
+                    if (e.getRepeatCount() >= 2) {
+                        hideChannelSidebar();
+                        return true;
+                    }
+                    return true;
+                }
             } else if (k == KeyEvent.KEYCODE_DPAD_CENTER || k == KeyEvent.KEYCODE_ENTER || k == KeyEvent.KEYCODE_NUMPAD_ENTER) {
-                View cur = getCurrentFocus();
                 if (cur == btnCloseSidebar) {
                     hideChannelSidebar();
                     return true;
@@ -1117,9 +1155,6 @@ public final class PlayerActivity extends Activity {
                     hideChannelSidebar();
                     return true;
                 }
-            } else if (k == KeyEvent.KEYCODE_DPAD_RIGHT) {
-                hideChannelSidebar();
-                return true;
             }
             return super.dispatchKeyEvent(e);
         }
