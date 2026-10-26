@@ -2,6 +2,7 @@ package tv.seyir.app;
 
 import android.app.*;
 import android.content.Context;
+import android.graphics.Color;
 import android.media.AudioManager;
 import android.os.*;
 import android.view.*;
@@ -74,10 +75,10 @@ public final class PlayerActivity extends Activity {
         AspectRatioFrameLayout.RESIZE_MODE_FIXED_WIDTH
     };
     private static final String[] RESIZE_LABELS = {
-        "📐 Boyut: Sığdır (Fit)",
-        "📐 Boyut: Ekrana Yay (Fill)",
-        "📐 Boyut: Yakınlaştır (Zoom)",
-        "📐 Boyut: 16:9 Sabit"
+        "Sığdır",
+        "Ekrana Yay",
+        "Yakınlaştır",
+        "16:9 Sabit"
     };
 
     private final Handler progressHandler = new Handler(Looper.getMainLooper());
@@ -238,11 +239,15 @@ public final class PlayerActivity extends Activity {
 
         playerTitle.setText(title != null ? title.title : "Seyir TV");
 
-        Button[] allButtons = {btnTopBack, btnTopChannels, btnTopClose, btnChannels, btnPrevChannel, btnRewind,
+        Button[] modernButtons = {btnTopChannels, btnChannels, btnPrevChannel, btnRewind,
                 btnPlayPause, btnNextSource, btnForward, btnNextChannel, btnResize, btnQuality,
-                btnAudio, btnSubtitle, btnSpeed, btnCloseSidebar, btnFilterAll, btnFilterSports, btnFilterNational};
-        for (Button b : allButtons) {
-            if (b != null) Ui.focus(b);
+                btnAudio, btnSubtitle, btnSpeed, btnFilterAll, btnFilterSports, btnFilterNational};
+        for (Button b : modernButtons) {
+            if (b != null) styleYouTubeButton(b);
+        }
+        Button[] roundButtons = {btnTopBack, btnTopClose, btnCloseSidebar};
+        for (Button b : roundButtons) {
+            if (b != null) styleYouTubeRoundButton(b);
         }
 
         btnTopBack.setOnClickListener(v -> closePlayer());
@@ -285,6 +290,79 @@ public final class PlayerActivity extends Activity {
                     player.seekTo(target);
                 }
                 scheduleHide();
+            }
+        });
+    }
+
+    private int dp(float n) {
+        return Math.round(n * getResources().getDisplayMetrics().density);
+    }
+
+    private void styleYouTubeButton(Button b) {
+        if (b == null) return;
+        b.setAllCaps(false);
+        b.setFocusable(true);
+        b.setFocusableInTouchMode(false);
+
+        int radius = dp(20);
+        android.graphics.drawable.GradientDrawable normalBg = new android.graphics.drawable.GradientDrawable();
+        normalBg.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
+        normalBg.setCornerRadius(radius);
+        normalBg.setColor(Color.argb(45, 255, 255, 255));
+
+        android.graphics.drawable.GradientDrawable focusedBg = new android.graphics.drawable.GradientDrawable();
+        focusedBg.setShape(android.graphics.drawable.GradientDrawable.RECTANGLE);
+        focusedBg.setCornerRadius(radius);
+        focusedBg.setColor(Color.WHITE);
+
+        b.setBackground(normalBg);
+        b.setTextColor(Color.WHITE);
+
+        b.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) {
+                b.setBackground(focusedBg);
+                b.setTextColor(Color.BLACK);
+                b.animate().scaleX(1.06f).scaleY(1.06f).setDuration(120).start();
+                b.setElevation(dp(8));
+                scheduleHide();
+            } else {
+                b.setBackground(normalBg);
+                b.setTextColor(Color.WHITE);
+                b.animate().scaleX(1.0f).scaleY(1.0f).setDuration(120).start();
+                b.setElevation(0);
+            }
+        });
+    }
+
+    private void styleYouTubeRoundButton(Button b) {
+        if (b == null) return;
+        b.setAllCaps(false);
+        b.setFocusable(true);
+        b.setFocusableInTouchMode(false);
+
+        android.graphics.drawable.GradientDrawable normalBg = new android.graphics.drawable.GradientDrawable();
+        normalBg.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+        normalBg.setColor(Color.argb(45, 255, 255, 255));
+
+        android.graphics.drawable.GradientDrawable focusedBg = new android.graphics.drawable.GradientDrawable();
+        focusedBg.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+        focusedBg.setColor(Color.WHITE);
+
+        b.setBackground(normalBg);
+        b.setTextColor(Color.WHITE);
+
+        b.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) {
+                b.setBackground(focusedBg);
+                b.setTextColor(Color.BLACK);
+                b.animate().scaleX(1.08f).scaleY(1.08f).setDuration(120).start();
+                b.setElevation(dp(8));
+                scheduleHide();
+            } else {
+                b.setBackground(normalBg);
+                b.setTextColor(Color.WHITE);
+                b.animate().scaleX(1.0f).scaleY(1.0f).setDuration(120).start();
+                b.setElevation(0);
             }
         });
     }
@@ -336,6 +414,10 @@ public final class PlayerActivity extends Activity {
                     filteredChannels.add(ch);
                 }
             }
+        }
+        if (filter.equals("sports")) {
+            java.text.Collator trCollator = java.text.Collator.getInstance(new java.util.Locale("tr"));
+            filteredChannels.sort((c1, c2) -> trCollator.compare(c1.name, c2.name));
         }
         if (sidebarAdapter != null) sidebarAdapter.notifyDataSetChanged();
         if (tvSidebarCount != null) tvSidebarCount.setText(filteredChannels.size() + " Kanal • Kumanda ile Seçin");
@@ -578,7 +660,7 @@ public final class PlayerActivity extends Activity {
         shouldPlay = true;
         updateNextSourceButton();
         playerStatusBadge.setText("Kanal açılıyor…");
-        showHud("📺 " + ch.name);
+        showHud(ch.name);
         if (sidebarAdapter != null) sidebarAdapter.notifyDataSetChanged();
         initialize();
     }
@@ -665,7 +747,7 @@ public final class PlayerActivity extends Activity {
             player.addListener(new Player.Listener() {
                 @Override public void onIsPlayingChanged(boolean playing) {
                     liveRecovery.playing(playing, SystemClock.elapsedRealtime());
-                    btnPlayPause.setText(playing ? "❚❚ Duraklat" : "▶ Oynat");
+                    btnPlayPause.setText(playing ? "Duraklat" : "Oynat");
                     if (playing) {
                         if (playerBufferingLayout != null) playerBufferingLayout.setVisibility(View.GONE);
                         playerStatusBadge.setText("Oynatılıyor");
@@ -782,7 +864,7 @@ public final class PlayerActivity extends Activity {
         int currentH = player != null && player.getVideoSize().height > 0 ? player.getVideoSize().height : selectedQualityHeight;
         String qText = currentH >= 2160 ? "4K UHD" : currentH >= 1080 ? "1080p FHD" : currentH >= 720 ? "720p HD" : currentH > 0 ? currentH + "p" : "1080p FHD";
         if (badgeHd != null) badgeHd.setText(qText);
-        if (btnQuality != null) btnQuality.setText("⚙️ Netlik: " + qText);
+        if (btnQuality != null) btnQuality.setText(qText);
     }
 
     private void selectQuality() {
@@ -871,7 +953,7 @@ public final class PlayerActivity extends Activity {
             .setItems(speedLabels, (d, w) -> {
                 currentSpeed = speeds[w];
                 if (player != null) player.setPlaybackSpeed(currentSpeed);
-                btnSpeed.setText("⚡ " + speeds[w] + "×");
+                btnSpeed.setText(speeds[w] + "x");
                 scheduleHide();
             }).show();
     }
@@ -888,7 +970,7 @@ public final class PlayerActivity extends Activity {
             if (nextUrl != null && !nextUrl.trim().isEmpty() && !nextUrl.equals(url)) {
                 url = nextUrl;
                 playerStatusBadge.setText("Yedek kaynak açılıyor…");
-                showHud("🔄 Yedek Kaynak");
+                showHud("Yedek Kaynak");
                 release();
                 initialize();
                 updateNextSourceButton();
@@ -1069,8 +1151,8 @@ public final class PlayerActivity extends Activity {
 
         // 3. Media playback keys
         if (k == KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE) { if (e.getRepeatCount() == 0) togglePlay(); return true; }
-        if (k == KeyEvent.KEYCODE_MEDIA_PLAY) { player.play(); btnPlayPause.setText("❚❚ Duraklat"); return true; }
-        if (k == KeyEvent.KEYCODE_MEDIA_PAUSE) { player.pause(); btnPlayPause.setText("▶ Oynat"); return true; }
+        if (k == KeyEvent.KEYCODE_MEDIA_PLAY) { player.play(); btnPlayPause.setText("Duraklat"); return true; }
+        if (k == KeyEvent.KEYCODE_MEDIA_PAUSE) { player.pause(); btnPlayPause.setText("Oynat"); return true; }
         if (k == KeyEvent.KEYCODE_MEDIA_FAST_FORWARD || k == KeyEvent.KEYCODE_MEDIA_NEXT) { seek(30000); return true; }
         if (k == KeyEvent.KEYCODE_MEDIA_REWIND || k == KeyEvent.KEYCODE_MEDIA_PREVIOUS) { seek(-30000); return true; }
         if (k == KeyEvent.KEYCODE_MENU || k == KeyEvent.KEYCODE_INFO) {

@@ -14,6 +14,52 @@ final class ChannelFilter {
         return Normalizer.normalize(s, Normalizer.Form.NFD).replaceAll("\\p{M}+", "");
     }
 
+    static String canonicalCategory(String name, String group) {
+        String n = normalized(name);
+        String g = normalized(group);
+
+        // 1. beIN Sports: strictly sports (not movies/entertainment)
+        if (n.contains("bein") || g.contains("bein")) {
+            if (n.contains("movie") || n.contains("sinema") || n.contains("series") || n.contains("dizi") || n.contains("iz") || n.contains("box")) {
+                return "Sinema & Dizi";
+            }
+            return "beIN Sports";
+        }
+
+        // 2. Belgesel
+        if (n.contains("belgesel") || g.contains("belgesel") || n.contains("dmax") || n.contains("tlc") || n.contains("nat geo") || n.contains("natgeo") || n.contains("discovery") || n.contains("history") || n.contains("animal")) {
+            return "Belgesel";
+        }
+
+        // 3. Haber
+        if (n.contains("haber") || g.contains("haber") || n.contains("ntv") || n.contains("cnnturk") || n.contains("cnn turk") || n.contains("tele1") || n.contains("szc") || n.contains("sozcu") || n.contains("tv100") || n.contains("ekol tv") || n.contains("ekoltv") || n.contains("tgrt") || n.contains("bloomberg") || n.contains("apara") || n.contains("24 tv") || n.contains("kanal 24") || n.contains("ulke tv") || n.contains("ulketv")) {
+            return "Haber";
+        }
+
+        // 4. Çocuk
+        if (n.contains("cocuk") || g.contains("cocuk") || n.contains("minika") || n.contains("cartoon") || n.contains("disney") || n.contains("nickelodeon") || n.contains("boomerang")) {
+            return "Çocuk";
+        }
+
+        // 5. Müzik
+        if (n.contains("muzik") || g.contains("muzik") || n.contains("kral") || n.contains("power") || n.contains("number1") || n.contains("number 1") || n.contains("dream") || n.contains("nr1")) {
+            return "Müzik";
+        }
+
+        // 6. Sinema & Dizi
+        if (n.contains("sinema") || g.contains("sinema") || n.contains("film") || g.contains("film") || n.contains("dizi") || g.contains("dizi") || n.contains("movie") || n.contains("salon") || n.contains("filmbox") || n.contains("yesilcam")) {
+            return "Sinema & Dizi";
+        }
+
+        // 7. Spor (all non-beIN sports)
+        if (n.contains("spor") || g.contains("spor") || n.contains("sport") || g.contains("sport") || n.contains("exxen") || n.contains("euro") || n.contains("ssport") || n.contains("s sport") || n.contains("tivibu") || n.contains("smart") || n.contains("aspor") || n.contains("htspor") || n.contains("fbtv") || n.contains("gstv") || n.contains("tv8.5") || n.contains("tv85") || n.contains("tabii") || n.contains("nba") || n.contains("fight") || n.contains("racing") || n.contains("motorsport")) {
+            return "Spor";
+        }
+
+        // 8. Ulusal (default)
+        return "Ulusal";
+    }
+
     static boolean allows(String name, String group) {
         String n = normalized(name), g = normalized(group);
         if (FOREIGN.matcher(n + " " + g).find() || n.matches("^(fr|uk|us|en|ar|es|de|it|pt|pl|ru|nl)bein.*")) return false;

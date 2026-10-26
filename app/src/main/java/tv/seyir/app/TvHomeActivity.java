@@ -444,7 +444,16 @@ public class TvHomeActivity extends Activity {
         java.text.Collator trCollator = java.text.Collator.getInstance(new java.util.Locale("tr"));
         Set<String> unique = new java.util.TreeSet<>((a, b) -> trCollator.compare(a, b));
         for (SportsManager.SportChannel ch : channels) if (ch.category != null && !ch.category.trim().isEmpty()) unique.add(ch.category);
-        List<String> choices = new ArrayList<>(); choices.add("Tüm kanallar"); choices.addAll(unique);
+        String[] standardOrder = {"beIN Sports", "Spor", "Ulusal", "Haber", "Belgesel", "Sinema & Dizi", "Çocuk", "Müzik"};
+        List<String> choices = new ArrayList<>();
+        choices.add("Tüm kanallar");
+        for (String s : standardOrder) {
+            if (unique.contains(s)) {
+                choices.add(s);
+                unique.remove(s);
+            }
+        }
+        choices.addAll(unique);
         int selected = category.isEmpty() ? 0 : Math.max(0, choices.indexOf(category));
         AlertDialog d = new AlertDialog.Builder(this).setTitle("Kategoriler")
             .setSingleChoiceItems(choices.toArray(new String[0]), selected, (dialog, which) -> {
