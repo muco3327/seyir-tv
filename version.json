@@ -1,6 +1,6 @@
 {
-  "versionCode": 72,
-  "versionName": "0.5.29",
-  "changelog": "Oracle Cloud IPTV Proxy ve HTTP 403 / Yönlendirme Düzeltmeleri:\n1. 403 hatası alan tüm canlı yayınlar otomatik Oracle Proxy köprüsüne aktarılıyor.\n2. StreamProbe yönlendirme (302/307) ve modern User-Agent desteği ile güçlendirildi.\n3. beIN Sports ve spor kanalları için birincil Oracle bağlantıları eklendi.",
-  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.29.apk"
+  "versionCode": 73,
+  "versionName": "0.5.30",
+  "changelog": "Oracle Cloud IPTV Proxy ve HTTP 502 / Canlı Yayın İyileştirmeleri:\n1. HTTP 502 hatası giderildi (süresi dolan canlı HLS segmentleri otomatik atlanıyor).\n2. beIN Sports (1-5), S Sport (1-2), Tivibu Spor (1-3) ve Smart Spor (1-2) doğrudan çalışan kaynaklarla güncellendi.\n3. Oracle Proxy köprüsüne otomatik yönlendirme ve Referer güvenliği eklendi.",
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.30.apk"
 }

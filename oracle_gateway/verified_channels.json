@@ -1,0 +1,191 @@
+[
+  {
+    "id": "beinsports1",
+    "name": "beIN Sports 1",
+    "category": "Spor",
+    "urls": [
+      "https://andro.evrenesoglu217.click/checklist/androstreamlivebs1.m3u8",
+      "https://atom.han686314.workers.dev/bein-sports-1.m3u8"
+    ]
+  },
+  {
+    "id": "beinsports2",
+    "name": "beIN Sports 2",
+    "category": "Spor",
+    "urls": [
+      "https://andro.evrenesoglu217.click/checklist/androstreamlivebs2.m3u8"
+    ]
+  },
+  {
+    "id": "beinsports3",
+    "name": "beIN Sports 3",
+    "category": "Spor",
+    "urls": [
+      "https://andro.evrenesoglu217.click/checklist/androstreamlivebs3.m3u8"
+    ]
+  },
+  {
+    "id": "beinsports4",
+    "name": "beIN Sports 4",
+    "category": "Spor",
+    "urls": [
+      "https://andro.evrenesoglu217.click/checklist/androstreamlivebs4.m3u8"
+    ]
+  },
+  {
+    "id": "beinsports5",
+    "name": "beIN Sports 5",
+    "category": "Spor",
+    "urls": [
+      "https://andro.evrenesoglu217.click/checklist/androstreamlivebs5.m3u8",
+      "https://purple-fog-7608.han686314.workers.dev/androstreamlivebs5.m3u8"
+    ]
+  },
+  {
+    "id": "ssport1",
+    "name": "S Sport 1",
+    "category": "Spor",
+    "urls": [
+      "https://andro.evrenesoglu217.click/checklist/androstreamlivess1.m3u8"
+    ]
+  },
+  {
+    "id": "ssport2",
+    "name": "S Sport 2",
+    "category": "Spor",
+    "urls": [
+      "https://andro.evrenesoglu217.click/checklist/androstreamlivess2.m3u8"
+    ]
+  },
+  {
+    "id": "tivibuspor1",
+    "name": "Tivibu Spor 1",
+    "category": "Spor",
+    "urls": [
+      "https://andro.evrenesoglu217.click/checklist/androstreamlivets1.m3u8"
+    ]
+  },
+  {
+    "id": "tivibuspor2",
+    "name": "Tivibu Spor 2",
+    "category": "Spor",
+    "urls": [
+      "https://andro.evrenesoglu217.click/checklist/androstreamlivets2.m3u8"
+    ]
+  },
+  {
+    "id": "tivibuspor3",
+    "name": "Tivibu Spor 3",
+    "category": "Spor",
+    "urls": [
+      "https://andro.evrenesoglu217.click/checklist/androstreamlivets3.m3u8"
+    ]
+  },
+  {
+    "id": "smartspor1",
+    "name": "Smart Spor 1",
+    "category": "Spor",
+    "urls": [
+      "https://andro.evrenesoglu217.click/checklist/androstreamlivesm1.m3u8"
+    ]
+  },
+  {
+    "id": "smartspor2",
+    "name": "Smart Spor 2",
+    "category": "Spor",
+    "urls": [
+      "https://andro.evrenesoglu217.click/checklist/androstreamlivesm2.m3u8"
+    ]
+  },
+  {
+    "id": "trt1",
+    "name": "TRT 1",
+    "category": "Ulusal",
+    "urls": [
+      "https://trt.daioncdn.net/trt-1/master.m3u8?app=web"
+    ]
+  },
+  {
+    "id": "trtspor",
+    "name": "TRT Spor",
+    "category": "Spor",
+    "urls": [
+      "https://trt.daioncdn.net/trtspor/master.m3u8?app=web&platform=trtspor"
+    ]
+  },
+  {
+    "id": "aspor",
+    "name": "A Spor",
+    "category": "Spor",
+    "urls": [
+      "https://rnttwmjcin.turknet.ercdn.net/lcpmvefbyo/aspor/aspor.m3u8"
+    ]
+  },
+  {
+    "id": "atv",
+    "name": "ATV",
+    "category": "Ulusal",
+    "urls": [
+      "https://rnttwmjcin.turknet.ercdn.net/lcpmvefbyo/atv/atv_720p.m3u8",
+      "https://rnttwmjcin.turknet.ercdn.net/lcpmvefbyo/atv/atv.m3u8"
+    ]
+  },
+  {
+    "id": "kanald",
+    "name": "Kanal D",
+    "category": "Ulusal",
+    "urls": [
+      "https://demiroren.daioncdn.net/kanald/kanald.m3u8?app=kanald_web&ce=3",
+      "https://ackaxsqacw.turknet.ercdn.net/ozfkfbbjba/kanald/kanald.m3u8"
+    ]
+  },
+  {
+    "id": "showtv",
+    "name": "Show TV",
+    "category": "Ulusal",
+    "urls": [
+      "https://ciner.daioncdn.net/showtv/showtv.m3u8?ce=3&app=4bc856ef-4c68-4a94-bc87-37dfaaa66558",
+      "https://rmtftbjlne.turknet.ercdn.net/bpeytmnqyp/showtv/showtv.m3u8"
+    ]
+  },
+  {
+    "id": "startv",
+    "name": "Star TV",
+    "category": "Ulusal",
+    "urls": [
+      "https://dogus.daioncdn.net/startv/startv_720p.m3u8?app=a20ac41e-bdc3-4aa1-934d-26b484480ac9"
+    ]
+  },
+  {
+    "id": "tv8bucuk",
+    "name": "TV 8.5",
+    "category": "Ulusal",
+    "urls": [
+      "https://tv8.daioncdn.net/tv8bucuk/tv8bucuk_720p.m3u8?sig=3e1e7e77bd21da485aa2c59a649bcb17&sid=6t07ysfz9eyd&app=bf58ab52-4865-4c81-b223-26b41009801e&ce=3"
+    ]
+  },
+  {
+    "id": "kanal7",
+    "name": "Kanal 7",
+    "category": "Ulusal",
+    "urls": [
+      "https://kanal7-live.daioncdn.net/kanal7/kanal7_1080p.m3u8"
+    ]
+  },
+  {
+    "id": "beyaztv",
+    "name": "Beyaz TV",
+    "category": "Ulusal",
+    "urls": [
+      "https://beyaztv-live.daioncdn.net/beyaztv/beyaztv_720p.m3u8"
+    ]
+  },
+  {
+    "id": "a2",
+    "name": "A2",
+    "category": "Ulusal",
+    "urls": [
+      "https://rnttwmjcin.turknet.ercdn.net/lcpmvefbyo/a2tv/a2tv.m3u8"
+    ]
+  }
+]

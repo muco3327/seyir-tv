@@ -1,89 +1,191 @@
 [
   {
-    "id": "beinhaber",
-    "name": "beIN Sports Haber",
-    "logo": "https://raw.githubusercontent.com/tv-logo/tv-logos/main/countries/turkey/bein-sports-haber-tr.png",
-    "category": "beIN Sports",
+    "id": "beinsports1",
+    "name": "beIN Sports 1",
+    "category": "Spor",
     "urls": [
-      "https://bein-esp-xumo.amagi.tv/playlistR1080p.m3u8"
-    ],
-    "headers": {
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
-    }
+      "https://andro.evrenesoglu217.click/checklist/androstreamlivebs1.m3u8",
+      "https://atom.han686314.workers.dev/bein-sports-1.m3u8"
+    ]
+  },
+  {
+    "id": "beinsports2",
+    "name": "beIN Sports 2",
+    "category": "Spor",
+    "urls": [
+      "https://andro.evrenesoglu217.click/checklist/androstreamlivebs2.m3u8"
+    ]
+  },
+  {
+    "id": "beinsports3",
+    "name": "beIN Sports 3",
+    "category": "Spor",
+    "urls": [
+      "https://andro.evrenesoglu217.click/checklist/androstreamlivebs3.m3u8"
+    ]
+  },
+  {
+    "id": "beinsports4",
+    "name": "beIN Sports 4",
+    "category": "Spor",
+    "urls": [
+      "https://andro.evrenesoglu217.click/checklist/androstreamlivebs4.m3u8"
+    ]
+  },
+  {
+    "id": "beinsports5",
+    "name": "beIN Sports 5",
+    "category": "Spor",
+    "urls": [
+      "https://andro.evrenesoglu217.click/checklist/androstreamlivebs5.m3u8",
+      "https://purple-fog-7608.han686314.workers.dev/androstreamlivebs5.m3u8"
+    ]
+  },
+  {
+    "id": "ssport1",
+    "name": "S Sport 1",
+    "category": "Spor",
+    "urls": [
+      "https://andro.evrenesoglu217.click/checklist/androstreamlivess1.m3u8"
+    ]
+  },
+  {
+    "id": "ssport2",
+    "name": "S Sport 2",
+    "category": "Spor",
+    "urls": [
+      "https://andro.evrenesoglu217.click/checklist/androstreamlivess2.m3u8"
+    ]
+  },
+  {
+    "id": "tivibuspor1",
+    "name": "Tivibu Spor 1",
+    "category": "Spor",
+    "urls": [
+      "https://andro.evrenesoglu217.click/checklist/androstreamlivets1.m3u8"
+    ]
+  },
+  {
+    "id": "tivibuspor2",
+    "name": "Tivibu Spor 2",
+    "category": "Spor",
+    "urls": [
+      "https://andro.evrenesoglu217.click/checklist/androstreamlivets2.m3u8"
+    ]
+  },
+  {
+    "id": "tivibuspor3",
+    "name": "Tivibu Spor 3",
+    "category": "Spor",
+    "urls": [
+      "https://andro.evrenesoglu217.click/checklist/androstreamlivets3.m3u8"
+    ]
+  },
+  {
+    "id": "smartspor1",
+    "name": "Smart Spor 1",
+    "category": "Spor",
+    "urls": [
+      "https://andro.evrenesoglu217.click/checklist/androstreamlivesm1.m3u8"
+    ]
+  },
+  {
+    "id": "smartspor2",
+    "name": "Smart Spor 2",
+    "category": "Spor",
+    "urls": [
+      "https://andro.evrenesoglu217.click/checklist/androstreamlivesm2.m3u8"
+    ]
+  },
+  {
+    "id": "trt1",
+    "name": "TRT 1",
+    "category": "Ulusal",
+    "urls": [
+      "https://trt.daioncdn.net/trt-1/master.m3u8?app=web"
+    ]
   },
   {
     "id": "trtspor",
-    "name": "TRT Spor HD",
-    "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/TRT_Spor_logo.svg/512px-TRT_Spor_logo.svg.png",
-    "category": "Ulusal Spor",
+    "name": "TRT Spor",
+    "category": "Spor",
     "urls": [
-      "https://trt.daioncdn.net/trtspor/master.m3u8?app=web&platform=trtspor",
-      "https://tv-trtspor2.medya.trt.com.tr/master_720.m3u8"
-    ],
-    "headers": {
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
-    }
-  },
-  {
-    "id": "trtsporyildiz",
-    "name": "TRT Spor Yildiz",
-    "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/TRT_Spor_Y%C4%B1ld%C4%B1z_Logo.svg/512px-TRT_Spor_Y%C4%B1ld%C4%B1z_Logo.svg.png",
-    "category": "Ulusal Spor",
-    "urls": [
-      "https://trt.daioncdn.net/trtspor-yildiz/master.m3u8?app=web&platform=trtspor"
-    ],
-    "headers": {
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
-    }
+      "https://trt.daioncdn.net/trtspor/master.m3u8?app=web&platform=trtspor"
+    ]
   },
   {
     "id": "aspor",
-    "name": "A Spor HD",
-    "logo": "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/A_Spor_logo.svg/512px-A_Spor_logo.svg.png",
-    "category": "Ulusal Spor",
+    "name": "A Spor",
+    "category": "Spor",
     "urls": [
-      "https://rnttwmjcin.turknet.ercdn.net/lcpmvefbyo/aspor/aspor_1080p.m3u8",
       "https://rnttwmjcin.turknet.ercdn.net/lcpmvefbyo/aspor/aspor.m3u8"
-    ],
-    "headers": {
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
-    }
+    ]
   },
   {
-    "id": "htspor",
-    "name": "HT Spor HD",
-    "logo": "https://www.htspor.com/images/manifest/social-share-logo.png",
-    "category": "Ulusal Spor",
+    "id": "atv",
+    "name": "ATV",
+    "category": "Ulusal",
     "urls": [
-      "https://ciner.daioncdn.net/ht-spor/ht-spor.m3u8?app=web"
-    ],
-    "headers": {
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
-    }
+      "https://rnttwmjcin.turknet.ercdn.net/lcpmvefbyo/atv/atv_720p.m3u8",
+      "https://rnttwmjcin.turknet.ercdn.net/lcpmvefbyo/atv/atv.m3u8"
+    ]
   },
   {
-    "id": "tjktv",
-    "name": "TJK TV (Yaris)",
-    "logo": "https://cdn.technettv.com/channel/20826/logo_256_1699966834.png",
-    "category": "Yaris",
+    "id": "kanald",
+    "name": "Kanal D",
+    "category": "Ulusal",
     "urls": [
-      "https://tjktv-live.tjk.org/tjktv.m3u8",
-      "http://tjktv.ercdn.net/tjktv.m3u8"
-    ],
-    "headers": {
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
-    }
+      "https://demiroren.daioncdn.net/kanald/kanald.m3u8?app=kanald_web&ce=3",
+      "https://ackaxsqacw.turknet.ercdn.net/ozfkfbbjba/kanald/kanald.m3u8"
+    ]
   },
   {
-    "id": "ekolsport",
-    "name": "Ekol Sports HD",
-    "logo": "https://feo.kablowebtv.com/resize/168A635D265A4328C2883FB4CD8FF/0/0/Vod/HLS/c4ca1fe1-e4ef-496a-9e97-b41a55910e43.png",
-    "category": "Ulusal Spor",
+    "id": "showtv",
+    "name": "Show TV",
+    "category": "Ulusal",
     "urls": [
-      "https://ekoltv-live.ercdn.net/ekolsport/ekolsport_1080p.m3u8?autoplay=1"
-    ],
-    "headers": {
-      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
-    }
+      "https://ciner.daioncdn.net/showtv/showtv.m3u8?ce=3&app=4bc856ef-4c68-4a94-bc87-37dfaaa66558",
+      "https://rmtftbjlne.turknet.ercdn.net/bpeytmnqyp/showtv/showtv.m3u8"
+    ]
+  },
+  {
+    "id": "startv",
+    "name": "Star TV",
+    "category": "Ulusal",
+    "urls": [
+      "https://dogus.daioncdn.net/startv/startv_720p.m3u8?app=a20ac41e-bdc3-4aa1-934d-26b484480ac9"
+    ]
+  },
+  {
+    "id": "tv8bucuk",
+    "name": "TV 8.5",
+    "category": "Ulusal",
+    "urls": [
+      "https://tv8.daioncdn.net/tv8bucuk/tv8bucuk_720p.m3u8?sig=3e1e7e77bd21da485aa2c59a649bcb17&sid=6t07ysfz9eyd&app=bf58ab52-4865-4c81-b223-26b41009801e&ce=3"
+    ]
+  },
+  {
+    "id": "kanal7",
+    "name": "Kanal 7",
+    "category": "Ulusal",
+    "urls": [
+      "https://kanal7-live.daioncdn.net/kanal7/kanal7_1080p.m3u8"
+    ]
+  },
+  {
+    "id": "beyaztv",
+    "name": "Beyaz TV",
+    "category": "Ulusal",
+    "urls": [
+      "https://beyaztv-live.daioncdn.net/beyaztv/beyaztv_720p.m3u8"
+    ]
+  },
+  {
+    "id": "a2",
+    "name": "A2",
+    "category": "Ulusal",
+    "urls": [
+      "https://rnttwmjcin.turknet.ercdn.net/lcpmvefbyo/a2tv/a2tv.m3u8"
+    ]
   }
 ]

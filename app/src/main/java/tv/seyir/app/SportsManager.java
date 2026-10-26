@@ -44,7 +44,12 @@ public final class SportsManager {
             || lower.contains("camon1")
             || lower.contains("tomtv")
             || lower.contains("tv247")
-            || lower.contains("zeus");
+            || lower.contains("zeus")
+            || lower.contains("evrenesoglu")
+            || lower.contains(".click")
+            || lower.contains("fastly.net")
+            || lower.contains("mangeinde")
+            || lower.contains("d6e3eae5e065d5");
     }
     public static final String REMOTE_SPORTS_URL = "https://raw.githubusercontent.com/muco3327/seyir-tv/main/sports.json";
     private static final Handler mainHandler = new Handler(Looper.getMainLooper());
