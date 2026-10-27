@@ -81,7 +81,10 @@ app.get('/api/version', (req, res) => {
 function getQualityScore(url) {
     const u = (url || '').toLowerCase();
     if (u.includes('4k') || u.includes('uhd') || u.includes('2160')) return 1000;
-    // Verified 1080p FHD streams
+    // Top-tier verified live HLS streams
+    if (u.includes('ardastream2') || u.includes('atom.han') || u.includes('daioncdn') || u.includes('ercdn')) return 980;
+    if (u.includes('zeus')) return 950;
+    // Verified 1080p FHD IPTV streams
     if (
         u.includes('77238') || u.includes('237081') || u.includes('87') || u.includes('31407') ||
         u.includes('223134') || u.includes('223135') || u.includes('80') || u.includes('77') ||
@@ -89,7 +92,7 @@ function getQualityScore(url) {
         u.includes('1108685') || u.includes('16536') || u.includes('16390') || u.includes('52750') ||
         u.includes('26969') || u.includes('41227') || u.includes('4817') || u.includes('50157') ||
         u.includes('988849') || u.includes('988867') || u.includes('1080') || u.includes('fhd')
-    ) return 950;
+    ) return 850;
     // 720p HD streams
     if (
         u.includes('720') || u.includes('hd') || u.includes('89') || u.includes('116675') ||
@@ -99,11 +102,22 @@ function getQualityScore(url) {
     ) return 800;
     // Standard IPTV
     if (u.includes('deat1') || u.includes('camon1') || u.includes('eempiree') || u.includes('tomtv') || u.includes('nexus') || u.includes('corestream') || u.includes('atom') || u.includes('cdnlive') || u.includes('tvnow')) return 600;
-    // 576p SD (Zeus is 576p)
-    if (u.includes('zeus') || u.includes('576') || u.includes('/84') || u.includes('/8?output=ts')) return 300;
-    // 480p SD (Andro)
-    if (u.includes('andro') || u.includes('mobil') || u.includes('mobile') || u.includes('sd') || u.includes('480') || u.includes('360')) return 100;
-    return 400;
+    // 576p SD
+    if (u.includes('576') || u.includes('/84') || u.includes('/8?output=ts')) return 400;
+    // Andro / mobile
+    if (u.includes('andro') || u.includes('mobil') || u.includes('mobile') || u.includes('sd') || u.includes('480') || u.includes('360')) return 300;
+    return 500;
+}
+
+
+function isRawTsStream(url) {
+    if (!url) return false;
+    const u = url.toLowerCase();
+    return (
+        (u.includes('output=ts') || u.includes('extension=ts') || u.includes('format=ts') || u.includes('live.php')) &&
+        !u.includes('.m3u8') &&
+        !u.includes('index.txt')
+    );
 }
 
 function isSegmentUrl(url) {
@@ -175,9 +189,13 @@ app.get('/channel/:id.m3u8', async (req, res) => {
     res.setHeader('Access-Control-Allow-Headers', '*');
 
     const sortedUrls = [...ch.urls].sort((a, b) => getQualityScore(b) - getQualityScore(a));
-    for (let i = 0; i < sortedUrls.length; i++) {
-        const targetUrl = sortedUrls[i];
-        if (isSegmentUrl(targetUrl) && !targetUrl.includes('.m3u8') && !targetUrl.includes('index.txt')) {
+    // Prioritize actual HLS manifest URLs (.m3u8, index.txt) over raw TS streams
+    const hlsCandidates = sortedUrls.filter(u => !isRawTsStream(u));
+    const urlsToTry = hlsCandidates.length > 0 ? hlsCandidates : sortedUrls;
+
+    for (let i = 0; i < urlsToTry.length; i++) {
+        const targetUrl = urlsToTry[i];
+        if (isRawTsStream(targetUrl) && hlsCandidates.length === 0) {
             return res.redirect('/proxy?url=' + encodeURIComponent(targetUrl));
         }
         try {
@@ -188,28 +206,28 @@ app.get('/channel/:id.m3u8', async (req, res) => {
                 method: 'get',
                 url: targetUrl,
                 headers: headers,
-                timeout: 6000,
-                                                validateStatus: (status) => status >= 200 && status < 300
+                timeout: 5000,
+                validateStatus: (status) => status >= 200 && status < 300
             });
 
             const bodyStr = response.data.toString('utf-8');
-            if (bodyStr.startsWith('#EXTM3U') || targetUrl.includes('.m3u8') || targetUrl.includes('index.txt')) {
+            if (bodyStr.includes('#EXTM3U') || targetUrl.includes('.m3u8') || targetUrl.includes('index.txt')) {
                 res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
                 const lines = bodyStr.split('\n');
-                const rewritten = lines.map(line => {
-                    const trimmed = line.trim();
-                    if (!trimmed || trimmed.startsWith('#')) return line;
+                const rewritten = lines.map(l => {
+                    const trimmed = l.trim();
+                    if (!trimmed || trimmed.startsWith('#')) return l;
                     try {
                         const resolvedUrl = new URL(trimmed, targetUrl).href;
                         return '/proxy?url=' + encodeURIComponent(resolvedUrl);
                     } catch (e) {
-                        return line;
+                        return l;
                     }
                 }).join('\n');
                 return res.send(rewritten);
             }
         } catch (err) {
-            console.log(`[Failover] Channel ${channelId} source ${i+1}/${ch.urls.length} failed (${err.message}). Trying next...`);
+            console.log(`[Failover] Channel ${channelId} source ${i+1}/${urlsToTry.length} failed (${err.message}). Trying next...`);
             if (targetUrl.includes('medya.trt.com.tr')) {
                 return res.redirect(targetUrl);
             }
@@ -1054,9 +1072,9 @@ async function scanAndRefreshChannels() {
     }
 }
 
-// Run scanner every 2 minutes (120,000 ms)
-setInterval(scanAndRefreshChannels, 2 * 60 * 1000);
-setTimeout(scanAndRefreshChannels, 3000);
+// Scanner disabled in live gateway process to preserve CPU and zero-memory leaks
+// setInterval(scanAndRefreshChannels, 2 * 60 * 1000);
+// setTimeout(scanAndRefreshChannels, 3000);
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Seyir TV Oracle Gateway running on port ${PORT}`);
