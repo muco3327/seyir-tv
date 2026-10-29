@@ -5,8 +5,8 @@
     "category": "beIN Sports",
     "urls": [
       "https://ladyboy.ardastream2.cfd//beintv/tracks-v1a1/mono.m3u8",
-      "https://atom.han686314.workers.dev/bein-sports-1.m3u8",
       "https://zeus645423.cfd/b1/index.txt",
+      "https://atom.han686314.workers.dev/bein-sports-1.m3u8",
       "http://nexusconnects.org:80/play/live.php?mac=00:1B:79:47:72:00&stream=988849&extension=ts&play_token=zYB5znYiYr",
       "http://nexusconnects.org:80/play/live.php?mac=00:1B:79:47:72:00&stream=988867&extension=ts&play_token=a34h1OJXxe",
       "http://190502.tomtv.eu:80/MustafaozdemR7808/z189b8mv2r/77238",
@@ -135,6 +135,7 @@
     "name": "beIN Sports 4",
     "category": "beIN Sports",
     "urls": [
+      "https://zeus645423.cfd/b4/index.txt",
       "http://190502.tomtv.eu:80/MustafaozdemR7808/z189b8mv2r/223134",
       "http://190502.tomtv.eu:80/LiudmilaSheremet/233v9m9kjc/223134",
       "https://corestream.ardastream.live//bein4/tracks-v1a1/mono.m3u8",
@@ -157,7 +158,6 @@
       "https://chunk.tv247.biz/api/proxy/playlist?token=eyJjaGFubmVsSWQiOiI2NyIsInRzIjoxNzg4MDE4NTU5Nzg0fQ==",
       "https://chunk.tv247.biz/api/proxy/playlist?token=eyJjaGFubmVsSWQiOiI5NCIsInRzIjoxNzg3ODEzNDk4NDA5fQ==",
       "https://proxy.cors.sh/https://channels.forestgump.space/ch1/track/67",
-      "https://zeus645423.cfd/b4/index.txt",
       "https://zeus324232.cfd/b4/index.txt",
       "https://andro.evrenesoglu217.click/checklist/androstreamlivebs4.m3u8"
     ]
@@ -167,6 +167,7 @@
     "name": "beIN Sports 5",
     "category": "beIN Sports",
     "urls": [
+      "https://zeus645423.cfd/b5/index.txt",
       "http://190502.tomtv.eu:80/MustafaozdemR7808/z189b8mv2r/223135",
       "http://deat1.com:8080/Celalustun/sEUTbRUtkwJH/50157?output=ts",
       "https://corestream.ardastream.live//bein5/tracks-v1a1/mono.m3u8",
@@ -185,7 +186,6 @@
       "https://pp.centtv38.live/yayinb5.m3u8",
       "https://chunk.tv247.biz/api/proxy/playlist?token=eyJjaGFubmVsSWQiOiIxMDEwIiwidHMiOjE3ODgwMTg1NjA3ODR9",
       "https://chunk.tv247.biz/api/proxy/playlist?token=eyJjaGFubmVsSWQiOiI5NSIsInRzIjoxNzg3ODEzNDk5NDA5fQ==",
-      "https://zeus645423.cfd/b5/index.txt",
       "https://zeus324232.cfd/b5/index.txt",
       "https://andro.evrenesoglu217.click/checklist/androstreamlivebs5.m3u8"
     ]
@@ -314,7 +314,7 @@
     "name": "Exxen 1",
     "category": "Spor",
     "urls": [
-      "http://150.230.29.27:3000/channel/exxen1.m3u8"
+      "http://me.mdmfista.com:80/play/live.php?mac=00:1A:79:F5:CE:D7&stream=15340&extension=ts&play_token=wNK4aVUruy"
     ]
   },
   {
@@ -322,7 +322,7 @@
     "name": "Exxen 2",
     "category": "Spor",
     "urls": [
-      "http://150.230.29.27:3000/channel/exxen2.m3u8"
+      "http://me.mdmfista.com:80/play/live.php?mac=00:1A:79:F5:CE:D7&stream=15341&extension=ts&play_token=zSABQW7fDf"
     ]
   },
   {
@@ -330,7 +330,7 @@
     "name": "Exxen 3",
     "category": "Spor",
     "urls": [
-      "http://150.230.29.27:3000/channel/exxen3.m3u8"
+      "http://me.mdmfista.com:80/play/live.php?mac=00:1A:79:F5:CE:D7&stream=15342&extension=ts&play_token=Pja6pkhpEZ"
     ]
   },
   {
@@ -338,7 +338,7 @@
     "name": "Exxen 4",
     "category": "Spor",
     "urls": [
-      "http://150.230.29.27:3000/channel/exxen4.m3u8"
+      "http://me.mdmfista.com:80/play/live.php?mac=00:1A:79:F5:CE:D7&stream=15515&extension=ts&play_token=MH3sitWFXZ"
     ]
   },
   {
@@ -346,7 +346,7 @@
     "name": "Exxen 5",
     "category": "Spor",
     "urls": [
-      "http://150.230.29.27:3000/channel/exxen5.m3u8"
+      "http://me.mdmfista.com:80/play/live.php?mac=00:1A:79:F5:CE:D7&stream=15516&extension=ts&play_token=5QGT1mdeQC"
     ]
   },
   {
@@ -430,6 +430,7 @@
     "name": "S Sport 2",
     "category": "Spor",
     "urls": [
+      "https://zeus645423.cfd/s2/index.txt",
       "http://190502.tomtv.eu:80/MustafaozdemR7808/z189b8mv2r/232183",
       "http://190502.tomtv.eu:80/LiudmilaSheremet/233v9m9kjc/232183",
       "https://corestream.ardastream.live//s-sport2/tracks-v1a1/mono.m3u8",
@@ -456,7 +457,6 @@
       "https://7nyaler.streamhostingcdn.top/stream/52/index.m3u8",
       "https://proxy.cors.sh/https://yayinlarfidanafidanlaragaca.xyz/hls/9.m3u8",
       "https://avva.magnitude.workers.dev/?url=https://avvaupdate.com/ssport2/index.m3u8?o=1%26e=1781703872%26tk=51d8cf311c0961e87873898f38494c8d",
-      "https://zeus645423.cfd/s2/index.txt",
       "https://zeus324232.cfd/s2/index.txt",
       "https://andro.evrenesoglu217.click/checklist/androstreamlivess2.m3u8"
     ]
@@ -540,10 +540,10 @@
     "name": "Tivibu Spor 2",
     "category": "Spor",
     "urls": [
+      "https://zeus645423.cfd/tivibu2/index.txt",
       "https://nove.5ef3a03c294b074f.click/p/9cgzadFEThNFMYakNE/607/a.cf-worker-4e1da3ddd26870a5.workers.dev/chunklist_hd.m3u8",
       "http://me.mdmfista.com:80/play/live.php?mac=00:1A:79:F5:CE:D7&stream=721&extension=ts&play_token=giniUtmJd5",
       "https://cdnlivetv.tv/secure/api/v1/6a288d2b81d8192bb76ccc3d/playlist.m3u8?token=NmEyODhkMmI4MWQ4MTkyYmI3NmNjYzNkOjE3ODgwMzMyMzg0NTY6Y2RubGl2ZXR2LnR2OjUzY2NhNmRjOTAzYjJjODYuZTEyOWQxMjMwNzlhNzJlZTM3NWUyODBlZTc1MDJmMzNiN2M4YTg3OWU4MDg2NDMyODk0OTAzODc3YzMxMjY4MQ",
-      "https://zeus645423.cfd/tivibu2/index.txt",
       "https://andro.evrenesoglu217.click/checklist/androstreamlivets2.m3u8"
     ]
   },
@@ -1919,7 +1919,7 @@
     "name": "Dream TV",
     "category": "Müzik",
     "urls": [
-      "http://150.230.29.27:3000/channel/dreamtv.m3u8"
+      "https://live.duhnet.tv/S2/HLS_LIVE/dreamturknp/playlist.m3u8"
     ]
   },
   {

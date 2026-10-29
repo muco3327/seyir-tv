@@ -164,8 +164,7 @@ function getHeadersForUrl(targetUrl, u) {
         headers['Referer'] = 'https://cdnlivetv.tv/';
         headers['Origin'] = 'https://cdnlivetv.tv';
     } else if (targetUrl.includes('zeus')) {
-        headers['Referer'] = 'https://zeus645423.cfd/';
-        headers['Origin'] = 'https://zeus645423.cfd';
+        // Zeus CDN blocks requests if Referer/Origin headers are attached. Clean headers required.
     } else if (targetUrl.includes('daioncdn') || targetUrl.includes('trt')) {
         headers['Referer'] = `${u.protocol}//${u.host}/`;
         headers['Origin'] = `${u.protocol}//${u.host}`;
@@ -188,7 +187,20 @@ app.get('/channel/:id.m3u8', async (req, res) => {
     res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', '*');
 
-    const sortedUrls = [...ch.urls].sort((a, b) => getQualityScore(b) - getQualityScore(a));
+    // Filter out recursive loopbacks to self
+    const validUrls = (ch.urls || []).filter(u => 
+        u && 
+        !u.includes('150.230.29.27') && 
+        !u.includes('localhost') && 
+        !u.includes('127.0.0.1') &&
+        !u.includes('/channel/')
+    );
+
+    if (validUrls.length === 0) {
+        return res.status(503).send(`No external upstream source configured for channel ${channelId}`);
+    }
+
+    const sortedUrls = [...validUrls].sort((a, b) => getQualityScore(b) - getQualityScore(a));
     // Prioritize actual HLS manifest URLs (.m3u8, index.txt) over raw TS streams
     const hlsCandidates = sortedUrls.filter(u => !isRawTsStream(u));
     const urlsToTry = hlsCandidates.length > 0 ? hlsCandidates : sortedUrls;
@@ -258,6 +270,9 @@ app.get('/playlist.m3u', (req, res) => {
 app.get('/proxy', async (req, res) => {
     const targetUrl = req.query.url;
     if (!targetUrl) return res.status(400).send('URL required');
+    if (targetUrl.includes('150.230.29.27') || targetUrl.includes('localhost') || targetUrl.includes('127.0.0.1')) {
+        return res.status(400).send('Loopback proxy forbidden');
+    }
 
     const isSegment = isSegmentUrl(targetUrl);
 
