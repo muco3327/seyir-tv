@@ -65,7 +65,7 @@ public final class PlayerActivity extends Activity {
     private Runnable pendingRecovery;
     private final List<String> fallbackList = new ArrayList<>();
     private long position;
-    private boolean shouldPlay = true, closing = false, userScrubbing = false;
+    private boolean shouldPlay = true, closing = false, userScrubbing = false, hasPlayedOnce = false;
 
     // Resize modes
     private int resizeModeIndex = 0;
@@ -394,7 +394,8 @@ public final class PlayerActivity extends Activity {
 
     private void startBufferingTimeout() {
         progressHandler.removeCallbacks(bufferingTimeoutTask);
-        progressHandler.postDelayed(bufferingTimeoutTask, 4500);
+        long delay = hasPlayedOnce ? 5000 : 9000;
+        progressHandler.postDelayed(bufferingTimeoutTask, delay);
     }
 
     private void cancelBufferingTimeout() {
@@ -769,6 +770,7 @@ public final class PlayerActivity extends Activity {
     private void switchChannel(SportsManager.SportChannel ch) {
         if (ch == null || ch.urls == null || ch.urls.isEmpty()) return;
         release();
+        hasPlayedOnce = false;
         title = new TitleItem(Source.SPORTS, ch.name, ch.urls.get(0), ch.logo, ch.category != null ? ch.category : "");
         playerTitle.setText(ch.name);
         fallbackList.clear();
@@ -818,6 +820,17 @@ public final class PlayerActivity extends Activity {
         probing = true;
         if (pendingProbe != null) pendingProbe.cancel(true);
         StreamRequest request = new StreamRequest(targetUrl, headers);
+
+        // Fast path: Oracle Gateway master and M3U8 streams are already verified HLS.
+        // Skip redundant blocking probe roundtrip to play instantly in <1s (same as Web).
+        if (targetUrl != null && (targetUrl.contains("150.230.29.27:3000/channel/") || targetUrl.contains(".m3u8"))) {
+            probing = false;
+            probedUrl = targetUrl;
+            probedMime = StreamProbe.HLS;
+            initPlayer(request);
+            return;
+        }
+
         pendingProbe = probeExecutor.submit(() -> {
             StreamProbe.Result probe = null;
             StreamRequest effective = request;
@@ -845,7 +858,7 @@ public final class PlayerActivity extends Activity {
         try {
             release();
             DefaultHttpDataSource.Factory httpData = new DefaultHttpDataSource.Factory()
-                .setUserAgent(request.headers.getOrDefault("User-Agent", "SeyirTV-Player"))
+                .setUserAgent(request.headers.getOrDefault("User-Agent", "Mozilla/5.0 (Linux; Android 12; TV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"))
                 .setConnectTimeoutMs(8000)
                 .setReadTimeoutMs(8000)
                 .setAllowCrossProtocolRedirects(true);
@@ -856,11 +869,22 @@ public final class PlayerActivity extends Activity {
                 playbackData = () -> new RefreshingPlaylistDataSource(httpData.createDataSource(), new PlaylistRoute(request.url));
             }
 
+            DefaultLoadControl loadControl = new DefaultLoadControl.Builder()
+                .setBufferDurationsMs(
+                    15_000,
+                    30_000,
+                    500,
+                    1_500
+                )
+                .setPrioritizeTimeOverSizeThresholds(true)
+                .build();
+
             DefaultBandwidthMeter bandwidthMeter = new DefaultBandwidthMeter.Builder(this)
                 .setInitialBitrateEstimate(15_000_000)
                 .build();
 
             player = new ExoPlayer.Builder(this, new DefaultRenderersFactory(this).setEnableDecoderFallback(true))
+                .setLoadControl(loadControl)
                 .setBandwidthMeter(bandwidthMeter)
                 .setMediaSourceFactory(new DefaultMediaSourceFactory(playbackData))
                 .setSeekBackIncrementMs(10000)
@@ -891,6 +915,7 @@ public final class PlayerActivity extends Activity {
                 @Override public void onPlaybackStateChanged(int s) {
                     if (player == null || closing) return;
                     if (s == Player.STATE_READY) {
+                        hasPlayedOnce = true;
                         cancelBufferingTimeout();
                         if (playerBufferingLayout != null) playerBufferingLayout.setVisibility(View.GONE);
                         boolean isLive = player.isCurrentMediaItemLive() || player.getDuration() <= 0;
@@ -952,7 +977,7 @@ public final class PlayerActivity extends Activity {
             });
 
             MediaItem.Builder item = new MediaItem.Builder().setUri(request.url);
-            if (StreamProbe.HLS.equals(probedMime) || (title.source != Source.SPORTS && StreamRequest.isHls(request.url))) {
+            if (StreamProbe.HLS.equals(probedMime) || StreamRequest.isHls(request.url) || request.url.contains(".m3u8") || request.url.contains("/channel/")) {
                 item.setMimeType(MimeTypes.APPLICATION_M3U8);
             }
             player.setMediaItem(item.build());

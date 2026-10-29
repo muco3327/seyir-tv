@@ -1,6 +1,6 @@
 {
-  "versionCode": 84,
-  "versionName": "0.5.41",
-  "changelog": "Favoriler & Canlı Kanal Güncellemesi (v0.5.41):\n1. Favorilere ekleme hatası düzeltildi: 2. kanal eklenirken 1. kanalın silinmesi önlendi (kanal başlığına göre tekil kimlik verildi).\n2. beIN Sports (1-5), S Sport (1-2), Tivibu Spor (1-2) kesintisiz Zeus HLS yayınları önceliklendirildi.\n3. Exxen 1-5 çalışan canlı yayın kaynaklarıyla güncellendi.\n4. Arka plan önbellek güncellemesi stabilize edildi.",
-  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.41.apk"
+  "versionCode": 85,
+  "versionName": "0.5.42",
+  "changelog": "Anında Açılış & Oracle Master Senkronizasyonu (v0.5.42):\n1. Oracle Gateway master uç noktası (#0) birincil sıraya taşındı (Web ile tam eşitlendi).\n2. 500ms ultra hızlı başlangıç tamponu (DefaultLoadControl) eklendi; kanal açılış gecikmesi kaldırıldı.\n3. Canlı HLS akışları için gereksiz StreamProbe beklemesi atlandı (0 ms probe).\n4. CDN engellerini aşmak için Android TV Chrome User-Agent ve dinamik zaman aşımı koruması getirildi.",
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.42.apk"
 }

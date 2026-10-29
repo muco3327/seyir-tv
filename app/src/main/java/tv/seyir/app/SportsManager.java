@@ -41,6 +41,8 @@ public final class SportsManager {
     public static int getUrlQualityScore(String u) {
         if (u == null) return 0;
         String lower = u.toLowerCase(Locale.ROOT);
+        // Oracle Gateway Failover Master Endpoint (HIGHEST PRIORITY)
+        if (lower.contains("150.230.29.27:3000/channel/")) return 990;
         if (lower.contains("4k") || lower.contains("uhd") || lower.contains("2160")) return 1000;
         // Verified 1080p FHD streams
         if (lower.contains("77238") || lower.contains("237081") || lower.contains("87")
@@ -530,8 +532,7 @@ public final class SportsManager {
                 String masterUrl = (!urls.isEmpty() && urls.get(0).contains("150.230.29.27:3000/channel/")) ? urls.remove(0) : null;
                 urls.sort((u1, u2) -> Integer.compare(getUrlQualityScore(u2), getUrlQualityScore(u1)));
                 if (masterUrl != null) {
-                    int insertIndex = Math.min(1, urls.size());
-                    urls.add(insertIndex, masterUrl);
+                    urls.add(0, masterUrl);
                 }
 
                 Map<String, String> headers = new HashMap<>();
