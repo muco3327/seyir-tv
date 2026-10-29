@@ -1,6 +1,6 @@
 {
-  "versionCode": 85,
-  "versionName": "0.5.42",
-  "changelog": "Anında Açılış & Oracle Master Senkronizasyonu (v0.5.42):\n1. Oracle Gateway master uç noktası (#0) birincil sıraya taşındı (Web ile tam eşitlendi).\n2. 500ms ultra hızlı başlangıç tamponu (DefaultLoadControl) eklendi; kanal açılış gecikmesi kaldırıldı.\n3. Canlı HLS akışları için gereksiz StreamProbe beklemesi atlandı (0 ms probe).\n4. CDN engellerini aşmak için Android TV Chrome User-Agent ve dinamik zaman aşımı koruması getirildi.",
-  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.42.apk"
+  "versionCode": 86,
+  "versionName": "0.5.43",
+  "changelog": "Yayıncı Seviyesi Kararlılık & Donma Önleme Güncellemesi (v0.5.43):\n1. Oracle Gateway Keep-Alive bağlantı havuzu ve Stateful Circuit Breaker devreye alındı.\n2. 2.5s Canlı Manifest ve 25s RAM Segment Önbelleği eklendi; bant genişliği ve CDN ban riski sıfırlandı.\n3. APK başlangıç tarayıcısının Oracle Master linkini bozması ve döngüsel proxy hatası giderildi.\n4. Web Player Hls.js fatal error otomatik kurtarma ve rebuffer kararlılığı eklendi.",
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.43.apk"
 }

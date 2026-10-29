@@ -175,7 +175,47 @@ function getHeadersForUrl(targetUrl, u) {
     return headers;
 }
 
-// Resilient Channel Master Endpoint with Automatic Multi-Source Failover
+// --- High Performance Broadcast Caching & Stateful Circuit Breaker ---
+const activeChannelSources = new Map(); // channelId -> url
+const sourceCooldowns = new Map(); // url -> timestamp
+const manifestCache = new Map(); // channelId -> { body: string, expires: number }
+const segmentCache = new Map(); // targetUrl -> { data: Buffer, contentType: string, expires: number }
+const MAX_CACHED_SEGMENTS = 70; // ~60-80 MB in RAM
+const inFlightRequests = new Map(); // targetUrl -> Promise<{ data: Buffer, contentType: string }>
+
+function isSourceCooledDown(url) {
+    const until = sourceCooldowns.get(url);
+    if (!until) return false;
+    if (Date.now() > until) {
+        sourceCooldowns.delete(url);
+        return false;
+    }
+    return true;
+}
+
+function markSourceFailed(url) {
+    sourceCooldowns.set(url, Date.now() + 60000); // Cooldown for 60 seconds
+}
+
+function markSourceSuccess(channelId, url) {
+    sourceCooldowns.delete(url);
+    activeChannelSources.set(channelId, url);
+}
+
+function pruneSegmentCache() {
+    const now = Date.now();
+    for (const [key, item] of segmentCache.entries()) {
+        if (now > item.expires) segmentCache.delete(key);
+    }
+    while (segmentCache.size > MAX_CACHED_SEGMENTS) {
+        const oldestKey = segmentCache.keys().next().value;
+        if (oldestKey) segmentCache.delete(oldestKey);
+        else break;
+    }
+}
+setInterval(pruneSegmentCache, 15000);
+
+// Resilient Channel Master Endpoint with Automatic Multi-Source Failover & 2.5s RAM Manifest Cache
 app.get('/channel/:id.m3u8', async (req, res) => {
     const channelId = req.params.id;
     const ch = curatedChannels.find(c => c.id === channelId);
@@ -186,6 +226,13 @@ app.get('/channel/:id.m3u8', async (req, res) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', '*');
+
+    // 1. Check RAM Cache (Live HLS manifest cache: 2.5s TTL)
+    const cached = manifestCache.get(channelId);
+    if (cached && Date.now() < cached.expires) {
+        res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
+        return res.send(cached.body);
+    }
 
     // Filter out recursive loopbacks to self
     const validUrls = (ch.urls || []).filter(u => 
@@ -200,10 +247,32 @@ app.get('/channel/:id.m3u8', async (req, res) => {
         return res.status(503).send(`No external upstream source configured for channel ${channelId}`);
     }
 
+    // Stateful Ordering:
+    // 1. Currently active/working source for this channel (if not cooled down)
+    // 2. High quality available sources (not cooled down)
+    // 3. Cooled down sources as last resort
+    const activeSource = activeChannelSources.get(channelId);
     const sortedUrls = [...validUrls].sort((a, b) => getQualityScore(b) - getQualityScore(a));
-    // Prioritize actual HLS manifest URLs (.m3u8, index.txt) over raw TS streams
     const hlsCandidates = sortedUrls.filter(u => !isRawTsStream(u));
-    const urlsToTry = hlsCandidates.length > 0 ? hlsCandidates : sortedUrls;
+    const pool = hlsCandidates.length > 0 ? hlsCandidates : sortedUrls;
+
+    const available = [];
+    const cooledDown = [];
+    for (const u of pool) {
+        if (isSourceCooledDown(u)) cooledDown.push(u);
+        else available.push(u);
+    }
+
+    const urlsToTry = [];
+    if (activeSource && available.includes(activeSource)) {
+        urlsToTry.push(activeSource);
+    }
+    for (const u of available) {
+        if (!urlsToTry.includes(u)) urlsToTry.push(u);
+    }
+    for (const u of cooledDown) {
+        if (!urlsToTry.includes(u)) urlsToTry.push(u);
+    }
 
     for (let i = 0; i < urlsToTry.length; i++) {
         const targetUrl = urlsToTry[i];
@@ -218,7 +287,9 @@ app.get('/channel/:id.m3u8', async (req, res) => {
                 method: 'get',
                 url: targetUrl,
                 headers: headers,
-                timeout: 5000,
+                timeout: 3000,
+                httpAgent: httpAgent,
+                httpsAgent: httpsAgent,
                 validateStatus: (status) => status >= 200 && status < 300
             });
 
@@ -236,10 +307,13 @@ app.get('/channel/:id.m3u8', async (req, res) => {
                         return l;
                     }
                 }).join('\n');
+
+                markSourceSuccess(channelId, targetUrl);
+                manifestCache.set(channelId, { body: rewritten, expires: Date.now() + 2500 });
                 return res.send(rewritten);
             }
         } catch (err) {
-            console.log(`[Failover] Channel ${channelId} source ${i+1}/${urlsToTry.length} failed (${err.message}). Trying next...`);
+            markSourceFailed(targetUrl);
             if (targetUrl.includes('medya.trt.com.tr')) {
                 return res.redirect(targetUrl);
             }
@@ -266,7 +340,7 @@ app.get('/playlist.m3u', (req, res) => {
     res.send(m3u);
 });
 
-// Proxy endpoint: Adapts headers per host, streams segments and rewrites child playlists
+// Proxy endpoint: Adapts headers per host, streams segments and rewrites child playlists with RAM segment cache & in-flight de-duplication
 app.get('/proxy', async (req, res) => {
     const targetUrl = req.query.url;
     if (!targetUrl) return res.status(400).send('URL required');
@@ -276,49 +350,82 @@ app.get('/proxy', async (req, res) => {
 
     const isSegment = isSegmentUrl(targetUrl);
 
-    try {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', '*');
+
+    // 1. Segment RAM Cache hit check
+    if (isSegment) {
+        const cachedSeg = segmentCache.get(targetUrl);
+        if (cachedSeg && Date.now() < cachedSeg.expires) {
+            res.setHeader('Content-Type', cachedSeg.contentType);
+            res.setHeader('Content-Length', cachedSeg.data.length);
+            return res.send(cachedSeg.data);
+        }
+    }
+
+    // 2. In-flight de-duplication: if multiple clients request the exact same segment, await the same fetch
+    let fetchPromise;
+    if (isSegment && inFlightRequests.has(targetUrl)) {
+        fetchPromise = inFlightRequests.get(targetUrl);
+    } else {
         const u = new URL(targetUrl);
         const headers = getHeadersForUrl(targetUrl, u);
 
-        let response;
-        let attempts = 0;
-        const maxAttempts = isSegment ? 2 : 1;
-        while (attempts < maxAttempts) {
-            attempts++;
-            try {
-                response = await axios({
-                    method: 'get',
-                    url: targetUrl,
-                    headers: headers,
-                    responseType: isSegment ? 'stream' : 'arraybuffer',
-                    timeout: isSegment ? 6000 : 9000,
-                                                            validateStatus: (status) => status >= 200 && status < 400
-                });
-                break;
-            } catch (retryErr) {
-                if (attempts >= maxAttempts) throw retryErr;
-            }
-        }
+        fetchPromise = (async () => {
+            const response = await axios({
+                method: 'get',
+                url: targetUrl,
+                headers: headers,
+                responseType: 'arraybuffer',
+                timeout: isSegment ? 6000 : 8000,
+                httpAgent: httpAgent,
+                httpsAgent: httpsAgent,
+                validateStatus: (status) => status >= 200 && status < 400
+            });
 
-        res.setHeader('Access-Control-Allow-Origin', '*');
-        res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
-        res.setHeader('Access-Control-Allow-Headers', '*');
+            let contentType = response.headers['content-type'] || '';
+            if (isSegment) {
+                if (!contentType || contentType.includes('image/') || contentType.includes('text/') || targetUrl.includes('/c/') || targetUrl.includes('.jpg')) {
+                    contentType = 'video/mp2t';
+                }
+            }
+            return {
+                data: Buffer.from(response.data),
+                contentType: contentType
+            };
+        })();
 
         if (isSegment) {
-            let contentType = response.headers['content-type'] || 'video/mp2t';
-            if (contentType.includes('image/') || contentType.includes('text/') || targetUrl.includes('/c/') || targetUrl.includes('.jpg')) {
-                contentType = 'video/mp2t';
-            }
-            res.setHeader('Content-Type', contentType);
-            response.data.on('error', () => {
-                if (!res.headersSent) res.status(502).end();
+            inFlightRequests.set(targetUrl, fetchPromise);
+            fetchPromise.finally(() => {
+                inFlightRequests.delete(targetUrl);
             });
-            return response.data.pipe(res);
+        }
+    }
+
+    // Handle client early disconnect
+    let clientDisconnected = false;
+    req.on('close', () => {
+        clientDisconnected = true;
+    });
+
+    try {
+        const result = await fetchPromise;
+        if (clientDisconnected || res.writableEnded) return;
+
+        if (isSegment) {
+            segmentCache.set(targetUrl, {
+                data: result.data,
+                contentType: result.contentType,
+                expires: Date.now() + 25000 // Cache for 25s
+            });
+            res.setHeader('Content-Type', result.contentType);
+            res.setHeader('Content-Length', result.data.length);
+            return res.send(result.data);
         }
 
-        const contentType = response.headers['content-type'] || '';
-        const bodyStr = response.data.toString('utf-8');
-
+        const bodyStr = result.data.toString('utf-8');
         // Rewrite M3U8 child segments & playlists
         if (bodyStr.startsWith('#EXTM3U') || targetUrl.includes('.m3u8') || targetUrl.includes('index.txt')) {
             res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
@@ -336,8 +443,9 @@ app.get('/proxy', async (req, res) => {
             return res.send(rewritten);
         }
 
-        res.setHeader('Content-Type', contentType || 'video/mp2t');
-        res.send(response.data);
+        res.setHeader('Content-Type', result.contentType || 'video/mp2t');
+        res.setHeader('Content-Length', result.data.length);
+        res.send(result.data);
     } catch (err) {
         if (isSegment) {
             return res.status(404).end();
@@ -719,10 +827,12 @@ app.get('/', (req, res) => {
             if (Hls.isSupported()) {
                 hls = new Hls({
                     enableWorker: true,
-                    lowLatencyMode: true,
-                    backBufferLength: 60,
+                    lowLatencyMode: false,
+                    liveSyncDurationCount: 3,
+                    liveMaxLatencyDurationCount: 6,
                     maxBufferLength: 30,
-                    maxMaxBufferLength: 60
+                    maxMaxBufferLength: 60,
+                    backBufferLength: 60
                 });
                 hls.loadSource(streamUrl);
                 hls.attachMedia(video);
@@ -735,10 +845,33 @@ app.get('/', (req, res) => {
                         resBadge.textContent = h ? h + 'p HD' : '1080p FHD';
                     }
                 });
+                let errorCount = 0;
                 hls.on(Hls.Events.ERROR, (e, data) => {
                     if (data.fatal) {
-                        statusEl.textContent = 'Yedek deneniyor...';
-                        statusEl.style.background = '#ef4444';
+                        errorCount++;
+                        switch (data.type) {
+                            case Hls.ErrorTypes.NETWORK_ERROR:
+                                statusEl.textContent = 'Ağ yenileniyor...';
+                                statusEl.style.background = '#f59e0b';
+                                if (errorCount < 3) {
+                                    hls.startLoad();
+                                } else {
+                                    errorCount = 0;
+                                    setTimeout(() => playChannel(currentChannel), 1200);
+                                }
+                                break;
+                            case Hls.ErrorTypes.MEDIA_ERROR:
+                                statusEl.textContent = 'Akış kurtarılıyor...';
+                                statusEl.style.background = '#f59e0b';
+                                hls.recoverMediaError();
+                                break;
+                            default:
+                                statusEl.textContent = 'Yedek akış açılıyor...';
+                                statusEl.style.background = '#ef4444';
+                                hls.destroy();
+                                setTimeout(() => playChannel(currentChannel), 1200);
+                                break;
+                        }
                     }
                 });
             } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
