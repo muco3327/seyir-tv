@@ -419,6 +419,7 @@ app.get('/', (req, res) => {
         /* Mobile Portrait Specific Layout */
         #mobile-nav-bar { display: none; }
         @media (max-width: 820px) and (orientation: portrait), (max-width: 650px) {
+            #video-top-bar { display: none !important; }
             #app-container { flex-direction: column; }
             #sidebar { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100; }
             #sidebar.open { display: flex; }
@@ -509,6 +510,9 @@ app.get('/', (req, res) => {
                 display: none !important;
             }
             #mobile-nav-bar {
+                display: none !important;
+            }
+            #video-top-bar {
                 display: none !important;
             }
             #close-mobile-sidebar {
@@ -603,6 +607,7 @@ app.get('/', (req, res) => {
                     </div>
 
                     <div class="pill-group">
+                        <button id="btn-fit-row" class="btn-pill" onclick="toggleFit()">⛶ Doldur</button>
                         <button class="btn-pill" onclick="toggleSidebar()">📺 Kanallar</button>
                         <button class="btn-pill" onclick="toggleFullscreen()">⛶ Tam Ekran</button>
                     </div>
@@ -785,12 +790,18 @@ app.get('/', (req, res) => {
             wakeControls();
         }
 
-        // Fullscreen Toggle
+        // Fullscreen Toggle (supports iOS Safari webkitEnterFullscreen directly)
         function toggleFullscreen() {
+            if (video.webkitEnterFullscreen && !navigator.userAgent.includes('Macintosh')) {
+                video.webkitEnterFullscreen();
+                return;
+            }
             const el = document.getElementById('video-wrapper') || document.documentElement;
             if (!document.fullscreenElement && !document.webkitFullscreenElement) {
                 if (el.requestFullscreen) {
-                    el.requestFullscreen().catch(() => {});
+                    el.requestFullscreen().catch(() => {
+                        if (video.webkitEnterFullscreen) video.webkitEnterFullscreen();
+                    });
                 } else if (el.webkitRequestFullscreen) {
                     el.webkitRequestFullscreen();
                 } else if (video.webkitEnterFullscreen) {
@@ -812,6 +823,10 @@ app.get('/', (req, res) => {
             const label = document.getElementById('fit-label');
             if (label) {
                 label.textContent = isCover ? 'Sığdır' : 'Doldur';
+            }
+            const rowBtn = document.getElementById('btn-fit-row');
+            if (rowBtn) {
+                rowBtn.textContent = isCover ? '⛶ Sığdır' : '⛶ Doldur';
             }
             wakeControls();
         }
