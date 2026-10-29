@@ -9,7 +9,12 @@ public final class TitleItem {
     public TitleItem(Source source, String title, String url, String image, String info) {
         this.source=source; this.title=title; this.url=url; this.image=image; this.info=info;
     }
-    public String key() { return MediaPolicy.key(source.name(), url); }
+    public String key() {
+        if (source == Source.SPORTS) {
+            return source.name() + ":" + ChannelPresentation.key(title);
+        }
+        return MediaPolicy.key(source.name(), url);
+    }
     public JSONObject json() {
         JSONObject j=new JSONObject();
         try { j.put("source",source.name()); j.put("title",title); j.put("url",url); j.put("image",image); j.put("info",info); }

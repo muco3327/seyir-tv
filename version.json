@@ -1,6 +1,6 @@
 {
-  "versionCode": 83,
-  "versionName": "0.5.40",
-  "changelog": "FHD (1080p) Doğrulama & Sabit Kanal Sayısı (v0.5.40):\n1. İstemci tarafı M3U taraması (GithubScanner) devre dışı bırakıldı; beIN Sports kanal dalgalanması (8 vs 49) tamamen önlendi.\n2. Tüm beIN Sports (1-5, Max 1-2, Haber) ve S Sport kanallarında gerçek 1920x1080 Full HD yayınlar 1. sıraya taşındı.\n3. 576p SD (Zeus) ve 480p SD (Andro) en alt acil durum yedeğine çekildi.\n4. Oracle Gateway doğrudan 1920x1080 Full HD stream yönlendirmesiyle senkronize edildi.",
-  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.40.apk"
+  "versionCode": 84,
+  "versionName": "0.5.41",
+  "changelog": "Favoriler & Canlı Kanal Güncellemesi (v0.5.41):\n1. Favorilere ekleme hatası düzeltildi: 2. kanal eklenirken 1. kanalın silinmesi önlendi (kanal başlığına göre tekil kimlik verildi).\n2. beIN Sports (1-5), S Sport (1-2), Tivibu Spor (1-2) kesintisiz Zeus HLS yayınları önceliklendirildi.\n3. Exxen 1-5 çalışan canlı yayın kaynaklarıyla güncellendi.\n4. Arka plan önbellek güncellemesi stabilize edildi.",
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.41.apk"
 }
