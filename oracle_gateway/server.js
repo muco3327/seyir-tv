@@ -462,8 +462,10 @@ app.get('/', (req, res) => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#070a13">
-    <title>Seyir TV - Canlı TV & Spor Kanalları</title>
+    <meta name="theme-color" content="#06080f">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Seyir TV - Canlı Yayın</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -496,7 +498,7 @@ app.get('/', (req, res) => {
             letter-spacing: -0.01em;
         }
 
-        /* Ambient Glow Background */
+        /* Ambient Glow Background on Desktop */
         body::before {
             content: '';
             position: fixed;
@@ -504,7 +506,6 @@ app.get('/', (req, res) => {
             background: radial-gradient(ellipse at 50% -20%, rgba(14, 116, 144, 0.18) 0%, transparent 70%);
             pointer-events: none;
             z-index: 0;
-            transition: opacity 0.5s ease;
         }
 
         #app-layout {
@@ -515,7 +516,7 @@ app.get('/', (req, res) => {
             z-index: 1;
         }
 
-        /* --- SIDEBAR --- */
+        /* --- DESKTOP SIDEBAR --- */
         #sidebar {
             width: var(--sidebar-w);
             background: var(--bg-surface);
@@ -528,7 +529,6 @@ app.get('/', (req, res) => {
             box-shadow: 4px 0 24px rgba(0,0,0,0.4);
         }
 
-        /* Brand Header */
         .sidebar-header {
             padding: 16px 18px 12px 18px;
             display: flex;
@@ -583,7 +583,6 @@ app.get('/', (req, res) => {
             height: 16px;
             fill: var(--text-dim);
             pointer-events: none;
-            transition: fill 0.2s;
         }
         #search-input {
             width: 100%;
@@ -602,7 +601,6 @@ app.get('/', (req, res) => {
             box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
             background: #0f172a;
         }
-        #search-input:focus + .search-icon { fill: #38bdf8; }
         .clear-search-btn {
             position: absolute;
             right: 10px;
@@ -625,6 +623,7 @@ app.get('/', (req, res) => {
             overflow-x: auto;
             scrollbar-width: none;
             border-bottom: 1px solid var(--border);
+            -webkit-overflow-scrolling: touch;
         }
         #category-bar::-webkit-scrollbar { display: none; }
         .cat-chip {
@@ -641,6 +640,7 @@ app.get('/', (req, res) => {
             display: flex;
             align-items: center;
             gap: 5px;
+            flex-shrink: 0;
         }
         .cat-chip:hover {
             background: rgba(255, 255, 255, 0.08);
@@ -663,6 +663,7 @@ app.get('/', (req, res) => {
             gap: 4px;
             scrollbar-width: thin;
             scrollbar-color: rgba(255,255,255,0.12) transparent;
+            -webkit-overflow-scrolling: touch;
         }
         #channel-list::-webkit-scrollbar { width: 5px; }
         #channel-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 4px; }
@@ -671,7 +672,7 @@ app.get('/', (req, res) => {
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 9px 12px;
+            padding: 10px 12px;
             background: transparent;
             border-radius: 10px;
             cursor: pointer;
@@ -684,7 +685,7 @@ app.get('/', (req, res) => {
             transform: translateX(2px);
         }
         .ch-card.active {
-            background: rgba(2, 132, 199, 0.16);
+            background: rgba(2, 132, 199, 0.18);
             border-color: rgba(56, 189, 248, 0.35);
         }
         .ch-card.active::before {
@@ -728,7 +729,7 @@ app.get('/', (req, res) => {
             gap: 2px;
         }
         .ch-name-text {
-            font-size: 13.5px;
+            font-size: 14px;
             font-weight: 600;
             color: #e2e8f0;
             white-space: nowrap;
@@ -745,7 +746,7 @@ app.get('/', (req, res) => {
             gap: 6px;
         }
         .ch-category-pill {
-            font-size: 10px;
+            font-size: 11px;
             font-weight: 600;
             color: var(--text-dim);
             text-transform: uppercase;
@@ -754,8 +755,8 @@ app.get('/', (req, res) => {
         .ch-card.active .ch-category-pill { color: #7dd3fc; }
 
         .ch-status-indicator {
-            width: 6px;
-            height: 6px;
+            width: 7px;
+            height: 7px;
             border-radius: 50%;
             background: #475569;
         }
@@ -769,7 +770,7 @@ app.get('/', (req, res) => {
             50% { opacity: 0.6; transform: scale(1.2); }
         }
 
-        /* --- MAIN STAGE & PLAYER --- */
+        /* --- DESKTOP STAGE & PLAYER --- */
         #main-stage {
             flex: 1;
             display: flex;
@@ -782,7 +783,6 @@ app.get('/', (req, res) => {
             justify-content: center;
         }
 
-        /* Video Frame */
         #video-container {
             position: relative;
             width: 100%;
@@ -793,7 +793,6 @@ app.get('/', (req, res) => {
             overflow: hidden;
             box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 60px rgba(2, 132, 199, 0.12);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            transition: box-shadow 0.3s ease;
         }
         video {
             width: 100%;
@@ -804,7 +803,7 @@ app.get('/', (req, res) => {
         video.crisp-mode { filter: contrast(1.06) saturate(1.08) brightness(1.02); }
         video.fit-cover { object-fit: cover !important; }
 
-        /* Video Top Floating Overlay */
+        /* Floating Top Bar Overlay */
         #video-top-overlay {
             position: absolute;
             top: 0; left: 0; right: 0;
@@ -886,10 +885,9 @@ app.get('/', (req, res) => {
         .top-action-btn:hover {
             background: rgba(30, 41, 59, 0.95);
             border-color: #38bdf8;
-            transform: translateY(-1px);
         }
 
-        /* Player Bottom Details & Quick Strip */
+        /* Player Bottom Controls */
         #player-bottom-details {
             width: 100%;
             max-width: 1080px;
@@ -905,29 +903,11 @@ app.get('/', (req, res) => {
             flex-wrap: wrap;
             gap: 10px;
         }
-        .now-playing-heading {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
         .now-channel-name {
-            font-size: 20px;
+            font-size: 22px;
             font-weight: 800;
             color: #fff;
             letter-spacing: -0.02em;
-        }
-        .now-epg-subtitle {
-            font-size: 13px;
-            color: #38bdf8;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .now-epg-subtitle::before {
-            content: '●';
-            color: var(--text-dim);
-            font-size: 9px;
         }
 
         .status-pill-badge {
@@ -950,7 +930,6 @@ app.get('/', (req, res) => {
             background: currentColor;
         }
 
-        /* Modern Quick Toolbar */
         .modern-toolbar {
             display: flex;
             justify-content: space-between;
@@ -995,7 +974,6 @@ app.get('/', (req, res) => {
         }
         .tool-btn svg { width: 14px; height: 14px; fill: currentColor; }
 
-        /* Shortcut Helper Footnote */
         .shortcuts-hint {
             font-size: 11px;
             color: var(--text-dim);
@@ -1012,110 +990,166 @@ app.get('/', (req, res) => {
             border: 1px solid var(--border);
         }
 
-        /* --- MOBILE LAYOUTS --- */
-        #mobile-bottom-bar { display: none; }
-        #close-sidebar-mobile { display: none; }
-
-        @media (max-width: 860px) and (orientation: portrait), (max-width: 700px) {
-            #video-top-overlay { display: none !important; }
-            #app-layout { flex-direction: column; }
-            #sidebar {
-                display: none;
-                position: fixed;
-                top: 0; left: 0; width: 100%; height: 100%;
-                z-index: 100;
-                background: #090d16;
-            }
-            #sidebar.open { display: flex; }
-            #close-sidebar-mobile {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 6px;
-                padding: 14px;
-                background: #1e293b;
-                color: #fff;
-                font-size: 14px;
-                font-weight: 700;
-                cursor: pointer;
-                border-top: 1px solid var(--border);
-            }
-            #main-stage {
-                padding: 12px;
-                justify-content: flex-start;
-                padding-bottom: 74px;
-            }
-            #video-container { border-radius: 10px; }
-            .shortcuts-hint { display: none; }
-            .now-channel-name { font-size: 17px; }
-
-            /* Mobile Bottom Bar */
-            #mobile-bottom-bar {
-                display: flex;
-                position: fixed;
-                bottom: 0; left: 0; width: 100%;
-                height: 58px;
-                background: rgba(11, 17, 32, 0.92);
-                border-top: 1px solid var(--border);
-                backdrop-filter: blur(12px);
-                z-index: 60;
-                justify-content: space-around;
-                align-items: center;
-                padding-bottom: env(safe-area-inset-bottom);
-            }
-            .nav-item-btn {
-                flex: 1;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                height: 100%;
-                color: var(--text-muted);
-                font-size: 11px;
-                font-weight: 600;
-                cursor: pointer;
-                background: none;
-                border: none;
-                gap: 3px;
-            }
-            .nav-item-btn.active { color: #38bdf8; }
-            .nav-item-btn svg { width: 19px; height: 19px; fill: currentColor; }
-        }
-
-        /* Mobile Landscape (Full Screen Video) */
-        @media (orientation: landscape) and (max-height: 550px), (orientation: landscape) and (max-width: 1000px) and (max-height: 600px) {
+        /* =======================================================
+           MOBILE & TABLET VIEWPORT (< 860px) - YOUTUBE / TWITCH OTT
+           ======================================================= */
+        @media (max-width: 860px) {
+            body::before { display: none; }
             html, body {
                 overflow: hidden !important;
-                position: fixed !important;
-                width: 100vw !important; height: 100vh !important; height: 100dvh !important;
-                margin: 0 !important; padding: 0 !important;
+                position: fixed;
+                inset: 0;
+                width: 100%;
+                height: 100%;
+                height: 100dvh;
             }
-            #app-layout, #main-stage {
-                position: fixed !important; inset: 0 !important;
-                width: 100vw !important; height: 100vh !important; height: 100dvh !important;
-                padding: 0 !important; margin: 0 !important;
+            #app-layout {
+                flex-direction: column !important;
+                width: 100% !important;
+                height: 100% !important;
+                height: 100dvh !important;
+                overflow: hidden;
+            }
+
+            /* Main stage holds the top sticky video */
+            #main-stage {
+                padding: 0 !important;
+                flex: none !important;
+                width: 100% !important;
+                height: auto !important;
+                background: #000 !important;
+                z-index: 50;
+            }
+
+            #video-container {
+                max-width: 100% !important;
+                border-radius: 0 !important;
+                border: none !important;
+                box-shadow: 0 4px 16px rgba(0,0,0,0.7) !important;
+                aspect-ratio: 16 / 9;
+                width: 100% !important;
+            }
+
+            /* Video overlay on mobile */
+            #video-top-overlay {
+                padding: 10px 12px;
+            }
+            .overlay-right .top-action-btn:not(:last-child) {
+                display: none; /* keep only fullscreen on mobile overlay */
+            }
+
+            /* Hide desktop bottom toolbar; show mobile stream info bar */
+            #player-bottom-details {
+                margin: 0 !important;
+                padding: 10px 14px;
+                background: var(--bg-surface);
+                border-bottom: 1px solid var(--border);
+                gap: 8px;
+            }
+            .now-channel-name {
+                font-size: 16px;
+                font-weight: 700;
+            }
+            .shortcuts-hint { display: none !important; }
+            .modern-toolbar {
+                padding: 4px 0 0 0;
+                background: transparent;
+                border: none;
+                justify-content: flex-start;
+                gap: 8px;
+            }
+            .modern-toolbar .tool-btn {
+                padding: 6px 10px;
+                font-size: 11.5px;
+            }
+            .toolbar-group:last-child button:not(#btn-fit-row) {
+                display: none; /* Kanallar & Tam Ekran handled elsewhere */
+            }
+
+            /* Mobile Sidebar becomes the in-page browsable channel section below video */
+            #sidebar {
+                width: 100% !important;
+                flex: 1 !important;
+                box-shadow: none !important;
+                border-right: none !important;
+                border-top: 1px solid var(--border);
+                background: var(--bg-base);
+                overflow: hidden;
+            }
+            .sidebar-header {
+                display: none; /* Brand logo not needed below video */
+            }
+            .search-container {
+                padding: 8px 12px 6px 12px;
+            }
+            #search-input {
+                padding: 8px 30px 8px 32px;
+                font-size: 12.5px;
+            }
+            #category-bar {
+                padding: 6px 12px 8px 12px;
+                gap: 5px;
+            }
+            .cat-chip {
+                padding: 5px 10px;
+                font-size: 11.5px;
+            }
+            #channel-list {
+                padding: 6px 10px;
+                gap: 4px;
+                padding-bottom: calc(14px + env(safe-area-inset-bottom));
+            }
+            .ch-card {
+                padding: 8px 10px;
+            }
+            .ch-avatar {
+                width: 32px;
+                height: 32px;
+                font-size: 11px;
+            }
+            .ch-name-text {
+                font-size: 13px;
+            }
+        }
+
+        /* Mobile Landscape (Full Screen Video Mode) */
+        @media (orientation: landscape) and (max-height: 520px) {
+            html, body, #app-layout, #main-stage {
+                position: fixed !important;
+                inset: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                height: 100dvh !important;
+                padding: 0 !important;
+                margin: 0 !important;
                 background: #000 !important;
                 overflow: hidden !important;
             }
-            #sidebar {
-                display: none;
-                position: fixed !important; top: 0 !important; left: 0 !important;
-                width: 320px !important; max-width: 80vw !important; height: 100% !important;
-                z-index: 200 !important;
+            #sidebar, #player-bottom-details {
+                display: none !important;
             }
-            #sidebar.open { display: flex !important; }
             #video-container {
-                position: fixed !important; inset: 0 !important;
-                width: 100vw !important; height: 100vh !important; height: 100dvh !important;
-                max-width: 100vw !important; max-height: 100dvh !important;
-                aspect-ratio: unset !important; border-radius: 0 !important;
-                border: none !important; box-shadow: none !important;
+                position: fixed !important;
+                inset: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                height: 100dvh !important;
+                max-width: 100vw !important;
+                max-height: 100dvh !important;
+                aspect-ratio: unset !important;
+                border: none !important;
+                border-radius: 0 !important;
             }
-            #player-bottom-details, #mobile-bottom-bar, #video-top-overlay { display: none !important; }
-            #close-sidebar-mobile { display: flex !important; }
+            #video-top-overlay {
+                display: flex !important;
+                padding: 10px 18px;
+            }
+            .overlay-right .top-action-btn {
+                display: inline-flex !important;
+            }
         }
 
-        /* Fullscreen API */
+        /* Native Fullscreen API */
         :fullscreen #video-container, :-webkit-full-screen #video-container {
             width: 100vw !important; height: 100vh !important;
             max-width: 100vw !important; max-height: 100vh !important;
@@ -1126,7 +1160,7 @@ app.get('/', (req, res) => {
 </head>
 <body>
     <div id="app-layout">
-        <!-- SIDEBAR -->
+        <!-- SIDEBAR (Desktop Left / Mobile Underneath Video) -->
         <aside id="sidebar">
             <div class="sidebar-header">
                 <div class="brand-logo">
@@ -1142,7 +1176,7 @@ app.get('/', (req, res) => {
             <div class="search-container">
                 <div class="search-wrap">
                     <svg class="search-icon" viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
-                    <input type="text" id="search-input" placeholder="Kanal ara... (Örn: beIN, S Sport, TRT)">
+                    <input type="text" id="search-input" placeholder="Kanal ara... (beIN, S Sport, TRT)">
                     <button id="clear-search" class="clear-search-btn" onclick="clearSearch()">✕</button>
                 </div>
             </div>
@@ -1162,10 +1196,9 @@ app.get('/', (req, res) => {
 
             <!-- Channel List -->
             <div id="channel-list"></div>
-            <div id="close-sidebar-mobile" onclick="toggleSidebar()">✕ Listeyi Kapat</div>
         </aside>
 
-        <!-- MAIN STAGE -->
+        <!-- MAIN STAGE (Desktop Center / Mobile Top Sticky Video) -->
         <main id="main-stage">
             <div id="video-container">
                 <video id="video-player" playsinline controls></video>
@@ -1194,13 +1227,10 @@ app.get('/', (req, res) => {
                 </div>
             </div>
 
-            <!-- Player Bottom Details & Quick Strip -->
+            <!-- Player Details & Quick Strip -->
             <div id="player-bottom-details">
                 <div class="info-card-row">
-                    <div class="now-playing-heading">
-                        <h1 id="channel-heading" class="now-channel-name">Seyir TV</h1>
-                        <span id="epg-title" class="now-epg-subtitle">Yayın akışı hazırlanıyor</span>
-                    </div>
+                    <h1 id="channel-heading" class="now-channel-name">Seyir TV</h1>
                     <div id="stream-status" class="status-pill-badge">Hazır</div>
                 </div>
 
@@ -1216,16 +1246,13 @@ app.get('/', (req, res) => {
                             <svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
                         </button>
                         <button id="btn-crisp" class="tool-btn" onclick="toggleCrisp()">
-                            <span>✨ Canlı & Net</span>
+                            <span>✨ Netlik</span>
                         </button>
                     </div>
 
                     <div class="toolbar-group">
                         <button id="btn-fit-row" class="tool-btn" onclick="toggleFit()">
                             <span>⛶ Doldur</span>
-                        </button>
-                        <button class="tool-btn" onclick="toggleSidebar()">
-                            <span>📺 Kanallar</span>
                         </button>
                         <button class="tool-btn" onclick="toggleFullscreen()">
                             <span>⛶ Tam Ekran</span>
@@ -1245,30 +1272,6 @@ app.get('/', (req, res) => {
         </main>
     </div>
 
-    <!-- Mobile Bottom Navigation -->
-    <nav id="mobile-bottom-bar">
-        <button class="nav-item-btn active" onclick="toggleSidebar()">
-            <svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg>
-            <span>Kanallar</span>
-        </button>
-        <button class="nav-item-btn" onclick="prevChannel()">
-            <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
-            <span>Önceki</span>
-        </button>
-        <button class="nav-item-btn" onclick="nextChannel()">
-            <svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
-            <span>Sonraki</span>
-        </button>
-        <button class="nav-item-btn" onclick="toggleCrisp()">
-            <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-            <span>Netlik</span>
-        </button>
-        <button class="nav-item-btn" onclick="toggleFullscreen()">
-            <svg viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
-            <span>Tam Ekran</span>
-        </button>
-    </nav>
-
     <script>
         let allChannels = [];
         let currentChannel = null;
@@ -1278,52 +1281,19 @@ app.get('/', (req, res) => {
         const video = document.getElementById('video-player');
         const channelList = document.getElementById('channel-list');
         const channelHeading = document.getElementById('channel-heading');
-        const epgTitle = document.getElementById('epg-title');
         const statusEl = document.getElementById('stream-status');
         const topTitle = document.getElementById('top-title');
         const topRes = document.getElementById('top-res');
         const searchInput = document.getElementById('search-input');
         const clearSearchBtn = document.getElementById('clear-search');
-        const sidebar = document.getElementById('sidebar');
         const channelCounter = document.getElementById('channel-counter');
-
-        // Dynamic EPG Generator matching current Turkish broadcast hours
-        function getLiveEpg(name) {
-            const n = (name || '').toLowerCase();
-            const hour = new Date().getHours();
-            if (n.includes('bein') && n.includes('1')) {
-                if (hour >= 18 && hour < 23) return "Trendyol Süper Lig Canlı Karşılaşma";
-                if (hour >= 23 || hour < 2) return "Gün Sonu & Süper Lig Maç Özetleri";
-                return "Süper Lig Maç Önü & Özel Dosyalar";
-            }
-            if (n.includes('bein') && n.includes('2')) return (hour >= 19 && hour < 23) ? "Trendyol Süper Lig & Ligue 1 Canlı" : "Ligue 1 & Süper Lig Karşılaşmaları";
-            if (n.includes('bein') && n.includes('3')) return "Trendyol 1. Lig & Basketbol Süper Ligi";
-            if (n.includes('bein') && n.includes('4')) return "EuroLeague Basketbol & WTA Tenis";
-            if (n.includes('bein') && n.includes('5')) return "Sultanlar Voleybol Ligi & Motor Sporları";
-            if (n.includes('s sport')) return (hour >= 18 && hour < 23) ? "İspanya LaLiga & Serie A Canlı" : "LaLiga Özetler & NBA Action";
-            if (n.includes('tivibu')) return "LaLiga, Serie A & İtalya Kupası";
-            if (n.includes('smart spor')) return "Sultanlar Voleybol Ligi Canlı Maç";
-            if (n.includes('exxen')) return "UEFA Şampiyonlar Ligi & Avrupa Ligi";
-            if (n.includes('tabii')) return "UEFA Avrupa Ligi & Konferans Ligi";
-            if (n.includes('trt spor')) return "Canlı Maç Kuşağı & Aktüel Futbol";
-            if (n.includes('a spor')) return (hour >= 21) ? "Son Sayfa Canlı & Transfer Raporu" : "Günün Spor Başlıkları & Sabah Sporu";
-            if (n.includes('trt 1')) return (hour >= 20 && hour < 23) ? "Prime Time Dizi / Canlı Karşılaşma" : "TRT 1 Gün Kuşağı";
-            if (n.includes('atv')) return (hour >= 20 && hour < 23) ? "Kuruluş Osman / Prime Time Dizi" : "Müge Anlı ile Tatlı Sert / Gün Ortası";
-            if (n.includes('kanal d')) return (hour >= 20 && hour < 23) ? "Arka Sokaklar / Dizi Kuşağı" : "Kanal D Gün Kuşağı";
-            if (n.includes('show')) return (hour >= 20 && hour < 23) ? "Kızılcık Şerbeti / Dizi Kuşağı" : "Show TV Gün Kuşağı";
-            if (n.includes('star')) return (hour >= 20 && hour < 23) ? "Yalı Çapkını / Prime Time Kuşağı" : "Star TV Gün Kuşağı";
-            if (n.includes('tv8')) return "MasterChef Türkiye / Survivor Canlı";
-            if (n.includes('haber') || n.includes('ntv') || n.includes('cnn')) return "Canlı Haber Bülteni & Sıcak Gelişmeler";
-            if (n.includes('belgesel') || n.includes('dmax') || n.includes('nat geo')) return "Vahşi Doğa & Bilim Belgeselleri";
-            return "Canlı Yayın Akışı";
-        }
 
         // Fetch Curated Master Channels
         fetch('/api/channels')
             .then(res => res.json())
             .then(data => {
                 allChannels = data || [];
-                channelCounter.textContent = allChannels.length + ' Kanal';
+                if (channelCounter) channelCounter.textContent = allChannels.length + ' Kanal';
                 renderChannels(allChannels);
                 if (allChannels.length > 0) {
                     playChannel(allChannels[0]);
@@ -1362,9 +1332,6 @@ app.get('/', (req, res) => {
                 item.className = 'ch-card' + (currentChannel && currentChannel.id === ch.id ? ' active' : '');
                 item.onclick = () => {
                     playChannel(ch);
-                    if (window.innerWidth <= 860) {
-                        sidebar.classList.remove('open');
-                    }
                 };
 
                 const avatar = document.createElement('div');
@@ -1405,7 +1372,6 @@ app.get('/', (req, res) => {
 
             channelHeading.textContent = ch.name;
             topTitle.textContent = ch.name;
-            epgTitle.textContent = getLiveEpg(ch.name);
 
             statusEl.textContent = 'Bağlanıyor…';
             statusEl.style.color = '#f59e0b';
@@ -1539,7 +1505,7 @@ app.get('/', (req, res) => {
             }
 
             renderChannels(filtered);
-            channelCounter.textContent = filtered.length + ' Kanal';
+            if (channelCounter) channelCounter.textContent = filtered.length + ' Kanal';
         }
 
         // Quick Previous & Next Channel
@@ -1572,11 +1538,6 @@ app.get('/', (req, res) => {
             const text = isCover ? '⛶ Sığdır' : '⛶ Doldur';
             if (topLabel) topLabel.textContent = isCover ? 'Sığdır' : 'Doldur';
             if (rowBtn) rowBtn.querySelector('span').textContent = text;
-            wakeControls();
-        }
-
-        function toggleSidebar() {
-            sidebar.classList.toggle('open');
             wakeControls();
         }
 
@@ -1639,10 +1600,8 @@ app.get('/', (req, res) => {
             videoTopOverlay.classList.remove('fade-out');
             clearTimeout(controlsTimer);
             controlsTimer = setTimeout(() => {
-                if (!sidebar.classList.contains('open')) {
-                    videoTopOverlay.classList.add('fade-out');
-                }
-            }, 3200);
+                videoTopOverlay.classList.add('fade-out');
+            }, 3000);
         }
 
         videoContainer.addEventListener('click', (e) => {
@@ -1656,7 +1615,7 @@ app.get('/', (req, res) => {
 
         // Auto Landscape Fullscreen
         function checkOrientation() {
-            const isLandscape = (window.innerWidth > window.innerHeight) && (window.innerHeight <= 650);
+            const isLandscape = (window.innerWidth > window.innerHeight) && (window.innerHeight <= 520);
             if (isLandscape && screen.orientation && screen.orientation.type && screen.orientation.type.startsWith('landscape')) {
                 if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
                     document.documentElement.requestFullscreen().catch(() => {});
