@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" width="108" height="108">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#020617" />
+    </linearGradient>
+    <linearGradient id="playGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#0284c7" flood-opacity="0.45" />
+    </filter>
+  </defs>
+  <!-- Background squircle -->
+  <rect x="2" y="2" width="104" height="104" rx="26" fill="url(#bgGrad)" stroke="#38bdf8" stroke-width="2.5" />
+  <!-- Left accent bar -->
+  <rect x="24" y="28" width="6" height="52" rx="3" fill="#ffffff" />
+  <!-- Play triangle with glow -->
+  <path d="M38 27 L82 54 L38 81 Z" fill="url(#playGrad)" stroke="#38bdf8" stroke-width="2" stroke-linejoin="round" filter="url(#glow)" />
+</svg>
