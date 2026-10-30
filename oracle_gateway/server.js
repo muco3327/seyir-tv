@@ -1011,14 +1011,17 @@ app.get('/', (req, res) => {
                 overflow: hidden;
             }
 
-            /* Main stage holds the top sticky video */
+            /* Main stage holds the top sticky video (Rendered at top on mobile) */
             #main-stage {
+                order: 1 !important;
                 padding: 0 !important;
                 flex: none !important;
                 width: 100% !important;
                 height: auto !important;
                 background: #000 !important;
                 z-index: 50;
+                position: sticky;
+                top: 0;
             }
 
             #video-container {
@@ -1032,10 +1035,14 @@ app.get('/', (req, res) => {
 
             /* Video overlay on mobile */
             #video-top-overlay {
-                padding: 10px 12px;
+                padding: 8px 10px;
+                pointer-events: none;
             }
-            .overlay-right .top-action-btn:not(:last-child) {
-                display: none; /* keep only fullscreen on mobile overlay */
+            #video-top-overlay .overlay-right {
+                display: none !important; /* Hide overlay buttons on phone to prevent wrapping/collision */
+            }
+            #video-top-overlay #top-title {
+                display: none !important; /* Channel title is displayed cleanly below video */
             }
 
             /* Hide desktop bottom toolbar; show mobile stream info bar */
@@ -1068,6 +1075,7 @@ app.get('/', (req, res) => {
 
             /* Mobile Sidebar becomes the in-page browsable channel section below video */
             #sidebar {
+                order: 2 !important;
                 width: 100% !important;
                 flex: 1 !important;
                 box-shadow: none !important;
@@ -1220,9 +1228,7 @@ app.get('/', (req, res) => {
                         <button id="btn-fit" class="top-action-btn" onclick="toggleFit()" title="Ekranı Doldur / Sığdır">
                             <span id="fit-label">Doldur</span>
                         </button>
-                        <button class="top-action-btn" onclick="toggleFullscreen()" title="Tam Ekran (F)">
-                            <span>Tam Ekran</span>
-                        </button>
+
                     </div>
                 </div>
             </div>
@@ -1253,9 +1259,6 @@ app.get('/', (req, res) => {
                     <div class="toolbar-group">
                         <button id="btn-fit-row" class="tool-btn" onclick="toggleFit()">
                             <span>⛶ Doldur</span>
-                        </button>
-                        <button class="tool-btn" onclick="toggleFullscreen()">
-                            <span>⛶ Tam Ekran</span>
                         </button>
                     </div>
                 </div>
