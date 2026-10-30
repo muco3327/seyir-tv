@@ -483,6 +483,7 @@ app.get('/', (req, res) => {
     res.setHeader('Pragma', 'no-cache');
     res.setHeader('Expires', '0');
     res.setHeader('Surrogate-Control', 'no-store');
+    res.setHeader('Clear-Site-Data', '"cache"');
     res.send(`<!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -1071,15 +1072,28 @@ app.get('/', (req, res) => {
             /* Video overlay on mobile */
             #video-top-overlay {
                 padding: 8px 10px;
-                pointer-events: none;
+                pointer-events: none !important;
+            }
+            #video-top-overlay .overlay-left {
+                pointer-events: none !important;
             }
             #video-top-overlay .overlay-right,
             #video-top-overlay button,
             #video-top-overlay .top-action-btn {
-                display: none !important; /* Hide all overlay buttons on phone to prevent wrapping/collision */
+                display: none !important; /* Absolutely no buttons in top overlay */
             }
             #video-top-overlay #top-title {
-                display: none !important; /* Channel title is displayed cleanly below video */
+                display: none !important;
+            }
+            .badge-live-pulse, #top-res {
+                pointer-events: none !important;
+            }
+            .yt-fullscreen-btn {
+                bottom: 10px !important;
+                right: 10px !important;
+                width: 42px !important;
+                height: 42px !important;
+                z-index: 45 !important;
             }
 
             /* Hide desktop bottom toolbar; show mobile stream info bar */
@@ -1201,6 +1215,41 @@ app.get('/', (req, res) => {
             border-radius: 0 !important; background: #000 !important; border: none !important;
         }
         :fullscreen video, :-webkit-full-screen video { width: 100% !important; height: 100% !important; }
+
+        /* YouTube Style Floating Fullscreen Button (Bottom-Right) */
+        .yt-fullscreen-btn {
+            position: absolute;
+            bottom: 12px;
+            right: 12px;
+            width: 42px;
+            height: 42px;
+            background: rgba(11, 17, 32, 0.75);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            border-radius: 8px;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 45;
+            transition: opacity 0.3s ease, transform 0.15s ease, background 0.2s ease;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+            pointer-events: auto;
+        }
+        .yt-fullscreen-btn:hover {
+            background: rgba(220, 38, 38, 0.9);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: scale(1.08);
+        }
+        .yt-fullscreen-btn:active {
+            transform: scale(0.92);
+        }
+        .yt-fullscreen-btn.fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
@@ -1268,6 +1317,13 @@ app.get('/', (req, res) => {
 
                     </div>
                 </div>
+
+                <!-- YouTube Style Fullscreen Button (Bottom-Right) -->
+                <button id="btn-yt-fullscreen" class="yt-fullscreen-btn" onclick="toggleFullscreen()" title="Tam Ekran" aria-label="Tam Ekran">
+                    <svg id="yt-fs-icon" viewBox="0 0 24 24" width="22" height="22">
+                        <path fill="#ffffff" d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+                    </svg>
+                </button>
             </div>
 
             <!-- Player Details & Quick Strip -->
@@ -1630,23 +1686,45 @@ app.get('/', (req, res) => {
             }
         });
 
-        // Auto-hide controls overlay
+        // Auto-hide controls overlay & YouTube Fullscreen button
         let controlsTimer = null;
         const videoContainer = document.getElementById('video-container');
         const videoTopOverlay = document.getElementById('video-top-overlay');
+        const ytFullscreenBtn = document.getElementById('btn-yt-fullscreen');
+        const ytFsIcon = document.getElementById('yt-fs-icon');
+
+        function updateFullscreenIcon() {
+            const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+            if (!ytFsIcon) return;
+            if (isFs) {
+                ytFsIcon.innerHTML = '<path fill="#ffffff" d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/>';
+                if (ytFullscreenBtn) ytFullscreenBtn.title = 'Tam Ekrandan Çık';
+            } else {
+                ytFsIcon.innerHTML = '<path fill="#ffffff" d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>';
+                if (ytFullscreenBtn) ytFullscreenBtn.title = 'Tam Ekran';
+            }
+        }
+        document.addEventListener('fullscreenchange', updateFullscreenIcon);
+        document.addEventListener('webkitfullscreenchange', updateFullscreenIcon);
 
         function wakeControls() {
-            if (!videoTopOverlay) return;
-            videoTopOverlay.classList.remove('fade-out');
+            if (videoTopOverlay) videoTopOverlay.classList.remove('fade-out');
+            if (ytFullscreenBtn) ytFullscreenBtn.classList.remove('fade-out');
             clearTimeout(controlsTimer);
             controlsTimer = setTimeout(() => {
-                videoTopOverlay.classList.add('fade-out');
-            }, 3000);
+                if (videoTopOverlay) videoTopOverlay.classList.add('fade-out');
+                if (ytFullscreenBtn) ytFullscreenBtn.classList.add('fade-out');
+            }, 3500);
         }
 
         videoContainer.addEventListener('click', (e) => {
-            if (!e.target.closest('button')) {
-                videoTopOverlay.classList.toggle('fade-out');
+            if (e.target.closest('#btn-yt-fullscreen') || e.target.closest('button')) return;
+            const isFaded = videoTopOverlay && videoTopOverlay.classList.contains('fade-out');
+            if (isFaded) {
+                wakeControls();
+            } else {
+                if (videoTopOverlay) videoTopOverlay.classList.add('fade-out');
+                if (ytFullscreenBtn) ytFullscreenBtn.classList.add('fade-out');
             }
         });
         videoContainer.addEventListener('mousemove', wakeControls);
