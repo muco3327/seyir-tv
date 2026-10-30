@@ -6,6 +6,7 @@
     "urls": [
       "https://ladyboy.ardastream2.cfd//beintv/tracks-v1a1/mono.m3u8",
       "https://zeus645423.cfd/b1/index.txt",
+      "https://zeus324232.cfd/b1/index.txt",
       "http://nexusconnects.org:80/play/live.php?mac=00:1B:79:47:72:00&stream=988849&extension=ts&play_token=zYB5znYiYr",
       "http://nexusconnects.org:80/play/live.php?mac=00:1B:79:47:72:00&stream=988867&extension=ts&play_token=a34h1OJXxe",
       "http://190502.tomtv.eu:80/MustafaozdemR7808/z189b8mv2r/77238",
@@ -39,12 +40,10 @@
       "http://eempiree.com:8080/Exe381SZV/jTGka52/1105082?output=ts",
       "http://eempiree.com:8080/Exe381SZV/jTGka52/1105081?output=ts",
       "http://deat1.com:8080/Celalustun/sEUTbRUtkwJH/8?output=ts",
-      "https://atom.han686314.workers.dev/bein-sports-1.m3u8",
       "https://raw.githubusercontent.com/kadirsener1/247/refs/heads/main/cdnlive/trbeinsports1.m3u8",
       "https://raw.githubusercontent.com/kadirsener1/247/refs/heads/main/tvnow247/trbeinsports1.m3u8",
       "https://cdnlivetv.tv/secure/api/v1/6a288d2681d8192bb76ca9a2/playlist.m3u8?token=NmEyODhkMjY4MWQ4MTkyYmI3NmNhOWEyOjE3ODgwMzMyNTA1MjU6Y2RubGl2ZXR2LnR2OmM1ZDU1N2NiZjA0M2Y0YTAuZWMyNmFmNzQyY2U2NzQyMmUzNTMxY2U2MWVkMGM3NTVjOTU1MzU3MjU5NTViMDNjYWMwOTQ0NWI2MzEyNzg1ZA",
       "https://cdnlivetv.tv/secure/api/v1/6a288d2b81d8192bb76ccbfe/playlist.m3u8?token=NmEyODhkMmI4MWQ4MTkyYmI3NmNjYmZlOjE3ODgwMzMyMzYyNjc6Y2RubGl2ZXR2LnR2OjViZDYzNGMyZGIzODFiN2QuNTY2YjU4NDI5YmExYTk1N2MzZjZkZjlkYWM1MTIyMzJiMWY5NmI2Mzc0Yjg2YTllY2RkMDEwZDU5ODNlM2VjMA",
-      "https://ladyboy.ardatvgs.cfd//beintv/tracks-v1a1/mono.m3u8",
       "https://avva.magnitude.workers.dev/?url=https://avvaupdate.com/95f0000dd0e/index.m3u8?o=1%26e=1781703872%26tk=51d8cf311c0961e87873898f38494c8d",
       "https://chunk.tv247.biz/api/proxy/playlist?token=eyJjaGFubmVsSWQiOiI5MSIsInRzIjoxNzg3ODEzNDk1NDA4fQ==",
       "https://chunk.tv247.biz/api/proxy/playlist?token=eyJjaGFubmVsSWQiOiIxMTYiLCJ0cyI6MTc4NzgxMzUxMjQxM30=",
@@ -222,16 +221,17 @@
     "name": "beIN Sports Haber",
     "category": "beIN Sports",
     "urls": [
+      "http://176.65.153.66:6003/play/a00y/index.m3u8",
+      "http://176.65.153.66:6003/play/a00y/73688018.m3u8",
+      "https://raw.githubusercontent.com/kadirsener1/247/refs/heads/main/cdnlive/trbeinsportshaber.m3u8",
       "http://190502.tomtv.eu:80/MustafaozdemR7808/z189b8mv2r/76",
       "http://190502.tomtv.eu:80/LiudmilaSheremet/233v9m9kjc/76",
       "http://deat1.com:8080/Celalustun/sEUTbRUtkwJH/7?output=ts",
       "http://deat1.com:8080/Celalustun/sEUTbRUtkwJH/6?output=ts",
       "http://taliptv01.xyz:8080/play/live.php?mac=00:1A:79:4D:06:6C&stream=620421&extension=ts",
-      "https://raw.githubusercontent.com/kadirsener1/247/refs/heads/main/cdnlive/trbeinsportshaber.m3u8",
       "https://cdnlivetv.tv/secure/api/v1/6a288d2b81d8192bb76ccc0f/playlist.m3u8?token=NmEyODhkMmI4MWQ4MTkyYmI3NmNjYzBmOjE3ODgwMzMyMzc3MTM6Y2RubGl2ZXR2LnR2OjY4NDljNzliZDE3MmQzNjEuMTg3MzliMGE4ODE0MjUyNjI4ZTA4NWQxYTcwZDE3YzkwYjIyZTE0NzFiNDRjZjhjODAyYWI3ZjM5ZjFmMTJkNQ",
       "http://88.99.165.164:6878/ace/getstream?infohash=22d5b3999d11a4f1bad9da8fdaa9034935fb2706&pid=237",
       "https://trn03.tulix.tv/gt-beinsportshaber/index.m3u8?token=ae8ebfde63142e4716ab799a5aa7df6d",
-      "http://176.65.153.66:6003/play/a00y/index.m3u8",
       "https://tgn.bozztv.com/dvrfl05/gin-beinsportshaber/tracks-v1a1/mono.m3u8"
     ]
   },
@@ -407,6 +407,7 @@
     "category": "Spor",
     "urls": [
       "https://zeus645423.cfd/s1/index.txt",
+      "https://zeus324232.cfd/s1/index.txt",
       "http://camon1.com:8080/Hamdi@123/Hoca@123/94871?output=ts",
       "http://eempiree.com:8080/Exe381SZV/jTGka52/94871?output=ts",
       "http://190502.tomtv.eu:80/LiudmilaSheremet/233v9m9kjc/233930",
@@ -421,7 +422,6 @@
       "https://cdnlivetv.tv/secure/api/v1/6a288d2f81d8192bb76cf2cb/playlist.m3u8?token=NmEyODhkMmY4MWQ4MTkyYmI3NmNmMmNiOjE3ODgwMzMzMDQ3MDM6Y2RubGl2ZXR2LnR2OjM4NDJjNjQ3ZDI4OWVmYWEuMWJjMzAzMTFiYzhiN2FiNzA4OWZjM2Y0OWRjM2U3NmZmNTRhY2RmNjIyMmViNTc3ZjBhNDEwZThmNmVjYjVmZQ",
       "https://proxy.cors.sh/https://yayinlarfidanafidanlaragaca.xyz/hls/6.m3u8",
       "https://avva.magnitude.workers.dev/?url=https://avvaupdate.com/ssport1/index.m3u8?o=1%26e=1781703872%26tk=51d8cf311c0961e87873898f38494c8d",
-      "https://zeus324232.cfd/s1/index.txt",
       "https://andro.evrenesoglu217.click/checklist/androstreamlivess1.m3u8"
     ]
   },
@@ -575,6 +575,8 @@
     "name": "TRT Spor",
     "category": "Spor",
     "urls": [
+      "https://trt.daioncdn.net/trtspor/master.m3u8?app=web&platform=trtspor",
+      "http://176.65.153.35:6001/play/a020/index.m3u8",
       "https://tv-trtspor1.medya.trt.com.tr/master_1080.m3u8",
       "https://tv-trtspor2.medya.trt.com.tr/master_720.m3u8",
       "http://190502.tomtv.eu:80/MustafaozdemR7808/z189b8mv2r/63",
@@ -593,11 +595,9 @@
       "http://deat1.com:8080/Celalustun/sEUTbRUtkwJH/40?output=ts",
       "http://deat1.com:8080/Celalustun/sEUTbRUtkwJH/8671?output=ts",
       "http://deat1.com:8080/Celalustun/sEUTbRUtkwJH/207?output=ts",
-      "https://trt.daioncdn.net/trtspor/master.m3u8?app=web&platform=trtspor",
       "https://rd-trtradyo1.medya.trt.com.tr/master_128.m3u8",
       "https://tv-trtspor1.medya.trt.com.tr/master.m3u8",
       "http://176.65.153.12:6001/play/a04g/index.m3u8",
-      "http://176.65.153.35:6001/play/a020/index.m3u8",
       "http://176.65.153.91:6001/play/a003/index.m3u8",
       "https://tgn.bozztv.com/dvrfl05/gin-trtspor/tracks-v1a1/mono.m3u8",
       "https://chunk.tv247.biz/api/proxy/playlist?token=eyJjaGFubmVsSWQiOiI4ODkiLCJ0cyI6MTc4NzgxNDIwMTYxOH0=",

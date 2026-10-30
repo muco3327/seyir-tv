@@ -9,7 +9,28 @@ const { URL } = require('url');
 
 const app = express();
 app.use(cors());
+app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
+// VOD Database & Scraper & Stream Resolver
+const vodDb = require('./vod_db');
+const vodScraper = require('./vod_scraper');
+const streamResolver = require('./stream_resolver');
+
+// Initialize VOD DB and start background sync on startup
+vodDb.initDb().then(() => {
+    console.log('[SERVER] VOD Database ready.');
+    // Check if catalog has items, if not run initial sync
+    vodDb.getItems({ limit: 1 }).then(items => {
+        if (items.length === 0) {
+            console.log('[SERVER] Catalog empty, triggering initial sync...');
+            vodScraper.syncCatalog();
+        }
+    });
+}).catch(err => {
+    console.error('[SERVER] VOD DB init error:', err);
+});
+
 
 // Favicon & Web App Icons
 app.get('/favicon.ico', (req, res) => {
@@ -53,6 +74,259 @@ function reloadChannels() {
     }
 }
 reloadChannels();
+
+// ==========================================
+// VOD API Endpoints (Film & Dizi & Senkron)
+// ==========================================
+
+// 1. Get Movies (Paginated, filtered by genre or search query)
+app.get('/api/vod/movies', async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 24;
+        const genre = req.query.genre || '';
+        const search = req.query.search || '';
+
+        let items = await vodDb.getItems({ type: 'movie', genre, search, page, limit });
+        if (items.length === 0 && search && search.trim().length >= 2) {
+            await vodScraper.searchOnline(search);
+            items = await vodDb.getItems({ type: 'movie', genre, search, page, limit });
+        }
+        res.json({
+            page,
+            limit,
+            items
+        });
+    } catch (e) {
+        console.error('[API] /api/vod/movies error:', e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// 2. Get Series (Paginated, filtered by genre or search query)
+app.get('/api/vod/series', async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 24;
+        const genre = req.query.genre || '';
+        const search = req.query.search || '';
+
+        const items = await vodDb.getItems({ type: 'series', genre, search, page, limit });
+        res.json({
+            page,
+            limit,
+            items
+        });
+    } catch (e) {
+        console.error('[API] /api/vod/series error:', e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// 3. Movie Details & Stream
+app.get('/api/vod/movie/:id', async (req, res) => {
+    try {
+        const movie = await vodDb.getItemById(req.params.id);
+        if (!movie) {
+            return res.status(404).json({ error: 'Movie not found' });
+        }
+
+        // On-demand stream resolution if client wants to play
+        let stream = null;
+        if (movie.source_url) {
+            stream = await vodScraper.resolvePageStream(movie.source_url);
+        }
+
+        res.json({
+            ...movie,
+            stream
+        });
+    } catch (e) {
+        console.error('[API] /api/vod/movie/:id error:', e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// 4. Series Details & Seasons / Episodes Hierarchy
+app.get('/api/vod/series/:id', async (req, res) => {
+    try {
+        const series = await vodDb.getItemById(req.params.id);
+        if (!series) {
+            return res.status(404).json({ error: 'Series not found' });
+        }
+
+        let episodes = await vodDb.getEpisodesBySeries(series.id);
+        if (episodes.length === 0 && series.source_url) {
+            // Lazy fetch episodes if not populated yet
+            const details = await vodScraper.getSeriesDetails(series.source_url, series.id);
+            if (details && details.episodes) {
+                for (const ep of details.episodes) {
+                    await vodDb.upsertEpisode(ep);
+                }
+                episodes = details.episodes;
+            }
+        }
+
+        // Group into seasons
+        const seasonsMap = {};
+        for (const ep of episodes) {
+            const sNum = ep.season_number;
+            if (!seasonsMap[sNum]) {
+                seasonsMap[sNum] = {
+                    seasonNumber: sNum,
+                    title: `${sNum}. Sezon`,
+                    episodes: []
+                };
+            }
+            seasonsMap[sNum].episodes.push(ep);
+        }
+
+        const seasons = Object.values(seasonsMap).sort((a, b) => a.seasonNumber - b.seasonNumber);
+
+        res.json({
+            ...series,
+            seasons
+        });
+    } catch (e) {
+        console.error('[API] /api/vod/series/:id error:', e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// 5. Episode Stream Resolver
+app.get('/api/vod/episode/:id', async (req, res) => {
+    try {
+        const ep = await vodDb.getEpisodeById(req.params.id);
+        if (!ep) {
+            return res.status(404).json({ error: 'Episode not found' });
+        }
+
+        let stream = null;
+        if (ep.source_url) {
+            stream = await vodScraper.resolvePageStream(ep.source_url);
+        }
+
+        res.json({
+            ...ep,
+            stream
+        });
+    } catch (e) {
+        console.error('[API] /api/vod/episode/:id error:', e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// 6. Generic On-Demand Stream Resolver
+app.get('/api/vod/resolve', async (req, res) => {
+    try {
+        const targetUrl = req.query.url;
+        if (!targetUrl) {
+            return res.status(400).json({ error: 'url parameter required' });
+        }
+
+        let stream = null;
+        if (targetUrl.includes('filmmodu.cc')) {
+            stream = await vodScraper.resolvePageStream(targetUrl);
+        } else {
+            stream = await streamResolver.resolveStream(targetUrl);
+        }
+
+        if (!stream) {
+            return res.status(404).json({ error: 'Stream could not be resolved' });
+        }
+        res.json(stream);
+    } catch (e) {
+        console.error('[API] /api/vod/resolve error:', e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// 7. Manual Catalog Sync Trigger
+app.post('/api/vod/sync', (req, res) => {
+    vodScraper.syncCatalog().catch(err => console.error('[SYNC] Background sync error:', err));
+    res.json({ status: 'sync_started', message: 'VOD catalog sync initiated in background.' });
+});
+
+app.get('/api/vod/sync/status', (req, res) => {
+    res.json(vodScraper.getSyncProgress());
+});
+
+app.get('/api/vod/stats', async (req, res) => {
+    try {
+        const stats = await vodDb.getStats();
+        res.json(stats);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// 8. User Watch History Sync
+app.get('/api/user/history', async (req, res) => {
+    try {
+        const deviceId = req.query.deviceId;
+        if (!deviceId) return res.status(400).json({ error: 'deviceId required' });
+        const history = await vodDb.getWatchHistory(deviceId);
+        res.json(history);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.post('/api/user/history', async (req, res) => {
+    try {
+        const { deviceId, itemId, itemType, title, posterUrl, season, episode, positionMs, durationMs } = req.body;
+        if (!deviceId || !itemId || !title) {
+            return res.status(400).json({ error: 'deviceId, itemId and title required' });
+        }
+        await vodDb.saveWatchHistory({
+            deviceId,
+            itemId,
+            itemType: itemType || 'movie',
+            title,
+            posterUrl: posterUrl || '',
+            season: season || 0,
+            episode: episode || 0,
+            positionMs: positionMs || 0,
+            durationMs: durationMs || 0
+        });
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// 9. User Favorites Sync
+app.get('/api/user/favorites', async (req, res) => {
+    try {
+        const deviceId = req.query.deviceId;
+        if (!deviceId) return res.status(400).json({ error: 'deviceId required' });
+        const favorites = await vodDb.getFavorites(deviceId);
+        res.json(favorites);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.post('/api/user/favorites/toggle', async (req, res) => {
+    try {
+        const { deviceId, itemId, itemType, title, posterUrl, year, rating } = req.body;
+        if (!deviceId || !itemId || !title) {
+            return res.status(400).json({ error: 'deviceId, itemId and title required' });
+        }
+        const result = await vodDb.toggleFavorite({
+            deviceId,
+            itemId,
+            itemType: itemType || 'movie',
+            title,
+            posterUrl: posterUrl || '',
+            year: year || '',
+            rating: rating || ''
+        });
+        res.json(result);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
 
 // API Channels endpoint
 app.get('/api/channels' , (req, res) => {
@@ -104,7 +378,8 @@ function getQualityScore(url) {
     const u = (url || '').toLowerCase();
     if (u.includes('4k') || u.includes('uhd') || u.includes('2160')) return 1000;
     // Top-tier verified live HLS streams
-    if (u.includes('ardastream2') || u.includes('atom.han') || u.includes('daioncdn') || u.includes('ercdn')) return 980;
+    if (u.includes('atom.han') || u.includes('ardatvgs')) return 0;
+    if (u.includes('ardastream2') || u.includes('daioncdn') || u.includes('ercdn')) return 980;
     if (u.includes('zeus')) return 950;
     // Verified 1080p FHD IPTV streams
     if (
@@ -256,13 +531,15 @@ app.get('/channel/:id.m3u8', async (req, res) => {
         return res.send(cached.body);
     }
 
-    // Filter out recursive loopbacks to self
+    // Filter out recursive loopbacks to self and known dead wrappers
     const validUrls = (ch.urls || []).filter(u => 
         u && 
         !u.includes('150.230.29.27') && 
         !u.includes('localhost') && 
         !u.includes('127.0.0.1') &&
-        !u.includes('/channel/')
+        !u.includes('/channel/') &&
+        !u.includes('atom.han') &&
+        !u.includes('ardatvgs')
     );
 
     if (validUrls.length === 0) {
@@ -317,6 +594,9 @@ app.get('/channel/:id.m3u8', async (req, res) => {
 
             const bodyStr = response.data.toString('utf-8');
             if (bodyStr.includes('#EXTM3U') || targetUrl.includes('.m3u8') || targetUrl.includes('index.txt')) {
+                if (bodyStr.includes('ardatvgs') || bodyStr.includes('atom.han')) {
+                    throw new Error('Manifest contains dead upstream domain (ardatvgs)');
+                }
                 res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
                 const lines = bodyStr.split('\n');
                 const rewritten = lines.map(l => {
