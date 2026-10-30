@@ -1069,9 +1069,33 @@ app.get('/', (req, res) => {
                 width: 100% !important;
             }
 
-            /* Video overlay on mobile - Hidden so player has 100% clean dahili controls without obstruction */
+            /* Video overlay on mobile - Unified with PC layout */
             #video-top-overlay {
-                display: none !important;
+                padding: 6px 8px !important;
+                display: flex !important;
+            }
+            #video-top-overlay .channel-title-pill {
+                max-width: 120px !important;
+                font-size: 11px !important;
+                padding: 3px 7px !important;
+            }
+            #video-top-overlay .top-action-btn {
+                padding: 4px 6px !important;
+                font-size: 11px !important;
+            }
+            #video-top-overlay .top-action-btn span {
+                font-size: 10px !important;
+            }
+            #video-top-overlay .badge-live-pulse {
+                font-size: 9.5px !important;
+                padding: 3px 6px !important;
+            }
+            #video-top-overlay .badge-quality-fhd {
+                font-size: 9.5px !important;
+                padding: 3px 6px !important;
+            }
+            #video-bottom-overlay {
+                padding: 6px 10px !important;
             }
 
             /* Hide desktop bottom toolbar; show mobile stream info bar */
@@ -1194,6 +1218,98 @@ app.get('/', (req, res) => {
         }
         :fullscreen video, :-webkit-full-screen video { width: 100% !important; height: 100% !important; }
 
+
+        /* Custom Seyir TV Unified Bottom Overlay */
+        #video-bottom-overlay {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            padding: 8px 14px;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.88) 0%, rgba(0, 0, 0, 0.4) 65%, transparent 100%);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            z-index: 35;
+            transition: opacity 0.3s ease;
+            pointer-events: auto;
+        }
+        #video-bottom-overlay.fade-out {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .bottom-left-controls, .bottom-right-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .player-icon-btn {
+            background: transparent;
+            border: none;
+            color: #ffffff;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.15s ease, background 0.15s ease;
+        }
+        .player-icon-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: scale(1.1);
+        }
+        .player-icon-btn:active {
+            transform: scale(0.92);
+        }
+        .player-live-badge {
+            font-size: 11px;
+            font-weight: 800;
+            color: #ef4444;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            letter-spacing: 0.5px;
+            padding-left: 4px;
+        }
+        .player-live-badge::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: #ef4444;
+            border-radius: 50%;
+            animation: pulse-dot 1.4s infinite;
+        }
+        .bottom-center-track {
+            flex: 1;
+            padding: 0 4px;
+            display: flex;
+            align-items: center;
+        }
+        .live-timeline {
+            position: relative;
+            width: 100%;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.25);
+            border-radius: 2px;
+        }
+        .live-timeline-fill {
+            width: 100%;
+            height: 100%;
+            background: #dc2626;
+            border-radius: 2px;
+        }
+        .live-timeline-dot {
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translate(50%, -50%);
+            width: 8px;
+            height: 8px;
+            background: #ffffff;
+            border: 2px solid #dc2626;
+            border-radius: 50%;
+            box-shadow: 0 0 6px rgba(220, 38, 38, 0.8);
+        }
     </style>
 </head>
 <body>
@@ -1239,7 +1355,7 @@ app.get('/', (req, res) => {
         <!-- MAIN STAGE (Desktop Center / Mobile Top Sticky Video) -->
         <main id="main-stage">
             <div id="video-container">
-                <video id="video-player" playsinline webkit-playsinline controls controlsList="nodownload"></video>
+                <video id="video-player" playsinline webkit-playsinline></video>
 
                 <!-- Floating Top Bar Overlay -->
                 <div id="video-top-overlay">
@@ -1259,6 +1375,32 @@ app.get('/', (req, res) => {
                             <span id="fit-label">Doldur</span>
                         </button>
 
+                    </div>
+                </div>
+
+                <!-- Custom Bottom Control Bar (Identical on PC & Phone) -->
+                <div id="video-bottom-overlay">
+                    <div class="bottom-left-controls">
+                        <button id="btn-play-pause" class="player-icon-btn" onclick="togglePlay()" title="Oynat / Duraklat (Space)">
+                            <svg id="svg-play" viewBox="0 0 24 24" width="22" height="22"><path fill="#fff" d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                        </button>
+                        <button id="btn-mute" class="player-icon-btn" onclick="toggleMute()" title="Sesi Aç / Kapat (M)">
+                            <svg id="svg-volume" viewBox="0 0 24 24" width="22" height="22"><path fill="#fff" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                        </button>
+                        <span id="player-time-badge" class="player-live-badge">CANLI</span>
+                    </div>
+
+                    <div class="bottom-center-track">
+                        <div class="live-timeline">
+                            <div class="live-timeline-fill"></div>
+                            <div class="live-timeline-dot"></div>
+                        </div>
+                    </div>
+
+                    <div class="bottom-right-controls">
+                        <button id="btn-player-fullscreen" class="player-icon-btn" onclick="toggleFullscreen()" title="Tam Ekran (F)">
+                            <svg id="svg-fs" viewBox="0 0 24 24" width="22" height="22"><path fill="#fff" d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -1626,23 +1768,83 @@ app.get('/', (req, res) => {
             }
         });
 
-        // Auto-hide controls overlay
-        let controlsTimer = null;
+        // Unified Player Controls (PC & Mobile)
         const videoContainer = document.getElementById('video-container');
         const videoTopOverlay = document.getElementById('video-top-overlay');
+        const videoBottomOverlay = document.getElementById('video-bottom-overlay');
+        let controlsTimer = null;
 
         function wakeControls() {
-            if (!videoTopOverlay) return;
-            videoTopOverlay.classList.remove('fade-out');
+            if (videoTopOverlay) videoTopOverlay.classList.remove('fade-out');
+            if (videoBottomOverlay) videoBottomOverlay.classList.remove('fade-out');
             clearTimeout(controlsTimer);
             controlsTimer = setTimeout(() => {
-                videoTopOverlay.classList.add('fade-out');
-            }, 3000);
+                if (!video.paused) {
+                    if (videoTopOverlay) videoTopOverlay.classList.add('fade-out');
+                    if (videoBottomOverlay) videoBottomOverlay.classList.add('fade-out');
+                }
+            }, 3500);
         }
 
+        function togglePlay() {
+            if (video.paused) {
+                video.play().catch(() => {});
+            } else {
+                video.pause();
+            }
+            updatePlayPauseIcon();
+            wakeControls();
+        }
+
+        function updatePlayPauseIcon() {
+            const svg = document.getElementById('svg-play');
+            if (!svg) return;
+            if (video.paused) {
+                svg.innerHTML = '<path fill="#fff" d="M8 5v14l11-7z"/>';
+            } else {
+                svg.innerHTML = '<path fill="#fff" d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+            }
+        }
+        video.addEventListener('play', updatePlayPauseIcon);
+        video.addEventListener('pause', updatePlayPauseIcon);
+
+        function toggleMute() {
+            video.muted = !video.muted;
+            updateVolumeIcon();
+            wakeControls();
+        }
+
+        function updateVolumeIcon() {
+            const svg = document.getElementById('svg-volume');
+            if (!svg) return;
+            if (video.muted || video.volume === 0) {
+                svg.innerHTML = '<path fill="#fff" d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>';
+            } else {
+                svg.innerHTML = '<path fill="#fff" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>';
+            }
+        }
+        video.addEventListener('volumechange', updateVolumeIcon);
+
+        function updateFsIcon() {
+            const svg = document.getElementById('svg-fs');
+            if (!svg) return;
+            const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+            if (isFs) {
+                svg.innerHTML = '<path fill="#fff" d="M5 16h3v3h2v-5H5v2zm3-8H5v2h5V5H8v3zm6 11h2v-3h3v-2h-5v5zm2-11V5h-2v5h5V8h-3z"/>';
+            } else {
+                svg.innerHTML = '<path fill="#fff" d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>';
+            }
+        }
+        document.addEventListener('fullscreenchange', updateFsIcon);
+        document.addEventListener('webkitfullscreenchange', updateFsIcon);
+
         videoContainer.addEventListener('click', (e) => {
-            if (!e.target.closest('button')) {
-                videoTopOverlay.classList.toggle('fade-out');
+            if (e.target.closest('button')) return;
+            const isFaded = videoBottomOverlay && videoBottomOverlay.classList.contains('fade-out');
+            if (isFaded) {
+                wakeControls();
+            } else {
+                togglePlay();
             }
         });
         videoContainer.addEventListener('mousemove', wakeControls);
