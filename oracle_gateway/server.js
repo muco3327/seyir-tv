@@ -457,10 +457,17 @@ app.get('/proxy', async (req, res) => {
 
 // Modern Responsive Mobile & Desktop Web Player Interface
 app.get('/', (req, res) => {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
     res.send(`<!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#06080f">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1038,8 +1045,10 @@ app.get('/', (req, res) => {
                 padding: 8px 10px;
                 pointer-events: none;
             }
-            #video-top-overlay .overlay-right {
-                display: none !important; /* Hide overlay buttons on phone to prevent wrapping/collision */
+            #video-top-overlay .overlay-right,
+            #video-top-overlay button,
+            #video-top-overlay .top-action-btn {
+                display: none !important; /* Hide all overlay buttons on phone to prevent wrapping/collision */
             }
             #video-top-overlay #top-title {
                 display: none !important; /* Channel title is displayed cleanly below video */
