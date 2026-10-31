@@ -126,15 +126,45 @@ app.get('/api/vod/series', async (req, res) => {
 // 3. Movie Details & Stream
 app.get('/api/vod/movie/:id', async (req, res) => {
     try {
-        const movie = await vodDb.getItemById(req.params.id);
+        let movie = await vodDb.getItemById(req.params.id);
         if (!movie) {
             return res.status(404).json({ error: 'Movie not found' });
         }
 
-        // On-demand stream resolution if client wants to play
-        let stream = null;
-        if (movie.source_url) {
-            stream = await vodScraper.resolvePageStream(movie.source_url);
+        // Check cached stream first
+        let stream = await vodDb.getCachedStream(`movie_${movie.id}`);
+
+        // If overview is short or backdrop is missing or stream is missing, enrich details
+        const needsEnrich = !stream || !movie.overview || movie.overview.length < 25 || movie.overview.includes('izle 20') || !movie.backdrop_url;
+        if (needsEnrich && movie.source_url) {
+            try {
+                const details = await vodScraper.getMovieDetails(movie.source_url);
+                if (details) {
+                    if (details.overview && details.overview.length > 15) movie.overview = details.overview;
+                    if (details.backdrop_url) movie.backdrop_url = details.backdrop_url;
+                    if (details.poster_url) movie.poster_url = details.poster_url;
+                    if (details.title && details.title.length > 1) movie.title = details.title;
+                    if (details.data_k) movie.data_k = details.data_k;
+                    await vodDb.upsertItem(movie);
+
+                    if (details.stream && details.stream.streamUrl) {
+                        stream = details.stream;
+                        await vodDb.setCachedStream(`movie_${movie.id}`, stream, 86400 * 7);
+                    }
+                }
+            } catch (err) {
+                console.warn('[API] Lazy movie detail fetch failed:', err.message);
+            }
+        }
+
+        // Fallback: If still no stream, try resolvePageStream
+        if (!stream && movie.source_url) {
+            try {
+                stream = await vodScraper.resolvePageStream(movie.source_url);
+                if (stream && stream.streamUrl) {
+                    await vodDb.setCachedStream(`movie_${movie.id}`, stream, 86400 * 7);
+                }
+            } catch (e) {}
         }
 
         res.json({
@@ -156,7 +186,26 @@ app.get('/api/vod/series/:id', async (req, res) => {
         }
 
         let episodes = await vodDb.getEpisodesBySeries(series.id);
-        if (episodes.length === 0 && series.source_url) {
+        if ((episodes.length === 0 || !series.overview || series.overview.trim().length < 5) && series.source_url) {
+            try {
+                const details = await vodScraper.getSeriesDetails(series.source_url, series.id);
+                if (details) {
+                    if (details.overview) series.overview = details.overview;
+                    if (details.title && details.title.length > 1) series.title = details.title;
+                    if (details.poster_url && !series.poster_url) series.poster_url = details.poster_url;
+                    await vodDb.upsertItem(series);
+                    if (details.episodes && episodes.length === 0) {
+                        for (const ep of details.episodes) {
+                            await vodDb.upsertEpisode(ep);
+                        }
+                        episodes = details.episodes;
+                    }
+                }
+            } catch (err) {
+                console.warn('[API] Lazy series detail fetch failed:', err.message);
+            }
+        }
+        if (false) {
             // Lazy fetch episodes if not populated yet
             const details = await vodScraper.getSeriesDetails(series.source_url, series.id);
             if (details && details.episodes) {
@@ -224,6 +273,19 @@ app.get('/api/vod/resolve', async (req, res) => {
             return res.status(400).json({ error: 'url parameter required' });
         }
 
+        if (targetUrl.includes('vidmixi.com/list/') || targetUrl.includes('.m3u8')) {
+            return res.json({
+                streamUrl: targetUrl,
+                mimeType: 'application/x-mpegURL',
+                quality: 'Auto (1080p)',
+                serverName: 'Vidmixi Sunucusu',
+                headers: {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                    'Referer': 'https://vidmixi.com/'
+                },
+                subtitles: []
+            });
+        }
         let stream = null;
         if (targetUrl.includes('filmmodu.cc')) {
             stream = await vodScraper.resolvePageStream(targetUrl);
@@ -343,6 +405,17 @@ app.get('/api/channels/status', (req, res) => {
     });
 });
 
+// New TV (VOD Dizi & Film) APK Download Endpoints
+app.get(['/api/newtv', '/api/newtv.apk', '/New-TV.apk'], (req, res) => {
+    const p = path.join(__dirname, 'New-TV.apk');
+    if (fs.existsSync(p)) {
+        res.setHeader('Content-Type', 'application/vnd.android.package-archive');
+        res.setHeader('Content-Disposition', 'attachment; filename="New-TV.apk"');
+        return res.sendFile(p);
+    }
+    res.status(404).send('New-TV.apk not found');
+});
+
 // Version endpoint (Fallback for Seyir TV updater)
 // Direct APK download endpoint (Fast fallback for TV app)
 app.get('/api/apk', (req, res) => {
@@ -354,6 +427,26 @@ app.get('/api/apk', (req, res) => {
         return res.sendFile(p);
     }
     res.redirect('https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.40.apk');
+});
+
+// New TV Version endpoint
+app.get(['/api/newtv/version', '/api/newtv-version'], (req, res) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Content-Type', 'application/json');
+    try {
+        let p = path.join(__dirname, 'newtv_version.json');
+        if (!fs.existsSync(p)) p = path.join(__dirname, '..', 'newtv_version.json');
+        if (fs.existsSync(p)) {
+            const raw = fs.readFileSync(p, 'utf-8');
+            return res.send(raw);
+        }
+    } catch (e) {}
+    res.json({
+        versionCode: 8,
+        versionName: '1.7',
+        changelog: 'New TV v1.7 Yenilikleri:\n1. Doğrudan sunucudan ve GitHub\'dan otomatik uygulama içi güncelleme desteği.\n2. Vidmixi 1080p doğrudan HLS akış iyileştirmeleri ve kesintisiz oynatma.\n3. 11.800+ Film ve Dizi kataloğu, anlık 2026 yılı ve kategori sıralaması.\n4. Film ve dizi detay sayfalarına tam konu özetleri ve HD posterler.',
+        apkUrl: 'http://150.230.29.27:3000/New-TV.apk'
+    });
 });
 
 app.get('/api/version', (req, res) => {
@@ -586,7 +679,7 @@ app.get('/channel/:id.m3u8', async (req, res) => {
                 method: 'get',
                 url: targetUrl,
                 headers: headers,
-                timeout: 3000,
+                timeout: 1800,
                 httpAgent: httpAgent,
                 httpsAgent: httpsAgent,
                 validateStatus: (status) => status >= 200 && status < 300
@@ -611,7 +704,7 @@ app.get('/channel/:id.m3u8', async (req, res) => {
                 }).join('\n');
 
                 markSourceSuccess(channelId, targetUrl);
-                manifestCache.set(channelId, { body: rewritten, expires: Date.now() + 2500 });
+                manifestCache.set(channelId, { body: rewritten, expires: Date.now() + 3500 });
                 return res.send(rewritten);
             }
         } catch (err) {
@@ -1349,30 +1442,9 @@ app.get('/', (req, res) => {
                 width: 100% !important;
             }
 
-            /* Video overlay on mobile - Unified with PC layout */
+            /* Hide top overlay completely on mobile to eliminate clutter and prevent blocking controls */
             #video-top-overlay {
-                padding: 6px 8px !important;
-                display: flex !important;
-            }
-            #video-top-overlay .channel-title-pill {
-                max-width: 120px !important;
-                font-size: 11px !important;
-                padding: 3px 7px !important;
-            }
-            #video-top-overlay .top-action-btn {
-                padding: 4px 6px !important;
-                font-size: 11px !important;
-            }
-            #video-top-overlay .top-action-btn span {
-                font-size: 10px !important;
-            }
-            #video-top-overlay .badge-live-pulse {
-                font-size: 9.5px !important;
-                padding: 3px 6px !important;
-            }
-            #video-top-overlay .badge-quality-fhd {
-                font-size: 9.5px !important;
-                padding: 3px 6px !important;
+                display: none !important;
             }
             #video-bottom-overlay {
                 padding: 6px 10px !important;
@@ -1402,8 +1474,13 @@ app.get('/', (req, res) => {
                 padding: 6px 10px;
                 font-size: 11.5px;
             }
-            .toolbar-group:last-child button:not(#btn-fit-row) {
-                display: none; /* Kanallar & Tam Ekran handled elsewhere */
+            .toolbar-group {
+                display: flex !important;
+                gap: 6px !important;
+                align-items: center !important;
+            }
+            .toolbar-group:last-child button {
+                display: inline-flex !important;
             }
 
             /* Mobile Sidebar becomes the in-page browsable channel section below video */
@@ -1498,6 +1575,32 @@ app.get('/', (req, res) => {
         }
         :fullscreen video, :-webkit-full-screen video { width: 100% !important; height: 100% !important; }
 
+
+        #unmute-banner {
+            position: absolute;
+            bottom: 64px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            color: #fff;
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            z-index: 38;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+            display: none;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.3);
+            animation: pulse-glow 2s infinite;
+        }
+        @keyframes pulse-glow {
+            0%, 100% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.04); }
+        }
 
         /* Custom Seyir TV Unified Bottom Overlay */
         #video-bottom-overlay {
@@ -1715,6 +1818,9 @@ app.get('/', (req, res) => {
                         <button id="btn-fit-row" class="tool-btn" onclick="toggleFit()">
                             <span>⛶ Doldur</span>
                         </button>
+                        <button id="btn-fs-row" class="tool-btn" onclick="toggleFullscreen()" style="background: rgba(2, 132, 199, 0.25); border-color: #0284c7; color: #38bdf8;">
+                            <span>⛶ Tam Ekran</span>
+                        </button>
                     </div>
                 </div>
 
@@ -1761,6 +1867,63 @@ app.get('/', (req, res) => {
                 statusEl.textContent = 'Bağlantı Hatası';
                 statusEl.style.color = '#ef4444';
             });
+
+        // Autoplay policy handler: plays unmuted if permitted, otherwise starts muted and offers 1-tap unmute
+        function attemptAutoplay() {
+            const p = video.play();
+            if (p !== undefined) {
+                p.then(() => {
+                    updatePlayPauseIcon();
+                    updateVolumeIcon();
+                    hideUnmuteBanner();
+                }).catch(() => {
+                    video.muted = true;
+                    updateVolumeIcon();
+                    video.play().then(() => {
+                        updatePlayPauseIcon();
+                        showUnmuteBanner();
+                    }).catch(() => {});
+                });
+            }
+        }
+
+        function showUnmuteBanner() {
+            let banner = document.getElementById('unmute-banner');
+            if (!banner) {
+                banner = document.createElement('div');
+                banner.id = 'unmute-banner';
+                banner.innerHTML = '<span>🔊 Sesi Açmak İçin Dokunun</span>';
+                banner.onclick = (e) => {
+                    e.stopPropagation();
+                    unlockAudio();
+                };
+                videoContainer.appendChild(banner);
+            }
+            banner.style.display = 'flex';
+        }
+
+        function hideUnmuteBanner() {
+            const banner = document.getElementById('unmute-banner');
+            if (banner) banner.style.display = 'none';
+        }
+
+        function unlockAudio() {
+            if (video.muted) {
+                video.muted = false;
+                updateVolumeIcon();
+                hideUnmuteBanner();
+            }
+        }
+        document.addEventListener('click', unlockAudio, { once: true });
+        document.addEventListener('keydown', unlockAudio, { once: true });
+        document.addEventListener('touchstart', unlockAudio, { once: true });
+
+        // Unregister stale service workers
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(regs => {
+                for (const r of regs) r.unregister();
+            });
+        }
 
         function getCategoryInitial(name, cat) {
             const n = (name || '').toLowerCase();
@@ -1861,16 +2024,26 @@ app.get('/', (req, res) => {
                 hls = new Hls({
                     enableWorker: true,
                     lowLatencyMode: false,
-                    liveSyncDurationCount: 3,
-                    liveMaxLatencyDurationCount: 6,
+                    liveSyncDurationCount: 4,
+                    liveMaxLatencyDurationCount: 8,
                     maxBufferLength: 30,
                     maxMaxBufferLength: 60,
-                    backBufferLength: 60
+                    maxBufferSize: 60 * 1000 * 1000,
+                    maxBufferHole: 0.5,
+                    highBufferWatchdogPeriod: 2,
+                    nudgeOffset: 0.1,
+                    nudgeMaxRetry: 5,
+                    manifestLoadingTimeOut: 5000,
+                    manifestLoadingMaxRetry: 3,
+                    manifestLoadingRetryDelay: 500,
+                    fragLoadingTimeOut: 8000,
+                    fragLoadingMaxRetry: 3,
+                    fragLoadingRetryDelay: 500
                 });
                 hls.loadSource(streamUrl);
                 hls.attachMedia(video);
                 hls.on(Hls.Events.MANIFEST_PARSED, (e, data) => {
-                    video.play().catch(() => {});
+                    attemptAutoplay();
                     statusEl.textContent = 'Yayında (FHD)';
                     statusEl.style.color = '#10b981';
                     statusEl.style.borderColor = 'rgba(16, 185, 129, 0.4)';
@@ -1883,6 +2056,15 @@ app.get('/', (req, res) => {
 
                 let errCount = 0;
                 hls.on(Hls.Events.ERROR, (e, data) => {
+                    // Buffer stall auto-recovery: nudge video currentTime past stalled frame
+                    if (data.details === Hls.ErrorDetails.BUFFER_STALLED_ERROR) {
+                        if (video.paused) {
+                            video.play().catch(() => {});
+                        } else {
+                            video.currentTime += 0.1;
+                        }
+                        return;
+                    }
                     if (data.fatal) {
                         errCount++;
                         switch (data.type) {
@@ -1915,7 +2097,7 @@ app.get('/', (req, res) => {
                     statusEl.textContent = 'Bağlantı yenileniyor…';
                     setTimeout(() => playChannel(currentChannel), 1500);
                 }, { once: true });
-                video.play().catch(() => {});
+                attemptAutoplay();
                 statusEl.textContent = 'Yayında';
                 statusEl.style.color = '#10b981';
             }
@@ -2000,14 +2182,23 @@ app.get('/', (req, res) => {
         }
 
         function toggleFullscreen() {
-            if (video.webkitEnterFullscreen && !navigator.userAgent.includes('Macintosh')) {
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                          (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+            if (isIOS && video && video.webkitEnterFullscreen) {
                 video.webkitEnterFullscreen();
                 return;
             }
             const el = document.getElementById('video-container') || document.documentElement;
             if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-                if (el.requestFullscreen) el.requestFullscreen().catch(() => {});
-                else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+                if (el.requestFullscreen) {
+                    el.requestFullscreen().catch(() => {
+                        if (video && video.webkitEnterFullscreen) video.webkitEnterFullscreen();
+                    });
+                } else if (el.webkitRequestFullscreen) {
+                    el.webkitRequestFullscreen();
+                } else if (video && video.webkitEnterFullscreen) {
+                    video.webkitEnterFullscreen();
+                }
             } else {
                 if (document.exitFullscreen) document.exitFullscreen().catch(() => {});
                 else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
@@ -2119,7 +2310,7 @@ app.get('/', (req, res) => {
         document.addEventListener('webkitfullscreenchange', updateFsIcon);
 
         videoContainer.addEventListener('click', (e) => {
-            if (e.target.closest('button')) return;
+            if (e.target.closest('button') || e.target.closest('#unmute-banner')) return;
             const isFaded = videoBottomOverlay && videoBottomOverlay.classList.contains('fade-out');
             if (isFaded) {
                 wakeControls();
@@ -2128,8 +2319,26 @@ app.get('/', (req, res) => {
             }
         });
         videoContainer.addEventListener('mousemove', wakeControls);
-        videoContainer.addEventListener('touchstart', wakeControls, { passive: true });
         video.addEventListener('dblclick', toggleFullscreen);
+
+        let lastTouchTime = 0;
+        videoContainer.addEventListener('touchend', (e) => {
+            if (e.target.closest('button') || e.target.closest('#unmute-banner')) return;
+            const now = Date.now();
+            if (now - lastTouchTime < 320) {
+                toggleFullscreen();
+                e.preventDefault();
+            } else {
+                const isFaded = videoBottomOverlay && videoBottomOverlay.classList.contains('fade-out');
+                if (isFaded) {
+                    wakeControls();
+                } else {
+                    if (videoTopOverlay) videoTopOverlay.classList.add('fade-out');
+                    if (videoBottomOverlay) videoBottomOverlay.classList.add('fade-out');
+                }
+            }
+            lastTouchTime = now;
+        });
 
         // Auto Landscape Fullscreen
         function checkOrientation() {
