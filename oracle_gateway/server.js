@@ -391,6 +391,45 @@ app.post('/api/user/favorites/toggle', async (req, res) => {
 });
 
 // API Channels endpoint
+// Reload in-memory curated channels from disk
+app.get('/api/channels/reload', (req, res) => {
+    try {
+        const p = path.join(__dirname, 'verified_channels.json');
+        if (fs.existsSync(p)) {
+            const raw = fs.readFileSync(p, 'utf-8');
+            curatedChannels = JSON.parse(raw);
+            console.log(`[GATEWAY] In-memory channels reloaded. Total: ${curatedChannels.length}`);
+            return res.json({ success: true, count: curatedChannels.length, timestamp: Date.now() });
+        }
+    } catch (e) {
+        return res.status(500).json({ error: e.message });
+    }
+    res.json({ success: false, error: 'File not found' });
+});
+
+let lastManualRefreshTime = 0;
+// Trigger on-demand channel scan & health refresh
+app.get('/api/channels/refresh', async (req, res) => {
+    const now = Date.now();
+    if (now - lastManualRefreshTime < 30000) {
+        const waitSec = Math.ceil((30000 - (now - lastManualRefreshTime)) / 1000);
+        return res.json({
+            success: true,
+            throttled: true,
+            message: `Lütfen ${waitSec} saniye sonra tekrar deneyin.`,
+            count: curatedChannels.length
+        });
+    }
+    lastManualRefreshTime = now;
+    try {
+        const scanner = require('./channel_scanner');
+        scanner.runScan().catch(err => console.error('[API] Scanner error:', err.message));
+        res.json({ success: true, message: 'Tarama başlatıldı, kaynaklar güncelleniyor.', timestamp: now });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 app.get('/api/channels' , (req, res) => {
     res.json(curatedChannels);
 });
@@ -499,6 +538,15 @@ function getQualityScore(url) {
     return 500;
 }
 
+
+function normalizeXtreamToHls(rawUrl) {
+    if (!rawUrl) return rawUrl;
+    const m = rawUrl.match(/^(https?:\/\/[^\/]+)\/([^\/]+)\/([^\/]+)\/(\d+)$/);
+    if (m) {
+        return `${m[1]}/live/${m[2]}/${m[3]}/${m[4]}.m3u8`;
+    }
+    return rawUrl;
+}
 
 function isRawTsStream(url) {
     if (!url) return false;
@@ -644,13 +692,11 @@ app.get('/channel/:id.m3u8', async (req, res) => {
     // 2. High quality available sources (not cooled down)
     // 3. Cooled down sources as last resort
     const activeSource = activeChannelSources.get(channelId);
-    const sortedUrls = [...validUrls].sort((a, b) => getQualityScore(b) - getQualityScore(a));
-    const hlsCandidates = sortedUrls.filter(u => !isRawTsStream(u));
-    const pool = hlsCandidates.length > 0 ? hlsCandidates : sortedUrls;
-
+    const normalizedUrls = validUrls.map(u => normalizeXtreamToHls(u));
+    // Prioritize order defined in curated channel list (which has verified 200 OK links first)
     const available = [];
     const cooledDown = [];
-    for (const u of pool) {
+    for (const u of normalizedUrls) {
         if (isSourceCooledDown(u)) cooledDown.push(u);
         else available.push(u);
     }
@@ -965,6 +1011,29 @@ app.get('/', (req, res) => {
             box-shadow: 0 4px 12px rgba(2, 132, 199, 0.4);
         }
         .brand-icon svg { width: 18px; height: 18px; fill: #fff; }
+        .refresh-pill-btn {
+            background: rgba(2, 132, 199, 0.2);
+            color: #38bdf8;
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            padding: 4px 9px;
+            border-radius: 6px;
+            font-size: 11.5px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .refresh-pill-btn:hover {
+            background: #0284c7;
+            color: #fff;
+        }
+        .refresh-pill-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
         .channel-counter-badge {
             font-size: 11px;
             font-weight: 700;
@@ -1706,7 +1775,10 @@ app.get('/', (req, res) => {
                     </div>
                     <span>Seyir TV</span>
                 </div>
-                <span id="channel-counter" class="channel-counter-badge">80 Kanal</span>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <button id="btn-refresh-sources" class="refresh-pill-btn" onclick="manualRefreshChannels()" title="Canlı Yayın Kaynaklarını Yenile">🔄 Yenile</button>
+                    <span id="channel-counter" class="channel-counter-badge">80 Kanal</span>
+                </div>
             </div>
 
             <!-- Search -->
@@ -1821,6 +1893,9 @@ app.get('/', (req, res) => {
                         <button id="btn-fs-row" class="tool-btn" onclick="toggleFullscreen()" style="background: rgba(2, 132, 199, 0.25); border-color: #0284c7; color: #38bdf8;">
                             <span>⛶ Tam Ekran</span>
                         </button>
+                        <button id="btn-refresh-row" class="tool-btn" onclick="manualRefreshChannels()" title="Yayın Kaynaklarını Canlı Yenile">
+                            <span>🔄 Yenile</span>
+                        </button>
                     </div>
                 </div>
 
@@ -1869,6 +1944,42 @@ app.get('/', (req, res) => {
             });
 
         // Autoplay policy handler: plays unmuted if permitted, otherwise starts muted and offers 1-tap unmute
+        function manualRefreshChannels() {
+            const btn1 = document.getElementById('btn-refresh-sources');
+            const btn2 = document.getElementById('btn-refresh-row');
+            const setButtons = (text, disabled) => {
+                if (btn1) { btn1.textContent = text; btn1.disabled = disabled; }
+                if (btn2) { btn2.querySelector('span').textContent = text; btn2.disabled = disabled; }
+            };
+            setButtons('⏳ Yenileniyor…', true);
+            statusEl.textContent = 'Kaynaklar taranıyor…';
+            statusEl.style.color = '#38bdf8';
+
+            fetch('/api/channels/refresh')
+                .then(r => r.json())
+                .then(data => {
+                    setTimeout(() => {
+                        fetch('/api/channels')
+                            .then(r => r.json())
+                            .then(chs => {
+                                if (chs && chs.length > 0) {
+                                    allChannels = chs;
+                                    renderChannels(allChannels);
+                                    if (currentChannel) {
+                                        const fresh = allChannels.find(c => c.id === currentChannel.id);
+                                        if (fresh) playChannel(fresh);
+                                    }
+                                }
+                                setButtons('✅ Güncellendi', true);
+                                setTimeout(() => setButtons('🔄 Yenile', false), 2500);
+                            });
+                    }, 2500);
+                })
+                .catch(err => {
+                    setButtons('🔄 Yenile', false);
+                });
+        }
+
         function attemptAutoplay() {
             const p = video.play();
             if (p !== undefined) {
