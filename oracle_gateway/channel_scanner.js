@@ -20,6 +20,50 @@ const httpsAgent = new https.Agent({ keepAlive: true, timeout: 5000, rejectUnaut
 const CHANNELS_FILE = path.join(__dirname, 'verified_channels.json');
 const GATEWAY_RELOAD_URL = 'http://localhost:3000/api/channels/reload';
 
+
+const HIGH_PRIORITY_SEEDS = {
+    beinsports1: [
+        'https://ladyboy.ardastream2.cfd//b1/tracks-v1a1/mono.m3u8',
+        'https://avva.magnitude.workers.dev/?url=https://avvaupdate.com/bein1/index.m3u8?o=1%26e=1781703872%26tk=51d8cf311c0961e87873898f38494c8d',
+        'https://raw.githubusercontent.com/kadirsener1/247/refs/heads/main/cdnlive/trbeinsports1.m3u8'
+    ],
+    beinsports2: [
+        'https://ladyboy.ardastream2.cfd//b2/tracks-v1a1/mono.m3u8',
+        'https://avva.magnitude.workers.dev/?url=https://avvaupdate.com/bein2/index.m3u8?o=1%26e=1781703872%26tk=51d8cf311c0961e87873898f38494c8d',
+        'https://raw.githubusercontent.com/kadirsener1/247/refs/heads/main/cdnlive/trbeinsports2.m3u8'
+    ],
+    beinsports3: [
+        'https://ladyboy.ardastream2.cfd//b3/tracks-v1a1/mono.m3u8',
+        'https://avva.magnitude.workers.dev/?url=https://avvaupdate.com/bein3/index.m3u8?o=1%26e=1781703872%26tk=51d8cf311c0961e87873898f38494c8d',
+        'https://raw.githubusercontent.com/kadirsener1/247/refs/heads/main/cdnlive/trbeinsports3.m3u8'
+    ],
+    beinsports4: [
+        'https://ladyboy.ardastream2.cfd//b4/tracks-v1a1/mono.m3u8',
+        'https://avva.magnitude.workers.dev/?url=https://avvaupdate.com/bein4/index.m3u8?o=1%26e=1781703872%26tk=51d8cf311c0961e87873898f38494c8d',
+        'https://raw.githubusercontent.com/kadirsener1/247/refs/heads/main/cdnlive/trbeinsports4.m3u8'
+    ],
+    beinsports5: [
+        'https://ladyboy.ardastream2.cfd//b5/tracks-v1a1/mono.m3u8',
+        'https://avva.magnitude.workers.dev/?url=https://avvaupdate.com/bein5/index.m3u8?o=1%26e=1781703872%26tk=51d8cf311c0961e87873898f38494c8d',
+        'https://raw.githubusercontent.com/kadirsener1/247/refs/heads/main/cdnlive/trbeinsports5.m3u8'
+    ],
+    ssport1: [
+        'https://avva.magnitude.workers.dev/?url=https://avvaupdate.com/ssport1/index.m3u8?o=1%26e=1781703872%26tk=51d8cf311c0961e87873898f38494c8d',
+        'https://raw.githubusercontent.com/kadirsener1/247/refs/heads/main/cdnlive/trssport.m3u8'
+    ],
+    ssport2: [
+        'https://ladyboy.ardastream2.cfd//ss2/tracks-v1a1/mono.m3u8',
+        'https://avva.magnitude.workers.dev/?url=https://avvaupdate.com/ssport2/index.m3u8?o=1%26e=1781703872%26tk=51d8cf311c0961e87873898f38494c8d',
+        'https://raw.githubusercontent.com/kadirsener1/247/refs/heads/main/cdnlive/trssport2.m3u8'
+    ],
+    aspor: [
+        'https://ladyboy.ardastream2.cfd//aspor/tracks-v1a1/mono.m3u8'
+    ],
+    trtspor: [
+        'https://trt.daioncdn.net/trtspor/master.m3u8?app=web&platform=trtspor'
+    ]
+};
+
 const COMMUNITY_SOURCES = [
     { name: 'akcagoz', url: 'https://raw.githubusercontent.com/batuhansabri55/AkcagozTV_Canli/main/tr.m3u' },
     { name: 'mahsun', url: 'https://raw.githubusercontent.com/kadirsener1/mahsun/main/playlist.m3u' },
@@ -73,16 +117,22 @@ function normalizeStreamLink(rawUrl) {
     return u;
 }
 
-async function testStream(url, timeoutMs = 2500) {
+async function testStream(url, timeoutMs = 3000) {
     if (!url) return false;
     try {
         const u = new URL(url);
         const headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
         };
-        if (u.hostname.includes('ardastream') || u.hostname.includes('cfd')) {
-            headers['Referer'] = 'https://tv.canlitv.mobi/';
+        if (u.hostname.includes('ardastream') || u.hostname.includes('cfd') || u.hostname.includes('help')) {
+            headers['Referer'] = 'https://mahsunsports57.xyz/';
+            headers['Origin'] = 'https://mahsunsports57.xyz';
+        } else if (u.hostname.includes('atomsport')) {
+            headers['Referer'] = 'https://www.atomsportv512.top';
+        } else if (u.hostname.includes('cdnlivetv')) {
+            headers['Referer'] = 'https://cdnlivetv.tv/';
         }
+
         const res = await axios({
             method: 'get',
             url: url,
@@ -92,10 +142,46 @@ async function testStream(url, timeoutMs = 2500) {
             httpsAgent,
             validateStatus: (status) => status >= 200 && status < 300
         });
+
         const ct = (res.headers['content-type'] || '').toLowerCase();
         const data = res.data;
-        const text = typeof data === 'string' ? data : (Buffer.isBuffer(data) ? data.toString('utf-8', 0, 500) : '');
-        return text.includes('#EXTM3U') || ct.includes('mpegurl') || ct.includes('video') || text.includes('.ts');
+        const text = typeof data === 'string' ? data : (Buffer.isBuffer(data) ? data.toString('utf-8', 0, 4000) : '');
+
+        if (!text.includes('#EXTM3U')) {
+            return ct.includes('video') || ct.includes('mpegurl') || text.includes('.ts');
+        }
+
+        // Deep segment probe to weed out 401/403/404 Xtream traps
+        const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l && !l.startsWith('#'));
+        if (lines.length === 0) return false;
+
+        let segUrl = lines[0];
+        try {
+            segUrl = new URL(segUrl, url).href;
+        } catch (e) {
+            // Keep segUrl as is
+        }
+
+        const segHeaders = { ...headers };
+        const segU = new URL(segUrl);
+        if (segU.hostname.includes('ardastream') || segU.hostname.includes('cfd') || segU.hostname.includes('help')) {
+            segHeaders['Referer'] = 'https://mahsunsports57.xyz/';
+        }
+
+        const segRes = await axios({
+            method: 'get',
+            url: segUrl,
+            headers: {
+                ...segHeaders,
+                'Range': 'bytes=0-1024'
+            },
+            timeout: 2500,
+            httpAgent,
+            httpsAgent,
+            validateStatus: (status) => (status >= 200 && status < 300) || status === 206
+        });
+
+        return segRes.status === 200 || segRes.status === 206;
     } catch (e) {
         return false;
     }
@@ -112,6 +198,9 @@ async function runScan() {
     }
 
     const discovered = {};
+    for (const [cid, sUrls] of Object.entries(HIGH_PRIORITY_SEEDS)) {
+        discovered[cid] = new Set(sUrls);
+    }
     for (const src of COMMUNITY_SOURCES) {
         try {
             const res = await axios.get(src.url, { timeout: 7000, httpAgent, httpsAgent });

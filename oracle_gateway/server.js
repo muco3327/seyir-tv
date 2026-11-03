@@ -562,7 +562,7 @@ function isSegmentUrl(url) {
     if (!url) return false;
     const u = url.toLowerCase();
     return Boolean(
-        u.match(/\.(ts|jpg|jpeg|png|aac|m4s)(\?|$)/i) ||
+        u.match(/\.(ts|jpg|jpeg|png|webp|avif|bin|aac|m4s)(\?|$)/i) ||
         u.includes('output=ts') ||
         u.includes('extension=ts') ||
         u.includes('format=ts') ||
@@ -570,6 +570,8 @@ function isSegmentUrl(url) {
         u.includes('/segment') ||
         u.includes('.cfd/c/') ||
         u.includes('/c/') ||
+        u.includes('.help/') ||
+        u.includes('tracks-v1a1/') ||
         u.includes('tomtv') ||
         u.includes('deat1') ||
         u.includes('camon1') ||
@@ -586,7 +588,7 @@ function getHeadersForUrl(targetUrl, u) {
     if (
         targetUrl.includes('evrenesoglu') ||
         targetUrl.includes('andro') ||
-        targetUrl.includes('google.d6e3eae5e065d5.help') ||
+        targetUrl.includes('.help') ||
         targetUrl.includes('fastly.net') ||
         targetUrl.includes('mangeinde') ||
         targetUrl.includes('vahided') ||
@@ -714,7 +716,8 @@ app.get('/channel/:id.m3u8', async (req, res) => {
 
     for (let i = 0; i < urlsToTry.length; i++) {
         const targetUrl = urlsToTry[i];
-        if (isRawTsStream(targetUrl) && hlsCandidates.length === 0) {
+        const hasHls = urlsToTry.some(u => !isRawTsStream(u));
+        if (isRawTsStream(targetUrl) && !hasHls) {
             return res.redirect('/proxy?url=' + encodeURIComponent(targetUrl));
         }
         try {
