@@ -4,9 +4,9 @@
     "name": "beIN Sports 1",
     "category": "beIN Sports",
     "urls": [
-      "http://190502.tomtv.eu:80/live/LiudmilaSheremet/233v9m9kjc/31409.m3u8",
       "http://190502.tomtv.eu:80/live/LiudmilaSheremet/233v9m9kjc/89.m3u8",
-      "https://zeus645423.cfd/b1/index.txt"
+      "http://190502.tomtv.eu:80/live/LiudmilaSheremet/233v9m9kjc/77238.m3u8",
+      "http://190502.tomtv.eu:80/live/MustafaozdemR7808/z189b8mv2r/89.m3u8"
     ]
   },
   {
@@ -24,8 +24,8 @@
     "name": "beIN Sports 3",
     "category": "beIN Sports",
     "urls": [
-      "http://190502.tomtv.eu:80/live/LiudmilaSheremet/233v9m9kjc/31407.m3u8",
-      "https://zeus645423.cfd/b3/index.txt"
+      "http://190502.tomtv.eu:80/live/LiudmilaSheremet/233v9m9kjc/31409.m3u8",
+      "http://190502.tomtv.eu:80/live/LiudmilaSheremet/233v9m9kjc/31407.m3u8"
     ]
   },
   {
