@@ -384,8 +384,11 @@ public final class PlayerActivity extends Activity {
     private final Runnable bufferingTimeoutTask = new Runnable() {
         @Override public void run() {
             if (player != null && player.getPlaybackState() == Player.STATE_BUFFERING && !closing && !isFinishing()) {
+                if (player.getBufferedPosition() > player.getCurrentPosition() + 1000) {
+                    return;
+                }
                 if (!fallbackList.isEmpty()) {
-                    showHud("Donma algılandı, yedek kaynağa geçiliyor…");
+                    showHud("Bağlantı yenileniyor…");
                     tryNextSource("Akış Zaman Aşımı");
                 }
             }
@@ -394,7 +397,7 @@ public final class PlayerActivity extends Activity {
 
     private void startBufferingTimeout() {
         progressHandler.removeCallbacks(bufferingTimeoutTask);
-        long delay = hasPlayedOnce ? 5000 : 9000;
+        long delay = (title != null && title.source == Source.SPORTS) ? 20000 : (hasPlayedOnce ? 12000 : 20000);
         progressHandler.postDelayed(bufferingTimeoutTask, delay);
     }
 
