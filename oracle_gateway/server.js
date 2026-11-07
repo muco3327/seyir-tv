@@ -1509,7 +1509,8 @@ app.get('/channel/:id.m3u8', async (req, res) => {
 
                     try {
 
-                        const resolvedUrl = new URL(trimmed, targetUrl).href;
+                        const finalUrl = (response.request && response.request.res && response.request.res.responseUrl) ? response.request.res.responseUrl : targetUrl;
+                        const resolvedUrl = new URL(trimmed, finalUrl).href;
 
                         return '/proxy?url=' + encodeURIComponent(resolvedUrl);
 
@@ -1774,7 +1775,8 @@ app.get('/proxy', async (req, res) => {
 
                 try {
 
-                    const resolvedUrl = new URL(trimmed, targetUrl).href;
+                    const finalUrl = (response.request && response.request.res && response.request.res.responseUrl) ? response.request.res.responseUrl : targetUrl;
+                        const resolvedUrl = new URL(trimmed, finalUrl).href;
 
                     return '/proxy?url=' + encodeURIComponent(resolvedUrl);
 
