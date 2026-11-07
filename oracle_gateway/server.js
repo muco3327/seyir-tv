@@ -14,8 +14,6 @@ const https = require('https');
 
 const { URL } = require('url');
 
-
-
 const app = express();
 
 app.use(cors());
@@ -24,8 +22,6 @@ app.use(express.json());
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-
-
 // VOD Database & Scraper & Stream Resolver
 
 const vodDb = require('./vod_db');
@@ -33,8 +29,6 @@ const vodDb = require('./vod_db');
 const vodScraper = require('./vod_scraper');
 
 const streamResolver = require('./stream_resolver');
-
-
 
 // Initialize VOD DB and start background sync on startup
 
@@ -61,10 +55,6 @@ vodDb.initDb().then(() => {
     console.error('[SERVER] VOD DB init error:', err);
 
 });
-
-
-
-
 
 // Favicon & Web App Icons
 
@@ -106,19 +96,13 @@ app.get('/manifest.json', (req, res) => {
 
 });
 
-
-
 const PORT = 3000;
-
-
 
 // High-performance Keep-Alive Connection Pool
 
 const httpAgent = new http.Agent({ keepAlive: true, maxSockets: 100, timeout: 60000 });
 
 const httpsAgent = new https.Agent({ keepAlive: true, maxSockets: 100, timeout: 60000 });
-
-
 
 // State & Channels
 
@@ -150,15 +134,11 @@ function reloadChannels() {
 
 reloadChannels();
 
-
-
 // ==========================================
 
 // VOD API Endpoints (Film & Dizi & Senkron)
 
 // ==========================================
-
-
 
 // 1. Get Movies (Paginated, filtered by genre or search query)
 
@@ -173,8 +153,6 @@ app.get('/api/vod/movies', async (req, res) => {
         const genre = req.query.genre || '';
 
         const search = req.query.search || '';
-
-
 
         let items = await vodDb.getItems({ type: 'movie', genre, search, page, limit });
 
@@ -206,8 +184,6 @@ app.get('/api/vod/movies', async (req, res) => {
 
 });
 
-
-
 // 2. Get Series (Paginated, filtered by genre or search query)
 
 app.get('/api/vod/series', async (req, res) => {
@@ -221,8 +197,6 @@ app.get('/api/vod/series', async (req, res) => {
         const genre = req.query.genre || '';
 
         const search = req.query.search || '';
-
-
 
         const items = await vodDb.getItems({ type: 'series', genre, search, page, limit });
 
@@ -246,8 +220,6 @@ app.get('/api/vod/series', async (req, res) => {
 
 });
 
-
-
 // 3. Movie Details & Stream
 
 app.get('/api/vod/movie/:id', async (req, res) => {
@@ -262,13 +234,9 @@ app.get('/api/vod/movie/:id', async (req, res) => {
 
         }
 
-
-
         // Check cached stream first
 
         let stream = await vodDb.getCachedStream(`movie_${movie.id}`);
-
-
 
         // If overview is short or backdrop is missing or stream is missing, enrich details
 
@@ -294,8 +262,6 @@ app.get('/api/vod/movie/:id', async (req, res) => {
 
                     await vodDb.upsertItem(movie);
 
-
-
                     if (details.stream && details.stream.streamUrl) {
 
                         stream = details.stream;
@@ -313,8 +279,6 @@ app.get('/api/vod/movie/:id', async (req, res) => {
             }
 
         }
-
-
 
         // Fallback: If still no stream, try resolvePageStream
 
@@ -334,8 +298,6 @@ app.get('/api/vod/movie/:id', async (req, res) => {
 
         }
 
-
-
         res.json({
 
             ...movie,
@@ -354,8 +316,6 @@ app.get('/api/vod/movie/:id', async (req, res) => {
 
 });
 
-
-
 // 4. Series Details & Seasons / Episodes Hierarchy
 
 app.get('/api/vod/series/:id', async (req, res) => {
@@ -369,8 +329,6 @@ app.get('/api/vod/series/:id', async (req, res) => {
             return res.status(404).json({ error: 'Series not found' });
 
         }
-
-
 
         let episodes = await vodDb.getEpisodesBySeries(series.id);
 
@@ -432,8 +390,6 @@ app.get('/api/vod/series/:id', async (req, res) => {
 
         }
 
-
-
         // Group into seasons
 
         const seasonsMap = {};
@@ -460,11 +416,7 @@ app.get('/api/vod/series/:id', async (req, res) => {
 
         }
 
-
-
         const seasons = Object.values(seasonsMap).sort((a, b) => a.seasonNumber - b.seasonNumber);
-
-
 
         res.json({
 
@@ -484,8 +436,6 @@ app.get('/api/vod/series/:id', async (req, res) => {
 
 });
 
-
-
 // 5. Episode Stream Resolver
 
 app.get('/api/vod/episode/:id', async (req, res) => {
@@ -500,8 +450,6 @@ app.get('/api/vod/episode/:id', async (req, res) => {
 
         }
 
-
-
         let stream = null;
 
         if (ep.source_url) {
@@ -509,8 +457,6 @@ app.get('/api/vod/episode/:id', async (req, res) => {
             stream = await vodScraper.resolvePageStream(ep.source_url);
 
         }
-
-
 
         res.json({
 
@@ -530,8 +476,6 @@ app.get('/api/vod/episode/:id', async (req, res) => {
 
 });
 
-
-
 // 6. Generic On-Demand Stream Resolver
 
 app.get('/api/vod/resolve', async (req, res) => {
@@ -545,8 +489,6 @@ app.get('/api/vod/resolve', async (req, res) => {
             return res.status(400).json({ error: 'url parameter required' });
 
         }
-
-
 
         if (targetUrl.includes('vidmixi.com/list/') || targetUrl.includes('.m3u8')) {
 
@@ -586,8 +528,6 @@ app.get('/api/vod/resolve', async (req, res) => {
 
         }
 
-
-
         if (!stream) {
 
             return res.status(404).json({ error: 'Stream could not be resolved' });
@@ -606,8 +546,6 @@ app.get('/api/vod/resolve', async (req, res) => {
 
 });
 
-
-
 // 7. Manual Catalog Sync Trigger
 
 app.post('/api/vod/sync', (req, res) => {
@@ -618,15 +556,11 @@ app.post('/api/vod/sync', (req, res) => {
 
 });
 
-
-
 app.get('/api/vod/sync/status', (req, res) => {
 
     res.json(vodScraper.getSyncProgress());
 
 });
-
-
 
 app.get('/api/vod/stats', async (req, res) => {
 
@@ -643,8 +577,6 @@ app.get('/api/vod/stats', async (req, res) => {
     }
 
 });
-
-
 
 // 7b. VOD Version & Delta Sync
 
@@ -663,8 +595,6 @@ app.get('/api/vod/version', async (req, res) => {
     }
 
 });
-
-
 
 app.get('/api/vod/delta', async (req, res) => {
 
@@ -696,8 +626,6 @@ app.get('/api/vod/delta', async (req, res) => {
 
 });
 
-
-
 // 8. User Watch History Sync
 
 app.get('/api/user/history', async (req, res) => {
@@ -719,8 +647,6 @@ app.get('/api/user/history', async (req, res) => {
     }
 
 });
-
-
 
 app.post('/api/user/history', async (req, res) => {
 
@@ -766,8 +692,6 @@ app.post('/api/user/history', async (req, res) => {
 
 });
 
-
-
 // 9. User Favorites Sync
 
 app.get('/api/user/favorites', async (req, res) => {
@@ -789,8 +713,6 @@ app.get('/api/user/favorites', async (req, res) => {
     }
 
 });
-
-
 
 app.post('/api/user/favorites/toggle', async (req, res) => {
 
@@ -832,8 +754,6 @@ app.post('/api/user/favorites/toggle', async (req, res) => {
 
 });
 
-
-
 // API Channels endpoint
 
 // Reload in-memory curated channels from disk
@@ -866,101 +786,107 @@ app.get('/api/channels/reload', (req, res) => {
 
 });
 
-
+const jitStreamCache = new Map(); // channelId -> { url: string, expires: number }
 
 const SPORTS_RESOLVE_MAP = {
-
     beinsports1: 'bein-sports-1',
-
     beinsports2: 'bein-sports-2',
-
     beinsports3: 'bein-sports-3',
-
     beinsports4: 'bein-sports-4',
-
     beinsports5: 'bein-sports-5',
-
     beinsportsmax1: 'bein-sports-max-1',
-
     beinsportsmax2: 'bein-sports-max-2',
-
     ssport1: 's-sport',
-
     ssport2: 's-sport-2',
-
     aspor: 'a-spor',
-
     trtspor: 'trt-spor'
-
 };
 
+const DL_STREAM_MAP = {
+    beinsports1: '62',
+    beinsports2: '63',
+    beinsports3: '64',
+    beinsports4: '67',
+    beinsports5: '1010',
+    ssport1: '68',
+    ssport2: '15169'
+};
 
+async function resolveJitStream(channelId, forceFresh = false) {
+    const aid = SPORTS_RESOLVE_MAP[channelId];
+    if (!aid) return null;
 
-async function fastSportsRefresh() {
-
-    let changed = 0;
-
-    await Promise.all(Object.entries(SPORTS_RESOLVE_MAP).map(async ([cid, aid]) => {
-
-        try {
-
-            const resp = await axios.get(`https://teletv15.top/load/yayinlink.php?id=${aid}`, {
-
-                timeout: 3000,
-
-                headers: { 'User-Agent': 'Mozilla/5.0' },
-
-                httpAgent,
-
-                httpsAgent
-
-            });
-
-            if (resp.status === 200 && resp.data && resp.data.deismackanal) {
-
-                const freshUrl = resp.data.deismackanal;
-
-                const ch = curatedChannels.find(c => c.id === cid);
-
-                if (ch) {
-
-                    ch.urls = [freshUrl, ...(ch.urls || []).filter(u => u !== freshUrl)];
-
-                    changed++;
-
-                }
-
-            }
-
-        } catch (e) {}
-
-    }));
-
-    if (changed > 0) {
-
-        try {
-
-            fs.writeFileSync(path.join(__dirname, 'verified_channels.json'), JSON.stringify(curatedChannels, null, 2), 'utf-8');
-
-            manifestCache.clear();
-
-            activeChannelSources.clear();
-
-            console.log(`[FastRefresh] Updated ${changed} sports channels from live resolver.`);
-
-        } catch (saveErr) {
-
-            console.error('[FastRefresh] Save error:', saveErr.message);
-
+    if (!forceFresh) {
+        const cached = jitStreamCache.get(channelId);
+        if (cached && Date.now() < cached.expires) {
+            return cached.url;
         }
-
     }
 
-    return changed;
+    // Provider 1: teletv15
+    try {
+        const resp = await axios.get(`https://teletv15.top/load/yayinlink.php?id=${aid}`, {
+            timeout: 2500,
+            headers: { 'User-Agent': 'Mozilla/5.0' },
+            httpAgent,
+            httpsAgent
+        });
+        if (resp.status === 200 && resp.data && resp.data.deismackanal) {
+            const freshUrl = resp.data.deismackanal;
+            jitStreamCache.set(channelId, { url: freshUrl, expires: Date.now() + 8 * 60 * 1000 });
+            const ch = curatedChannels.find(c => c.id === channelId);
+            if (ch) ch.urls = [freshUrl, ...(ch.urls || []).filter(u => u !== freshUrl)];
+            console.log(`[JIT] Resolved live stream for ${channelId} via primary: ${freshUrl.substring(0, 50)}...`);
+            return freshUrl;
+        }
+    } catch (e) {
+        console.warn(`[JIT] Primary resolve failed for ${channelId}:`, e.message);
+    }
 
+    // Provider 2: cfbu247 fallback
+    if (DL_STREAM_MAP[channelId]) {
+        try {
+            const dlResp = await axios.get(`https://chat.cfbu247.sbs/api/resolve-dlstream/${DL_STREAM_MAP[channelId]}`, {
+                timeout: 2500,
+                headers: { 'Origin': 'https://tvnow247.top', 'User-Agent': 'Mozilla/5.0' },
+                httpAgent,
+                httpsAgent
+            });
+            if (dlResp.status === 200 && dlResp.data && dlResp.data.m3u8) {
+                const freshUrl = dlResp.data.m3u8;
+                jitStreamCache.set(channelId, { url: freshUrl, expires: Date.now() + 5 * 60 * 1000 });
+                const ch = curatedChannels.find(c => c.id === channelId);
+                if (ch) ch.urls = [freshUrl, ...(ch.urls || []).filter(u => u !== freshUrl)];
+                console.log(`[JIT] Resolved live stream for ${channelId} via fallback dlstream.`);
+                return freshUrl;
+            }
+        } catch (e) {
+            console.warn(`[JIT] Fallback dlstream failed for ${channelId}:`, e.message);
+        }
+    }
+
+    return null;
 }
 
-
+async function fastSportsRefresh() {
+    let changed = 0;
+    const channelIds = Object.keys(SPORTS_RESOLVE_MAP);
+    await Promise.all(channelIds.map(async (cid) => {
+        const fresh = await resolveJitStream(cid, true);
+        if (fresh) changed++;
+    }));
+    if (changed > 0) {
+        try {
+            fs.writeFileSync(path.join(__dirname, 'verified_channels.json'), JSON.stringify(curatedChannels, null, 2), 'utf-8');
+            manifestCache.clear();
+            activeChannelSources.clear();
+            console.log(`[FastRefresh] Updated ${changed} sports channels.`);
+        } catch (saveErr) {
+            console.error('[FastRefresh] Save error:', saveErr.message);
+        }
+    }
+    return changed;
+}
 
 let lastManualRefreshTime = 0;
 
@@ -994,15 +920,11 @@ app.get('/api/channels/refresh', async (req, res) => {
 
 });
 
-
-
 app.get('/api/channels' , (req, res) => {
 
     res.json(curatedChannels);
 
 });
-
-
 
 // Channel status endpoint
 
@@ -1021,8 +943,6 @@ app.get('/api/channels/status', (req, res) => {
     });
 
 });
-
-
 
 // New TV (VOD Dizi & Film) APK Download Endpoints
 
@@ -1043,8 +963,6 @@ app.get(['/api/newtv', '/api/newtv.apk', '/New-TV.apk'], (req, res) => {
     res.status(404).send('New-TV.apk not found');
 
 });
-
-
 
 // Version endpoint (Fallback for Seyir TV updater)
 
@@ -1069,8 +987,6 @@ app.get('/api/apk', (req, res) => {
     res.redirect('https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.40.apk');
 
 });
-
-
 
 // New TV Version endpoint
 
@@ -1110,8 +1026,6 @@ app.get(['/api/newtv/version', '/api/newtv-version'], (req, res) => {
 
 });
 
-
-
 app.get('/api/version', (req, res) => {
 
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -1145,8 +1059,6 @@ app.get('/api/version', (req, res) => {
     }
 
 });
-
-
 
 function getQualityScore(url) {
 
@@ -1210,10 +1122,6 @@ function getQualityScore(url) {
 
 }
 
-
-
-
-
 function normalizeXtreamToHls(rawUrl) {
 
     if (!rawUrl) return rawUrl;
@@ -1229,8 +1137,6 @@ function normalizeXtreamToHls(rawUrl) {
     return rawUrl;
 
 }
-
-
 
 function isRawTsStream(url) {
 
@@ -1249,8 +1155,6 @@ function isRawTsStream(url) {
     );
 
 }
-
-
 
 function isSegmentUrl(url) {
 
@@ -1295,8 +1199,6 @@ function isSegmentUrl(url) {
     );
 
 }
-
-
 
 function getHeadersForUrl(targetUrl, u) {
 
@@ -1364,8 +1266,6 @@ function getHeadersForUrl(targetUrl, u) {
 
 }
 
-
-
 // --- High Performance Broadcast Caching & Stateful Circuit Breaker ---
 
 const activeChannelSources = new Map(); // channelId -> url
@@ -1379,8 +1279,6 @@ const segmentCache = new Map(); // targetUrl -> { data: Buffer, contentType: str
 const MAX_CACHED_SEGMENTS = 70; // ~60-80 MB in RAM
 
 const inFlightRequests = new Map(); // targetUrl -> Promise<{ data: Buffer, contentType: string }>
-
-
 
 function isSourceCooledDown(url) {
 
@@ -1400,15 +1298,11 @@ function isSourceCooledDown(url) {
 
 }
 
-
-
 function markSourceFailed(url) {
 
     sourceCooldowns.set(url, Date.now() + 60000); // Cooldown for 60 seconds
 
 }
-
-
 
 function markSourceSuccess(channelId, url) {
 
@@ -1417,8 +1311,6 @@ function markSourceSuccess(channelId, url) {
     activeChannelSources.set(channelId, url);
 
 }
-
-
 
 function pruneSegmentCache() {
 
@@ -1444,8 +1336,6 @@ function pruneSegmentCache() {
 
 setInterval(pruneSegmentCache, 15000);
 
-
-
 // Resilient Channel Master Endpoint with Automatic Multi-Source Failover & 2.5s RAM Manifest Cache
 
 app.get('/channel/:id.m3u8', async (req, res) => {
@@ -1460,15 +1350,11 @@ app.get('/channel/:id.m3u8', async (req, res) => {
 
     }
 
-
-
     res.setHeader('Access-Control-Allow-Origin', '*');
 
     res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
 
     res.setHeader('Access-Control-Allow-Headers', '*');
-
-
 
     // 1. Check RAM Cache (Live HLS manifest cache: 2.5s TTL)
 
@@ -1481,8 +1367,6 @@ app.get('/channel/:id.m3u8', async (req, res) => {
         return res.send(cached.body);
 
     }
-
-
 
     // Filter out recursive loopbacks to self and known dead wrappers
 
@@ -1504,15 +1388,11 @@ app.get('/channel/:id.m3u8', async (req, res) => {
 
     );
 
-
-
     if (validUrls.length === 0) {
 
         return res.status(503).send(`No external upstream source configured for channel ${channelId}`);
 
     }
-
-
 
     // Stateful Ordering:
 
@@ -1540,29 +1420,31 @@ app.get('/channel/:id.m3u8', async (req, res) => {
 
     }
 
-
-
     const urlsToTry = [];
 
+    // JIT: For live sports channels, resolve fresh dynamic stream first
+    if (SPORTS_RESOLVE_MAP[channelId]) {
+        try {
+            const jitUrl = await resolveJitStream(channelId, false);
+            if (jitUrl && !isSourceCooledDown(jitUrl)) {
+                urlsToTry.push(jitUrl);
+            }
+        } catch (jitErr) {
+            console.warn(`[JIT] Pre-fetch error for ${channelId}:`, jitErr.message);
+        }
+    }
+
     if (activeSource && available.includes(activeSource)) {
-
-        urlsToTry.push(activeSource);
-
+        if (!urlsToTry.includes(activeSource)) urlsToTry.push(activeSource);
     }
 
     for (const u of available) {
-
         if (!urlsToTry.includes(u)) urlsToTry.push(u);
-
     }
 
     for (const u of cooledDown) {
-
         if (!urlsToTry.includes(u)) urlsToTry.push(u);
-
     }
-
-
 
     for (let i = 0; i < urlsToTry.length; i++) {
 
@@ -1582,8 +1464,6 @@ app.get('/channel/:id.m3u8', async (req, res) => {
 
             const headers = getHeadersForUrl(targetUrl, u);
 
-
-
             const response = await axios({
 
                 method: 'get',
@@ -1601,8 +1481,6 @@ app.get('/channel/:id.m3u8', async (req, res) => {
                 validateStatus: (status) => status >= 200 && status < 300
 
             });
-
-
 
             const bodyStr = response.data.toString('utf-8');
 
@@ -1638,8 +1516,6 @@ app.get('/channel/:id.m3u8', async (req, res) => {
 
                 }).join('\n');
 
-
-
                 markSourceSuccess(channelId, targetUrl);
 
                 manifestCache.set(channelId, { body: rewritten, expires: Date.now() + 3500 });
@@ -1662,8 +1538,6 @@ app.get('/channel/:id.m3u8', async (req, res) => {
 
     }
 
-
-
     const directTRT = ch.urls.find(u => u.includes('medya.trt.com.tr'));
 
     if (directTRT) {
@@ -1671,8 +1545,6 @@ app.get('/channel/:id.m3u8', async (req, res) => {
         return res.redirect(directTRT);
 
     }
-
-
 
     if (SPORTS_RESOLVE_MAP[channelId]) {
         try {
@@ -1713,8 +1585,6 @@ app.get('/channel/:id.m3u8', async (req, res) => {
 
 });
 
-
-
 // M3U Playlist endpoint for IPTV apps / Seyir TV / VLC
 
 app.get('/playlist.m3u', (req, res) => {
@@ -1737,8 +1607,6 @@ app.get('/playlist.m3u', (req, res) => {
 
 });
 
-
-
 // Proxy endpoint: Adapts headers per host, streams segments and rewrites child playlists with RAM segment cache & in-flight de-duplication
 
 app.get('/proxy', async (req, res) => {
@@ -1753,19 +1621,13 @@ app.get('/proxy', async (req, res) => {
 
     }
 
-
-
     const isSegment = isSegmentUrl(targetUrl);
-
-
 
     res.setHeader('Access-Control-Allow-Origin', '*');
 
     res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
 
     res.setHeader('Access-Control-Allow-Headers', '*');
-
-
 
     // 1. Segment RAM Cache hit check
 
@@ -1785,8 +1647,6 @@ app.get('/proxy', async (req, res) => {
 
     }
 
-
-
     // 2. In-flight de-duplication: if multiple clients request the exact same segment, await the same fetch
 
     let fetchPromise;
@@ -1800,8 +1660,6 @@ app.get('/proxy', async (req, res) => {
         const u = new URL(targetUrl);
 
         const headers = getHeadersForUrl(targetUrl, u);
-
-
 
         fetchPromise = (async () => {
 
@@ -1825,8 +1683,6 @@ app.get('/proxy', async (req, res) => {
 
             });
 
-
-
             let contentType = response.headers['content-type'] || '';
 
             if (isSegment) {
@@ -1849,8 +1705,6 @@ app.get('/proxy', async (req, res) => {
 
         })();
 
-
-
         if (isSegment) {
 
             inFlightRequests.set(targetUrl, fetchPromise);
@@ -1865,8 +1719,6 @@ app.get('/proxy', async (req, res) => {
 
     }
 
-
-
     // Handle client early disconnect
 
     let clientDisconnected = false;
@@ -1877,15 +1729,11 @@ app.get('/proxy', async (req, res) => {
 
     });
 
-
-
     try {
 
         const result = await fetchPromise;
 
         if (clientDisconnected || res.writableEnded) return;
-
-
 
         if (isSegment) {
 
@@ -1906,8 +1754,6 @@ app.get('/proxy', async (req, res) => {
             return res.send(result.data);
 
         }
-
-
 
         const bodyStr = result.data.toString('utf-8');
 
@@ -1943,8 +1789,6 @@ app.get('/proxy', async (req, res) => {
 
         }
 
-
-
         res.setHeader('Content-Type', result.contentType || 'video/mp2t');
 
         res.setHeader('Content-Length', result.data.length);
@@ -1954,9 +1798,16 @@ app.get('/proxy', async (req, res) => {
     } catch (err) {
 
         if (isSegment) {
-
+            for (const [cid, srcUrl] of activeChannelSources.entries()) {
+                try {
+                    const srcU = new URL(srcUrl);
+                    if (targetUrl.includes(srcU.hostname) || targetUrl.includes('.help') || targetUrl.includes('d6e3e')) {
+                        manifestCache.delete(cid);
+                        jitStreamCache.delete(cid);
+                    }
+                } catch (e) {}
+            }
             return res.status(404).end();
-
         }
 
         const upstreamStatus = err.response ? err.response.status : 502;
@@ -1966,8 +1817,6 @@ app.get('/proxy', async (req, res) => {
     }
 
 });
-
-
 
 // Modern Responsive Mobile & Desktop Web Player Interface
 
@@ -2061,8 +1910,6 @@ app.get('/', (req, res) => {
 
         }
 
-
-
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
         html, body {
@@ -2080,8 +1927,6 @@ app.get('/', (req, res) => {
             letter-spacing: -0.01em;
 
         }
-
-
 
         /* Ambient Glow Background on Desktop */
 
@@ -2101,8 +1946,6 @@ app.get('/', (req, res) => {
 
         }
 
-
-
         #app-layout {
 
             display: flex;
@@ -2116,8 +1959,6 @@ app.get('/', (req, res) => {
             z-index: 1;
 
         }
-
-
 
         /* --- DESKTOP SIDEBAR --- */
 
@@ -2142,8 +1983,6 @@ app.get('/', (req, res) => {
             box-shadow: 4px 0 24px rgba(0,0,0,0.4);
 
         }
-
-
 
         .sidebar-header {
 
@@ -2243,8 +2082,6 @@ app.get('/', (req, res) => {
 
         }
 
-
-
         .channel-counter-badge {
 
             font-size: 11px;
@@ -2262,8 +2099,6 @@ app.get('/', (req, res) => {
             border: 1px solid var(--border);
 
         }
-
-
 
         /* Search Input */
 
@@ -2361,8 +2196,6 @@ app.get('/', (req, res) => {
 
         .clear-search-btn:hover { color: #fff; }
 
-
-
         /* Category Chips Bar */
 
         #category-bar {
@@ -2437,8 +2270,6 @@ app.get('/', (req, res) => {
 
         }
 
-
-
         /* Channel List */
 
         #channel-list {
@@ -2466,8 +2297,6 @@ app.get('/', (req, res) => {
         #channel-list::-webkit-scrollbar { width: 5px; }
 
         #channel-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 4px; }
-
-
 
         .ch-card {
 
@@ -2531,8 +2360,6 @@ app.get('/', (req, res) => {
 
         }
 
-
-
         .ch-avatar {
 
             width: 36px;
@@ -2572,8 +2399,6 @@ app.get('/', (req, res) => {
             border-color: #38bdf8;
 
         }
-
-
 
         .ch-info {
 
@@ -2639,8 +2464,6 @@ app.get('/', (req, res) => {
 
         .ch-card.active .ch-category-pill { color: #7dd3fc; }
 
-
-
         .ch-status-indicator {
 
             width: 7px;
@@ -2671,8 +2494,6 @@ app.get('/', (req, res) => {
 
         }
 
-
-
         /* --- DESKTOP STAGE & PLAYER --- */
 
         #main-stage {
@@ -2696,8 +2517,6 @@ app.get('/', (req, res) => {
             justify-content: center;
 
         }
-
-
 
         #video-container {
 
@@ -2737,8 +2556,6 @@ app.get('/', (req, res) => {
 
         video.fit-cover { object-fit: cover !important; }
 
-
-
         /* Floating Top Bar Overlay */
 
         #video-top-overlay {
@@ -2768,8 +2585,6 @@ app.get('/', (req, res) => {
         #video-top-overlay.fade-out { opacity: 0; pointer-events: none; }
 
         .overlay-left, .overlay-right { display: flex; gap: 8px; align-items: center; pointer-events: auto; }
-
-
 
         .badge-live-pulse {
 
@@ -2813,8 +2628,6 @@ app.get('/', (req, res) => {
 
         }
 
-
-
         .badge-quality-fhd {
 
             font-size: 11px;
@@ -2834,8 +2647,6 @@ app.get('/', (req, res) => {
             backdrop-filter: blur(6px);
 
         }
-
-
 
         .channel-title-pill {
 
@@ -2864,8 +2675,6 @@ app.get('/', (req, res) => {
             text-overflow: ellipsis;
 
         }
-
-
 
         .top-action-btn {
 
@@ -2904,8 +2713,6 @@ app.get('/', (req, res) => {
             border-color: #38bdf8;
 
         }
-
-
 
         /* Player Bottom Controls */
 
@@ -2951,8 +2758,6 @@ app.get('/', (req, res) => {
 
         }
 
-
-
         .status-pill-badge {
 
             font-size: 12px;
@@ -2991,8 +2796,6 @@ app.get('/', (req, res) => {
 
         }
 
-
-
         .modern-toolbar {
 
             display: flex;
@@ -3026,8 +2829,6 @@ app.get('/', (req, res) => {
             flex-wrap: wrap;
 
         }
-
-
 
         .tool-btn {
 
@@ -3079,8 +2880,6 @@ app.get('/', (req, res) => {
 
         .tool-btn svg { width: 14px; height: 14px; fill: currentColor; }
 
-
-
         .shortcuts-hint {
 
             font-size: 11px;
@@ -3110,8 +2909,6 @@ app.get('/', (req, res) => {
             border: 1px solid var(--border);
 
         }
-
-
 
         /* =======================================================
 
@@ -3153,8 +2950,6 @@ app.get('/', (req, res) => {
 
             }
 
-
-
             /* Main stage holds the top sticky video (Rendered at top on mobile) */
 
             #main-stage {
@@ -3179,8 +2974,6 @@ app.get('/', (req, res) => {
 
             }
 
-
-
             #video-container {
 
                 max-width: 100% !important;
@@ -3197,8 +2990,6 @@ app.get('/', (req, res) => {
 
             }
 
-
-
             /* Hide top overlay completely on mobile to eliminate clutter and prevent blocking controls */
 
             #video-top-overlay {
@@ -3212,8 +3003,6 @@ app.get('/', (req, res) => {
                 padding: 6px 10px !important;
 
             }
-
-
 
             /* Hide desktop bottom toolbar; show mobile stream info bar */
 
@@ -3278,8 +3067,6 @@ app.get('/', (req, res) => {
                 display: inline-flex !important;
 
             }
-
-
 
             /* Mobile Sidebar becomes the in-page browsable channel section below video */
 
@@ -3373,8 +3160,6 @@ app.get('/', (req, res) => {
 
         }
 
-
-
         /* Mobile Landscape (Full Screen Video Mode) */
 
         @media (orientation: landscape) and (max-height: 520px) {
@@ -3447,8 +3232,6 @@ app.get('/', (req, res) => {
 
         }
 
-
-
         /* Native Fullscreen API */
 
         :fullscreen #video-container, :-webkit-full-screen #video-container {
@@ -3462,10 +3245,6 @@ app.get('/', (req, res) => {
         }
 
         :fullscreen video, :-webkit-full-screen video { width: 100% !important; height: 100% !important; }
-
-
-
-
 
         #unmute-banner {
 
@@ -3516,8 +3295,6 @@ app.get('/', (req, res) => {
             50% { transform: translateX(-50%) scale(1.04); }
 
         }
-
-
 
         /* Custom Seyir TV Unified Bottom Overlay */
 
@@ -3737,8 +3514,6 @@ app.get('/', (req, res) => {
 
             </div>
 
-
-
             <!-- Search -->
 
             <div class="search-container">
@@ -3754,8 +3529,6 @@ app.get('/', (req, res) => {
                 </div>
 
             </div>
-
-
 
             <!-- Categories -->
 
@@ -3781,15 +3554,11 @@ app.get('/', (req, res) => {
 
             </div>
 
-
-
             <!-- Channel List -->
 
             <div id="channel-list"></div>
 
         </aside>
-
-
 
         <!-- MAIN STAGE (Desktop Center / Mobile Top Sticky Video) -->
 
@@ -3798,8 +3567,6 @@ app.get('/', (req, res) => {
             <div id="video-container">
 
                 <video id="video-player" playsinline webkit-playsinline></video>
-
-
 
                 <!-- Floating Top Bar Overlay -->
 
@@ -3835,13 +3602,9 @@ app.get('/', (req, res) => {
 
                         </button>
 
-
-
                     </div>
 
                 </div>
-
-
 
                 <!-- Custom Bottom Control Bar (Identical on PC & Phone) -->
 
@@ -3865,8 +3628,6 @@ app.get('/', (req, res) => {
 
                     </div>
 
-
-
                     <div class="bottom-center-track">
 
                         <div class="live-timeline">
@@ -3878,8 +3639,6 @@ app.get('/', (req, res) => {
                         </div>
 
                     </div>
-
-
 
                     <div class="bottom-right-controls">
 
@@ -3894,8 +3653,6 @@ app.get('/', (req, res) => {
                 </div>
 
             </div>
-
-
 
             <!-- Player Details & Quick Strip -->
 
@@ -3914,8 +3671,6 @@ app.get('/', (req, res) => {
                     <div id="stream-status" class="status-pill-badge">Hazır</div>
 
                 </div>
-
-
 
                 <!-- Modern Toolbar Strip -->
 
@@ -3947,8 +3702,6 @@ app.get('/', (req, res) => {
 
                     </div>
 
-
-
                     <div class="toolbar-group">
 
                         <button id="btn-fit-row" class="tool-btn" onclick="toggleFit()">
@@ -3973,8 +3726,6 @@ app.get('/', (req, res) => {
 
                 </div>
 
-
-
                 <div class="shortcuts-hint">
 
                     <span>Kısayollar:</span>
@@ -3997,8 +3748,6 @@ app.get('/', (req, res) => {
 
     </div>
 
-
-
     <script>
 
         let allChannels = [];
@@ -4008,8 +3757,6 @@ app.get('/', (req, res) => {
         let hls = null;
 
         let currentFilter = 'Tümü';
-
-
 
         const video = document.getElementById('video-player');
 
@@ -4028,8 +3775,6 @@ app.get('/', (req, res) => {
         const clearSearchBtn = document.getElementById('clear-search');
 
         const channelCounter = document.getElementById('channel-counter');
-
-
 
         // Fetch Curated Master Channels
 
@@ -4061,8 +3806,6 @@ app.get('/', (req, res) => {
 
             });
 
-
-
         // Autoplay policy handler: plays unmuted if permitted, otherwise starts muted and offers 1-tap unmute
 
         function manualRefreshChannels() {
@@ -4084,8 +3827,6 @@ app.get('/', (req, res) => {
             statusEl.textContent = 'Kaynaklar taranıyor…';
 
             statusEl.style.color = '#38bdf8';
-
-
 
             fetch('/api/channels/refresh')
 
@@ -4135,8 +3876,6 @@ app.get('/', (req, res) => {
 
         }
 
-
-
         function attemptAutoplay() {
 
             const p = video.play();
@@ -4171,8 +3910,6 @@ app.get('/', (req, res) => {
 
         }
 
-
-
         function showUnmuteBanner() {
 
             let banner = document.getElementById('unmute-banner');
@@ -4201,8 +3938,6 @@ app.get('/', (req, res) => {
 
         }
 
-
-
         function hideUnmuteBanner() {
 
             const banner = document.getElementById('unmute-banner');
@@ -4210,8 +3945,6 @@ app.get('/', (req, res) => {
             if (banner) banner.style.display = 'none';
 
         }
-
-
 
         function unlockAudio() {
 
@@ -4233,8 +3966,6 @@ app.get('/', (req, res) => {
 
         document.addEventListener('touchstart', unlockAudio, { once: true });
 
-
-
         // Unregister stale service workers
 
         if ('serviceWorker' in navigator) {
@@ -4246,8 +3977,6 @@ app.get('/', (req, res) => {
             });
 
         }
-
-
 
         function getCategoryInitial(name, cat) {
 
@@ -4289,8 +4018,6 @@ app.get('/', (req, res) => {
 
         }
 
-
-
         function renderChannels(list) {
 
             channelList.innerHTML = '';
@@ -4307,21 +4034,15 @@ app.get('/', (req, res) => {
 
                 };
 
-
-
                 const avatar = document.createElement('div');
 
                 avatar.className = 'ch-avatar';
 
                 avatar.textContent = getCategoryInitial(ch.name, ch.category);
 
-
-
                 const info = document.createElement('div');
 
                 info.className = 'ch-info';
-
-
 
                 const nameText = document.createElement('div');
 
@@ -4329,13 +4050,9 @@ app.get('/', (req, res) => {
 
                 nameText.textContent = ch.name;
 
-
-
                 const metaRow = document.createElement('div');
 
                 metaRow.className = 'ch-meta-row';
-
-
 
                 const catPill = document.createElement('span');
 
@@ -4343,21 +4060,15 @@ app.get('/', (req, res) => {
 
                 catPill.textContent = ch.category || 'Canlı';
 
-
-
                 metaRow.appendChild(catPill);
 
                 info.appendChild(nameText);
 
                 info.appendChild(metaRow);
 
-
-
                 const statusDot = document.createElement('div');
 
                 statusDot.className = 'ch-status-indicator';
-
-
 
                 item.appendChild(avatar);
 
@@ -4371,21 +4082,15 @@ app.get('/', (req, res) => {
 
         }
 
-
-
         function playChannel(ch) {
 
             if (!ch) return;
 
             currentChannel = ch;
 
-
-
             channelHeading.textContent = ch.name;
 
             topTitle.textContent = ch.name;
-
-
 
             statusEl.textContent = 'Bağlanıyor…';
 
@@ -4394,8 +4099,6 @@ app.get('/', (req, res) => {
             statusEl.style.borderColor = 'rgba(245, 158, 11, 0.4)';
 
             statusEl.style.background = 'rgba(245, 158, 11, 0.15)';
-
-
 
             document.querySelectorAll('.ch-card').forEach(el => el.classList.remove('active'));
 
@@ -4415,11 +4118,7 @@ app.get('/', (req, res) => {
 
             }
 
-
-
             const streamUrl = '/channel/' + encodeURIComponent(ch.id) + '.m3u8';
-
-
 
             // Clean previous player
 
@@ -4436,8 +4135,6 @@ app.get('/', (req, res) => {
             video.removeAttribute('src');
 
             video.load();
-
-
 
             if (Hls.isSupported()) {
 
@@ -4504,8 +4201,6 @@ app.get('/', (req, res) => {
                     }
 
                 });
-
-
 
                 let errCount = 0;
 
@@ -4603,8 +4298,6 @@ app.get('/', (req, res) => {
 
         }
 
-
-
         // Category Filtering & Sorting
 
         function filterCategory(cat) {
@@ -4621,8 +4314,6 @@ app.get('/', (req, res) => {
 
         }
 
-
-
         searchInput.addEventListener('input', () => {
 
             clearSearchBtn.style.display = searchInput.value ? 'block' : 'none';
@@ -4630,8 +4321,6 @@ app.get('/', (req, res) => {
             applyFilters();
 
         });
-
-
 
         function clearSearch() {
 
@@ -4644,8 +4333,6 @@ app.get('/', (req, res) => {
             searchInput.focus();
 
         }
-
-
 
         function applyFilters() {
 
@@ -4675,8 +4362,6 @@ app.get('/', (req, res) => {
 
             });
 
-
-
             // Sort Spor A to Z
 
             if (currentFilter === 'Spor') {
@@ -4685,15 +4370,11 @@ app.get('/', (req, res) => {
 
             }
 
-
-
             renderChannels(filtered);
 
             if (channelCounter) channelCounter.textContent = filtered.length + ' Kanal';
 
         }
-
-
 
         // Quick Previous & Next Channel
 
@@ -4709,8 +4390,6 @@ app.get('/', (req, res) => {
 
         }
 
-
-
         function nextChannel() {
 
             if (!allChannels.length) return;
@@ -4723,8 +4402,6 @@ app.get('/', (req, res) => {
 
         }
 
-
-
         // Toggle Crisp Mode Filter
 
         function toggleCrisp() {
@@ -4736,8 +4413,6 @@ app.get('/', (req, res) => {
             if (btn) btn.classList.toggle('active-glow', isActive);
 
         }
-
-
 
         // Aspect ratio (Fit vs Fill)
 
@@ -4758,8 +4433,6 @@ app.get('/', (req, res) => {
             wakeControls();
 
         }
-
-
 
         function toggleFullscreen() {
 
@@ -4808,8 +4481,6 @@ app.get('/', (req, res) => {
             wakeControls();
 
         }
-
-
 
         // Keyboard Controls
 
@@ -4875,8 +4546,6 @@ app.get('/', (req, res) => {
 
         });
 
-
-
         // Unified Player Controls (PC & Mobile)
 
         const videoContainer = document.getElementById('video-container');
@@ -4886,8 +4555,6 @@ app.get('/', (req, res) => {
         const videoBottomOverlay = document.getElementById('video-bottom-overlay');
 
         let controlsTimer = null;
-
-
 
         function wakeControls() {
 
@@ -4911,8 +4578,6 @@ app.get('/', (req, res) => {
 
         }
 
-
-
         function togglePlay() {
 
             if (video.paused) {
@@ -4930,8 +4595,6 @@ app.get('/', (req, res) => {
             wakeControls();
 
         }
-
-
 
         function updatePlayPauseIcon() {
 
@@ -4955,8 +4618,6 @@ app.get('/', (req, res) => {
 
         video.addEventListener('pause', updatePlayPauseIcon);
 
-
-
         function toggleMute() {
 
             video.muted = !video.muted;
@@ -4966,8 +4627,6 @@ app.get('/', (req, res) => {
             wakeControls();
 
         }
-
-
 
         function updateVolumeIcon() {
 
@@ -4988,8 +4647,6 @@ app.get('/', (req, res) => {
         }
 
         video.addEventListener('volumechange', updateVolumeIcon);
-
-
 
         function updateFsIcon() {
 
@@ -5015,8 +4672,6 @@ app.get('/', (req, res) => {
 
         document.addEventListener('webkitfullscreenchange', updateFsIcon);
 
-
-
         videoContainer.addEventListener('click', (e) => {
 
             if (e.target.closest('button') || e.target.closest('#unmute-banner')) return;
@@ -5038,8 +4693,6 @@ app.get('/', (req, res) => {
         videoContainer.addEventListener('mousemove', wakeControls);
 
         video.addEventListener('dblclick', toggleFullscreen);
-
-
 
         let lastTouchTime = 0;
 
@@ -5077,8 +4730,6 @@ app.get('/', (req, res) => {
 
         });
 
-
-
         // Auto Landscape Fullscreen
 
         function checkOrientation() {
@@ -5113,8 +4764,6 @@ app.get('/', (req, res) => {
 
 });
 
-
-
 // ============================================================================
 
 // Server-Side Autonomous Playlist Scraper & Rapid Token/Health Refresher (Every 2 min)
@@ -5130,8 +4779,6 @@ const COMMUNITY_SOURCES = [
     { name: 'lunedor', url: 'https://raw.githubusercontent.com/Lunedor/iptvTR/main/iptv_tum_kanallar.m3u' }
 
 ];
-
-
 
 function normalizeChannelName(rawName) {
 
@@ -5155,15 +4802,11 @@ function normalizeChannelName(rawName) {
 
 }
 
-
-
 function matchChannelId(rawName) {
 
     const n = normalizeChannelName(rawName);
 
     if (!n) return null;
-
-
 
     if (n.includes('beinsports1') || n.includes('bein1') || n.includes('beinsport1')) return 'beinsports1';
 
@@ -5235,8 +4878,6 @@ function matchChannelId(rawName) {
 
 }
 
-
-
 async function testStreamUrl(targetUrl, timeoutMs = 2500) {
 
     if (!targetUrl) return false;
@@ -5281,8 +4922,6 @@ async function testStreamUrl(targetUrl, timeoutMs = 2500) {
 
 }
 
-
-
 async function resolveNestedStreamUrl(urlStr) {
 
     if (!urlStr || !urlStr.includes('raw.githubusercontent.com') || !urlStr.endsWith('.m3u8')) {
@@ -5315,8 +4954,6 @@ async function resolveNestedStreamUrl(urlStr) {
 
 }
 
-
-
 async function scanAndRefreshChannels() {
 
     if (isScanning) return;
@@ -5327,11 +4964,7 @@ async function scanAndRefreshChannels() {
 
     console.log(`[Scanner] Autonomous channel & token scan started at ${new Date().toLocaleTimeString()}...`);
 
-
-
     const discoveredByChannel = {};
-
-
 
     // 1. Fetch community playlists
 
@@ -5344,8 +4977,6 @@ async function scanAndRefreshChannels() {
             const lines = res.data.toString('utf-8').split('\n');
 
             let currentName = '';
-
-
 
             for (let i = 0; i < lines.length; i++) {
 
@@ -5383,8 +5014,6 @@ async function scanAndRefreshChannels() {
 
     }
 
-
-
     // 2. Process and health-check channels
 
     let onlineCount = 0;
@@ -5403,8 +5032,6 @@ async function scanAndRefreshChannels() {
 
         }
 
-
-
         const candidateList = Array.from(urlCandidates).sort((a, b) => getQualityScore(b) - getQualityScore(a));
 
         // Resolve nested github URLs in candidate list
@@ -5419,8 +5046,6 @@ async function scanAndRefreshChannels() {
 
         }
 
-
-
         // Test candidates concurrently
 
         const testResults = await Promise.allSettled(
@@ -5429,13 +5054,9 @@ async function scanAndRefreshChannels() {
 
         );
 
-
-
         const workingUrls = [];
 
         const failingUrls = [];
-
-
 
         for (let i = 0; i < testResults.length; i++) {
 
@@ -5453,8 +5074,6 @@ async function scanAndRefreshChannels() {
 
         }
 
-
-
         // Keep remaining untried candidates at the end
 
         for (const u of resolvedList.slice(5)) {
@@ -5462,8 +5081,6 @@ async function scanAndRefreshChannels() {
             failingUrls.push(u);
 
         }
-
-
 
         workingUrls.sort((a, b) => getQualityScore(b) - getQualityScore(a));
 
@@ -5476,8 +5093,6 @@ async function scanAndRefreshChannels() {
             ch.urls = reordered;
 
         }
-
-
 
         const isOnline = workingUrls.length > 0;
 
@@ -5497,8 +5112,6 @@ async function scanAndRefreshChannels() {
 
     }
 
-
-
     lastScanTime = Date.now();
 
     isScanning = false;
@@ -5506,8 +5119,6 @@ async function scanAndRefreshChannels() {
     const duration = ((Date.now() - startTime) / 1000).toFixed(1);
 
     console.log(`[Scanner] Done in ${duration}s. Online: ${onlineCount}/${curatedChannels.length} channels.`);
-
-
 
     // Persist verified channels to disk
 
@@ -5523,19 +5134,14 @@ async function scanAndRefreshChannels() {
 
 }
 
-
-
 // Scanner disabled in live gateway process to preserve CPU and zero-memory leaks
 
 // setInterval(scanAndRefreshChannels, 2 * 60 * 1000);
 
 // setTimeout(scanAndRefreshChannels, 3000);
 
-
-
 app.listen(PORT, '0.0.0.0', () => {
 
     console.log(`Seyir TV Oracle Gateway running on port ${PORT}`);
 
 });
-
