@@ -1160,6 +1160,12 @@ function isSegmentUrl(url) {
 
     const u = url.toLowerCase();
 
+    if (u.includes('.m3u8') || u.includes('.m3u') || u.includes('index.txt') || u.includes('playlist')) {
+
+        return false;
+
+    }
+
     return Boolean(
 
         u.match(/\.(ts|jpg|jpeg|png|webp|avif|bin|aac|m4s)(\?|$)/i) ||
@@ -1174,25 +1180,13 @@ function isSegmentUrl(url) {
 
         u.includes('/segment') ||
 
+        u.includes('/hlsr/') ||
+
         u.includes('.cfd/c/') ||
 
         u.includes('/c/') ||
 
-        u.includes('.help/') ||
-
-        u.includes('tracks-v1a1/') ||
-
-        u.includes('tomtv') ||
-
-        u.includes('deat1') ||
-
-        u.includes('camon1') ||
-
-        u.includes('eempiree') ||
-
-        u.includes('nexusconnects') ||
-
-        u.includes('live.php')
+        u.includes('tracks-v1a1/')
 
     );
 
@@ -1612,208 +1606,104 @@ app.get('/playlist.m3u', (req, res) => {
 
 });
 
-// Proxy endpoint: Adapts headers per host, streams segments and rewrites child playlists with RAM segment cache & in-flight de-duplication
-
+// Proxy endpoint: Adapts headers per host, streams segments directly to client without RAM buffering, rewrites playlists
 app.get('/proxy', async (req, res) => {
-
     const targetUrl = req.query.url;
-
     if (!targetUrl) return res.status(400).send('URL required');
-
     if (targetUrl.includes('150.230.29.27') || targetUrl.includes('localhost') || targetUrl.includes('127.0.0.1')) {
-
         return res.status(400).send('Loopback proxy forbidden');
-
     }
 
     const isSegment = isSegmentUrl(targetUrl);
-
     res.setHeader('Access-Control-Allow-Origin', '*');
-
     res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
-
     res.setHeader('Access-Control-Allow-Headers', '*');
 
-    // 1. Segment RAM Cache hit check
-
+    // 1. Direct Stream Piped for Video Segments (Zero RAM Buffering, Zero Stutter)
     if (isSegment) {
-
-        const cachedSeg = segmentCache.get(targetUrl);
-
-        if (cachedSeg && Date.now() < cachedSeg.expires) {
-
-            res.setHeader('Content-Type', cachedSeg.contentType);
-
-            res.setHeader('Content-Length', cachedSeg.data.length);
-
-            return res.send(cachedSeg.data);
-
-        }
-
-    }
-
-    // 2. In-flight de-duplication: if multiple clients request the exact same segment, await the same fetch
-
-    let fetchPromise;
-
-    if (isSegment && inFlightRequests.has(targetUrl)) {
-
-        fetchPromise = inFlightRequests.get(targetUrl);
-
-    } else {
-
-        const u = new URL(targetUrl);
-
-        const headers = getHeadersForUrl(targetUrl, u);
-
-        fetchPromise = (async () => {
-
-            const response = await axios({
-
+        try {
+            const u = new URL(targetUrl);
+            const headers = getHeadersForUrl(targetUrl, u);
+            const upstream = await axios({
                 method: 'get',
-
                 url: targetUrl,
-
                 headers: headers,
-
-                responseType: 'arraybuffer',
-
-                timeout: isSegment ? 15000 : 15000,
-
+                responseType: 'stream',
+                timeout: 15000,
                 httpAgent: httpAgent,
-
                 httpsAgent: httpsAgent,
-
                 validateStatus: (status) => status >= 200 && status < 400
-
             });
 
-            let contentType = response.headers['content-type'] || '';
-
-            if (isSegment) {
-
-                if (!contentType || contentType.includes('image/') || contentType.includes('text/') || targetUrl.includes('/c/') || targetUrl.includes('.jpg')) {
-
-                    contentType = 'video/mp2t';
-
-                }
-
+            let contentType = upstream.headers['content-type'] || 'video/mp2t';
+            if (!contentType || contentType.includes('image/') || contentType.includes('text/') || targetUrl.includes('/c/') || targetUrl.includes('.jpg')) {
+                contentType = 'video/mp2t';
+            }
+            res.setHeader('Content-Type', contentType);
+            if (upstream.headers['content-length']) {
+                res.setHeader('Content-Length', upstream.headers['content-length']);
             }
 
-            return {
-
-                data: Buffer.from(response.data),
-
-                contentType: contentType
-
-            };
-
-        })();
-
-        if (isSegment) {
-
-            inFlightRequests.set(targetUrl, fetchPromise);
-
-            fetchPromise.finally(() => {
-
-                inFlightRequests.delete(targetUrl);
-
-            });
-
-        }
-
-    }
-
-    // Handle client early disconnect
-
-    let clientDisconnected = false;
-
-    req.on('close', () => {
-
-        clientDisconnected = true;
-
-    });
-
-    try {
-
-        const result = await fetchPromise;
-
-        if (clientDisconnected || res.writableEnded) return;
-
-        if (isSegment) {
-
-            segmentCache.set(targetUrl, {
-
-                data: result.data,
-
-                contentType: result.contentType,
-
-                expires: Date.now() + 25000 // Cache for 25s
-
-            });
-
-            res.setHeader('Content-Type', result.contentType);
-
-            res.setHeader('Content-Length', result.data.length);
-
-            return res.send(result.data);
-
-        }
-
-        const bodyStr = result.data.toString('utf-8');
-
-        // Rewrite M3U8 child segments & playlists
-
-        if (bodyStr.startsWith('#EXTM3U') || targetUrl.includes('.m3u8') || targetUrl.includes('index.txt')) {
-
-            res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
-
-            const lines = bodyStr.split('\n');
-
-            const rewritten = lines.map(line => {
-
-                const trimmed = line.trim();
-
-                if (!trimmed || trimmed.startsWith('#')) return line;
-
-                try {
-
-                    const finalUrl = (response.request && response.request.res && response.request.res.responseUrl) ? response.request.res.responseUrl : targetUrl;
-                        const resolvedUrl = new URL(trimmed, finalUrl).href;
-
-                    return '/proxy?url=' + encodeURIComponent(resolvedUrl);
-
-                } catch (e) {
-
-                    return line;
-
+            req.on('close', () => {
+                if (upstream.data && !upstream.data.destroyed) {
+                    upstream.data.destroy();
                 }
+            });
 
-            }).join('\n');
-
-            return res.send(rewritten);
-
-        }
-
-        res.setHeader('Content-Type', result.contentType || 'video/mp2t');
-
-        res.setHeader('Content-Length', result.data.length);
-
-        res.send(result.data);
-
-    } catch (err) {
-
-        if (isSegment) {
-            console.warn('[Proxy] Segment fetch error:', err.message, targetUrl.substring(0, 60));
+            return upstream.data.pipe(res);
+        } catch (err) {
+            console.warn('[Proxy] Segment fetch error:', err.message, targetUrl.substring(0, 80));
             return res.status(503).send('Segment fetch failed');
         }
-
-        const upstreamStatus = err.response ? err.response.status : 502;
-
-        res.status(upstreamStatus).send('Stream error: ' + err.message);
-
     }
 
+    // 2. Playlists / Manifests / Child M3U8s
+    try {
+        const u = new URL(targetUrl);
+        const headers = getHeadersForUrl(targetUrl, u);
+        const response = await axios({
+            method: 'get',
+            url: targetUrl,
+            headers: headers,
+            responseType: 'text',
+            timeout: 8000,
+            httpAgent: httpAgent,
+            httpsAgent: httpsAgent,
+            validateStatus: (status) => status >= 200 && status < 400
+        });
+
+        const finalUrl = (response.request && response.request.res && response.request.res.responseUrl) ? response.request.res.responseUrl : targetUrl;
+        const bodyStr = typeof response.data === 'string' ? response.data : response.data.toString('utf-8');
+
+        if (bodyStr.startsWith('#EXTM3U') || targetUrl.includes('.m3u8') || targetUrl.includes('index.txt')) {
+            res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
+            const lines = bodyStr.split('\n');
+            const rewritten = lines.map(line => {
+                const trimmed = line.trim();
+                if (!trimmed || trimmed.startsWith('#')) return line;
+                try {
+                    const resolvedUrl = new URL(trimmed, finalUrl).href;
+                    return '/proxy?url=' + encodeURIComponent(resolvedUrl);
+                } catch (e) {
+                    return line;
+                }
+            }).join('\n');
+            return res.send(rewritten);
+        }
+
+        res.setHeader('Content-Type', response.headers['content-type'] || 'text/plain');
+        return res.send(bodyStr);
+    } catch (err) {
+        const upstreamStatus = err.response ? err.response.status : 502;
+        return res.status(upstreamStatus).send('Stream error: ' + err.message);
+    }
+});
+
+// Defensive catch-all for any unrewritten /hlsr/ segments requested by older clients
+app.use('/hlsr', (req, res) => {
+    const edgeHost = 'http://83.149.95.103:1970';
+    const target = `${edgeHost}${req.originalUrl}`;
+    return res.redirect(`/proxy?url=${encodeURIComponent(target)}`);
 });
 
 // Modern Responsive Mobile & Desktop Web Player Interface
