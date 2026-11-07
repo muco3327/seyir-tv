@@ -859,8 +859,8 @@ public final class PlayerActivity extends Activity {
             release();
             DefaultHttpDataSource.Factory httpData = new DefaultHttpDataSource.Factory()
                 .setUserAgent(request.headers.getOrDefault("User-Agent", "Mozilla/5.0 (Linux; Android 12; TV) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"))
-                .setConnectTimeoutMs(8000)
-                .setReadTimeoutMs(8000)
+                .setConnectTimeoutMs(15000)
+                .setReadTimeoutMs(20000)
                 .setAllowCrossProtocolRedirects(true);
             if (!request.headers.isEmpty()) httpData.setDefaultRequestProperties(request.headers);
 
@@ -871,10 +871,10 @@ public final class PlayerActivity extends Activity {
 
             DefaultLoadControl loadControl = new DefaultLoadControl.Builder()
                 .setBufferDurationsMs(
-                    15_000,
+                    10_000,
                     30_000,
-                    750,
-                    3_500
+                    1_000,
+                    2_000
                 )
                 .setPrioritizeTimeOverSizeThresholds(true)
                 .build();
@@ -979,7 +979,14 @@ public final class PlayerActivity extends Activity {
             MediaItem.Builder item = new MediaItem.Builder().setUri(request.url);
             boolean isRawTs = request.url.contains("output=ts") || request.url.contains("extension=ts") || request.url.contains("format=ts") || (request.url.contains(".ts") && !request.url.contains(".m3u8"));
             if (!isRawTs && (StreamProbe.HLS.equals(probedMime) || StreamRequest.isHls(request.url) || request.url.contains(".m3u8") || request.url.contains("/channel/"))) {
-                item.setMimeType(MimeTypes.APPLICATION_M3U8);
+                item.setMimeType(MimeTypes.APPLICATION_M3U8);
+                if (title.source == Source.SPORTS) {
+                    item.setLiveConfiguration(new MediaItem.LiveConfiguration.Builder()
+                        .setTargetOffsetMs(5000)
+                        .setMinOffsetMs(2500)
+                        .setMaxOffsetMs(15000)
+                        .build());
+                }
             } else if (isRawTs) {
                 item.setMimeType(MimeTypes.VIDEO_MP2T);
             }

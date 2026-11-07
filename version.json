@@ -1,6 +1,6 @@
 {
-  "versionCode": 86,
-  "versionName": "0.5.43",
-  "changelog": "Yayıncı Seviyesi Kararlılık & Donma Önleme Güncellemesi (v0.5.43):\n1. Oracle Gateway Keep-Alive bağlantı havuzu ve Stateful Circuit Breaker devreye alındı.\n2. 2.5s Canlı Manifest ve 25s RAM Segment Önbelleği eklendi; bant genişliği ve CDN ban riski sıfırlandı.\n3. APK başlangıç tarayıcısının Oracle Master linkini bozması ve döngüsel proxy hatası giderildi.\n4. Web Player Hls.js fatal error otomatik kurtarma ve rebuffer kararlılığı eklendi.",
-  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.43.apk"
+  "versionCode": 87,
+  "versionName": "0.5.44",
+  "changelog": "Sıfır Kesinti & Spor Yayını Kararlılık Güncellemesi (v0.5.44):\n1. ExoPlayer 10s-30s garanti tampon ve 5s canlı ofset profili uygulandı (mikro git-gel donmaları sonlandırıldı).\n2. Okuma zaman aşımı 20 saniyeye çıkarıldı (4.7 MB FHD parçalarda bağlantı kopması engellendi).\n3. Oracle Gateway Zero-Buffer Stream Pipe ve Proactive Stream Supervisor devreye alındı.",
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.44.apk"
 }
