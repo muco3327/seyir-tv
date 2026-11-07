@@ -1449,6 +1449,11 @@ app.get('/channel/:id.m3u8', async (req, res) => {
         for (const u of cooledDown) {
             if (!urlsToTry.includes(u)) urlsToTry.push(u);
         }
+    } else if (urlsToTry.length === 0) {
+        for (const u of cooledDown) {
+            if (!urlsToTry.includes(u)) urlsToTry.push(u);
+            if (urlsToTry.length >= 2) break;
+        }
     }
 
     for (let i = 0; i < urlsToTry.length; i++) {
@@ -1477,7 +1482,7 @@ app.get('/channel/:id.m3u8', async (req, res) => {
 
                 headers: headers,
 
-                timeout: 1800,
+                timeout: 4500,
 
                 httpAgent: httpAgent,
 
@@ -1675,7 +1680,7 @@ app.get('/proxy', async (req, res) => {
 
                 responseType: 'arraybuffer',
 
-                timeout: isSegment ? 6000 : 8000,
+                timeout: isSegment ? 15000 : 15000,
 
                 httpAgent: httpAgent,
 
@@ -1801,16 +1806,8 @@ app.get('/proxy', async (req, res) => {
     } catch (err) {
 
         if (isSegment) {
-            for (const [cid, srcUrl] of activeChannelSources.entries()) {
-                try {
-                    const srcU = new URL(srcUrl);
-                    if (targetUrl.includes(srcU.hostname) || targetUrl.includes('.help') || targetUrl.includes('d6e3e')) {
-                        manifestCache.delete(cid);
-                        jitStreamCache.delete(cid);
-                    }
-                } catch (e) {}
-            }
-            return res.status(404).end();
+            console.warn('[Proxy] Segment fetch error:', err.message, targetUrl.substring(0, 60));
+            return res.status(503).send('Segment fetch failed');
         }
 
         const upstreamStatus = err.response ? err.response.status : 502;
