@@ -826,7 +826,7 @@ async function resolveJitStream(channelId, forceFresh = false) {
     // Provider 1: teletv15
     try {
         const resp = await axios.get(`https://teletv15.top/load/yayinlink.php?id=${aid}`, {
-            timeout: 2500,
+            timeout: 4500,
             headers: { 'User-Agent': 'Mozilla/5.0' },
             httpAgent,
             httpsAgent
@@ -847,7 +847,7 @@ async function resolveJitStream(channelId, forceFresh = false) {
     if (DL_STREAM_MAP[channelId]) {
         try {
             const dlResp = await axios.get(`https://chat.cfbu247.sbs/api/resolve-dlstream/${DL_STREAM_MAP[channelId]}`, {
-                timeout: 2500,
+                timeout: 4500,
                 headers: { 'Origin': 'https://tvnow247.top', 'User-Agent': 'Mozilla/5.0' },
                 httpAgent,
                 httpsAgent
@@ -1438,12 +1438,17 @@ app.get('/channel/:id.m3u8', async (req, res) => {
         if (!urlsToTry.includes(activeSource)) urlsToTry.push(activeSource);
     }
 
+    // For sports channels, restrict static candidate list to max 2 items to prevent long stall
+    const maxCandidates = SPORTS_RESOLVE_MAP[channelId] ? 2 : available.length;
     for (const u of available) {
         if (!urlsToTry.includes(u)) urlsToTry.push(u);
+        if (urlsToTry.length >= maxCandidates) break;
     }
 
-    for (const u of cooledDown) {
-        if (!urlsToTry.includes(u)) urlsToTry.push(u);
+    if (!SPORTS_RESOLVE_MAP[channelId]) {
+        for (const u of cooledDown) {
+            if (!urlsToTry.includes(u)) urlsToTry.push(u);
+        }
     }
 
     for (let i = 0; i < urlsToTry.length; i++) {
@@ -1548,15 +1553,9 @@ app.get('/channel/:id.m3u8', async (req, res) => {
 
     if (SPORTS_RESOLVE_MAP[channelId]) {
         try {
-            const resp = await axios.get(`https://teletv15.top/load/yayinlink.php?id=${SPORTS_RESOLVE_MAP[channelId]}`, {
-                timeout: 3000,
-                headers: { 'User-Agent': 'Mozilla/5.0' },
-                httpAgent,
-                httpsAgent
-            });
-            if (resp.status === 200 && resp.data && resp.data.deismackanal) {
-                const freshUrl = resp.data.deismackanal;
-                ch.urls = [freshUrl, ...(ch.urls || []).filter(u => u !== freshUrl)];
+            console.log(`[JIT] Rapid emergency recovery for ${channelId}...`);
+            const freshUrl = await resolveJitStream(channelId, true);
+            if (freshUrl) {
                 const u = new URL(freshUrl);
                 const headers = getHeadersForUrl(freshUrl, u);
                 const liveResp = await axios.get(freshUrl, { headers, timeout: 3000, httpAgent, httpsAgent });
@@ -1579,7 +1578,9 @@ app.get('/channel/:id.m3u8', async (req, res) => {
                     return res.send(rewritten);
                 }
             }
-        } catch (e) {}
+        } catch (e) {
+            console.warn(`[JIT] Rapid emergency recovery failed for ${channelId}:`, e.message);
+        }
     }
     res.status(502).send(`All sources for channel ${channelId} currently unavailable.`);
 
