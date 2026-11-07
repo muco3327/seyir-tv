@@ -834,8 +834,7 @@ async function resolveJitStream(channelId, forceFresh = false) {
         if (resp.status === 200 && resp.data && resp.data.deismackanal) {
             const freshUrl = resp.data.deismackanal;
             jitStreamCache.set(channelId, { url: freshUrl, expires: Date.now() + 8 * 60 * 1000 });
-            const ch = curatedChannels.find(c => c.id === channelId);
-            if (ch) ch.urls = [freshUrl, ...(ch.urls || []).filter(u => u !== freshUrl)];
+            // ch.urls kept clean, no token pollution
             console.log(`[JIT] Resolved live stream for ${channelId} via primary: ${freshUrl.substring(0, 50)}...`);
             return freshUrl;
         }
@@ -855,8 +854,7 @@ async function resolveJitStream(channelId, forceFresh = false) {
             if (dlResp.status === 200 && dlResp.data && dlResp.data.m3u8) {
                 const freshUrl = dlResp.data.m3u8;
                 jitStreamCache.set(channelId, { url: freshUrl, expires: Date.now() + 5 * 60 * 1000 });
-                const ch = curatedChannels.find(c => c.id === channelId);
-                if (ch) ch.urls = [freshUrl, ...(ch.urls || []).filter(u => u !== freshUrl)];
+                // ch.urls kept clean, no token pollution
                 console.log(`[JIT] Resolved live stream for ${channelId} via fallback dlstream.`);
                 return freshUrl;
             }
@@ -1422,8 +1420,19 @@ app.get('/channel/:id.m3u8', async (req, res) => {
 
     const urlsToTry = [];
 
-    // JIT: For live sports channels, resolve fresh dynamic stream first
-    if (SPORTS_RESOLVE_MAP[channelId]) {
+    // 1. Try active working source first
+    if (activeSource && available.includes(activeSource)) {
+        if (!urlsToTry.includes(activeSource)) urlsToTry.push(activeSource);
+    }
+
+    // 2. Try verified curated sources first (ROCK SOLID)
+    for (const u of available) {
+        if (!urlsToTry.includes(u)) urlsToTry.push(u);
+        if (urlsToTry.length >= 3) break;
+    }
+
+    // 3. Fallback to JIT resolver ONLY if no verified candidate is available
+    if (urlsToTry.length === 0 && SPORTS_RESOLVE_MAP[channelId]) {
         try {
             const jitUrl = await resolveJitStream(channelId, false);
             if (jitUrl && !isSourceCooledDown(jitUrl)) {
@@ -1432,17 +1441,6 @@ app.get('/channel/:id.m3u8', async (req, res) => {
         } catch (jitErr) {
             console.warn(`[JIT] Pre-fetch error for ${channelId}:`, jitErr.message);
         }
-    }
-
-    if (activeSource && available.includes(activeSource)) {
-        if (!urlsToTry.includes(activeSource)) urlsToTry.push(activeSource);
-    }
-
-    // For sports channels, restrict static candidate list to max 2 items to prevent long stall
-    const maxCandidates = SPORTS_RESOLVE_MAP[channelId] ? 2 : available.length;
-    for (const u of available) {
-        if (!urlsToTry.includes(u)) urlsToTry.push(u);
-        if (urlsToTry.length >= maxCandidates) break;
     }
 
     if (!SPORTS_RESOLVE_MAP[channelId]) {
