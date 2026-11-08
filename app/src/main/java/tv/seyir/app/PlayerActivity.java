@@ -874,10 +874,10 @@ public final class PlayerActivity extends Activity {
 
             DefaultLoadControl loadControl = new DefaultLoadControl.Builder()
                 .setBufferDurationsMs(
-                    10_000,
-                    30_000,
-                    1_000,
-                    2_000
+                    20_000,
+                    50_000,
+                    2_500,
+                    5_000
                 )
                 .setPrioritizeTimeOverSizeThresholds(true)
                 .build();
@@ -985,9 +985,9 @@ public final class PlayerActivity extends Activity {
                 item.setMimeType(MimeTypes.APPLICATION_M3U8);
                 if (title.source == Source.SPORTS) {
                     item.setLiveConfiguration(new MediaItem.LiveConfiguration.Builder()
-                        .setTargetOffsetMs(5000)
-                        .setMinOffsetMs(2500)
-                        .setMaxOffsetMs(15000)
+                        .setTargetOffsetMs(25000)
+                        .setMinOffsetMs(15000)
+                        .setMaxOffsetMs(40000)
                         .build());
                 }
             } else if (isRawTs) {

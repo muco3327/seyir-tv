@@ -22,6 +22,16 @@ app.use(express.json());
 
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.use((req, res, next) => {
+    const start = Date.now();
+    res.on('finish', () => {
+        if (req.path.startsWith('/proxy') || req.path.includes('version') || req.path.includes('.apk') || req.path.startsWith('/api/vod')) {
+            console.log(`[REQ] ${req.method} ${req.originalUrl.substring(0, 90)} -> ${res.statusCode} (${Date.now() - start}ms) [${req.headers['x-forwarded-for'] || req.socket.remoteAddress}]`);
+        }
+    });
+    next();
+});
+
 // VOD Database & Scraper & Stream Resolver
 
 const vodDb = require('./vod_db');
@@ -298,6 +308,13 @@ app.get('/api/vod/movie/:id', async (req, res) => {
 
         }
 
+        if (stream && stream.streamUrl && stream.streamUrl.includes('vidmixi.com') && !stream.streamUrl.includes('/proxy?url=')) {
+            stream = {
+                ...stream,
+                streamUrl: `http://150.230.29.27:3000/proxy?url=${encodeURIComponent(stream.streamUrl)}`
+            };
+        }
+
         res.json({
 
             ...movie,
@@ -491,10 +508,13 @@ app.get('/api/vod/resolve', async (req, res) => {
         }
 
         if (targetUrl.includes('vidmixi.com/list/') || targetUrl.includes('.m3u8')) {
+            const finalStreamUrl = (targetUrl.includes('vidmixi.com') && !targetUrl.includes('/proxy?url='))
+                ? `http://150.230.29.27:3000/proxy?url=${encodeURIComponent(targetUrl)}`
+                : targetUrl;
 
             return res.json({
 
-                streamUrl: targetUrl,
+                streamUrl: finalStreamUrl,
 
                 mimeType: 'application/x-mpegURL',
 
@@ -532,6 +552,13 @@ app.get('/api/vod/resolve', async (req, res) => {
 
             return res.status(404).json({ error: 'Stream could not be resolved' });
 
+        }
+
+        if (stream.streamUrl && stream.streamUrl.includes('vidmixi.com') && !stream.streamUrl.includes('/proxy?url=')) {
+            stream = {
+                ...stream,
+                streamUrl: `http://150.230.29.27:3000/proxy?url=${encodeURIComponent(stream.streamUrl)}`
+            };
         }
 
         res.json(stream);
@@ -1185,7 +1212,16 @@ function isSegmentUrl(url) {
         u.includes('.cfd/c/') ||
 
         u.includes('/c/') ||
-
+        u.includes('/process/') ||
+        u.includes('imgsed') ||
+        u.includes('imgpolza') ||
+        u.includes('phodemxi') ||
+        u.includes('imagesheld') ||
+        u.includes('imgpm') ||
+        u.includes('photodeh') ||
+        u.includes('photohjul') ||
+        u.includes('imglevg') ||
+        u.includes('imgsdns') ||
         u.includes('tracks-v1a1/')
 
     );
@@ -1223,6 +1259,22 @@ function getHeadersForUrl(targetUrl, u) {
         headers['Referer'] = 'https://mahsunsports57.xyz/';
 
         headers['Origin'] = 'https://mahsunsports57.xyz';
+
+    } else if (
+        targetUrl.includes('vidmixi') ||
+        targetUrl.includes('/process/') ||
+        targetUrl.includes('imgsed') ||
+        targetUrl.includes('imgpolza') ||
+        targetUrl.includes('phodemxi') ||
+        targetUrl.includes('imagesheld') ||
+        targetUrl.includes('imgpm') ||
+        targetUrl.includes('photodeh') ||
+        targetUrl.includes('photohjul') ||
+        targetUrl.includes('imglevg') ||
+        targetUrl.includes('imgsdns')
+    ) {
+        headers['Referer'] = 'https://vidmixi.com/';
+        headers['Origin'] = 'https://vidmixi.com';
 
     } else if (targetUrl.includes('atomsport') || targetUrl.includes('ardastream')) {
 
@@ -1333,6 +1385,7 @@ setInterval(pruneSegmentCache, 15000);
 app.get('/channel/:id.m3u8', async (req, res) => {
 
     const channelId = req.params.id;
+    
 
     const ch = curatedChannels.find(c => c.id === channelId);
 
@@ -1497,32 +1550,27 @@ app.get('/channel/:id.m3u8', async (req, res) => {
                 res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
 
                 const lines = bodyStr.split('\n');
-
+                const liveSegs = [];
                 const rewritten = lines.map(l => {
-
                     const trimmed = l.trim();
-
                     if (!trimmed || trimmed.startsWith('#')) return l;
-
                     try {
-
                         const finalUrl = (response.request && response.request.res && response.request.res.responseUrl) ? response.request.res.responseUrl : targetUrl;
                         const resolvedUrl = new URL(trimmed, finalUrl).href;
-
+                        if (isSegmentUrl(resolvedUrl)) liveSegs.push(resolvedUrl);
                         return '/proxy?url=' + encodeURIComponent(resolvedUrl);
-
                     } catch (e) {
-
                         return l;
-
                     }
-
                 }).join('\n');
 
+                if (liveSegs.length > 0) {
+                    recordPlaylistOrder(liveSegs);
+                    prefetchSegment(liveSegs[liveSegs.length - 1]);
+                }
+
                 markSourceSuccess(channelId, targetUrl);
-
                 manifestCache.set(channelId, { body: rewritten, expires: Date.now() + 3500 });
-
                 return res.send(rewritten);
 
             }
@@ -1561,16 +1609,24 @@ app.get('/channel/:id.m3u8', async (req, res) => {
                 if (bodyStr.includes('#EXTM3U')) {
                     res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
                     const manifestLines = bodyStr.split('\n');
+                    const liveSegs2 = [];
                     const rewritten = manifestLines.map(l => {
                         const trimmed = l.trim();
                         if (!trimmed || trimmed.startsWith('#')) return l;
                         try {
                             const resolvedUrl = new URL(trimmed, freshUrl).href;
+                            if (isSegmentUrl(resolvedUrl)) liveSegs2.push(resolvedUrl);
                             return '/proxy?url=' + encodeURIComponent(resolvedUrl);
                         } catch (e) {
                             return l;
                         }
                     }).join('\n');
+
+                    if (liveSegs2.length > 0) {
+                        recordPlaylistOrder(liveSegs2);
+                        prefetchSegment(liveSegs2[liveSegs2.length - 1]);
+                    }
+
                     markSourceSuccess(channelId, freshUrl);
                     manifestCache.set(channelId, { body: rewritten, expires: Date.now() + 3500 });
                     return res.send(rewritten);
@@ -1606,6 +1662,70 @@ app.get('/playlist.m3u', (req, res) => {
 
 });
 
+// Lookahead prefetch engine for zero-stutter HLS playback
+const nextSegmentMap = new Map();
+
+function recordPlaylistOrder(urls) {
+    for (let i = 0; i < urls.length - 1; i++) {
+        nextSegmentMap.set(urls[i], urls[i + 1]);
+    }
+    if (nextSegmentMap.size > 15000) {
+        const keysToDelete = Array.from(nextSegmentMap.keys()).slice(0, 5000);
+        for (const k of keysToDelete) nextSegmentMap.delete(k);
+    }
+}
+
+async function fetchSegmentBuffer(targetUrl) {
+    const u = new URL(targetUrl);
+    const headers = getHeadersForUrl(targetUrl, u);
+    const upstream = await axios({
+        method: 'get',
+        url: targetUrl,
+        headers: headers,
+        responseType: 'arraybuffer',
+        timeout: 15000,
+        httpAgent: httpAgent,
+        httpsAgent: httpsAgent,
+        validateStatus: (status) => status >= 200 && status < 400
+    });
+
+    let contentType = upstream.headers['content-type'] || 'video/mp2t';
+    if (!contentType || contentType.includes('image/') || contentType.includes('text/') || targetUrl.includes('/c/') || targetUrl.includes('.jpg')) {
+        contentType = 'video/mp2t';
+    }
+    const buf = Buffer.from(upstream.data);
+    return {
+        data: buf,
+        contentType: contentType,
+        status: upstream.status
+    };
+}
+
+function prefetchSegment(targetUrl) {
+    if (!targetUrl || segmentCache.has(targetUrl) || inFlightRequests.has(targetUrl)) return;
+    const promise = fetchSegmentBuffer(targetUrl).then(result => {
+        segmentCache.set(targetUrl, {
+            data: result.data,
+            contentType: result.contentType,
+            expires: Date.now() + 120000 // 2 minutes TTL
+        });
+        inFlightRequests.delete(targetUrl);
+        return result;
+    }).catch(err => {
+        inFlightRequests.delete(targetUrl);
+    });
+    inFlightRequests.set(targetUrl, promise);
+}
+
+function triggerLookaheadPrefetch(targetUrl) {
+    const next1 = nextSegmentMap.get(targetUrl);
+    if (next1) {
+        prefetchSegment(next1);
+        const next2 = nextSegmentMap.get(next1);
+        if (next2) prefetchSegment(next2);
+    }
+}
+
 // Proxy endpoint: Adapts headers per host, streams segments directly to client without RAM buffering, rewrites playlists
 app.get('/proxy', async (req, res) => {
     const targetUrl = req.query.url;
@@ -1619,11 +1739,39 @@ app.get('/proxy', async (req, res) => {
     res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', '*');
 
-    // 1. Direct Stream Piped for Video Segments (Zero RAM Buffering, Zero Stutter)
+    // 1. Prefetch-Accelerated Zero-Stutter Video Segments
     if (isSegment) {
+        triggerLookaheadPrefetch(targetUrl);
+
+        // Serve from RAM cache immediately (0ms)
+        const cached = segmentCache.get(targetUrl);
+        if (cached && Date.now() < cached.expires && !req.headers['range']) {
+            res.status(200);
+            res.setHeader('Content-Type', cached.contentType);
+            res.setHeader('Content-Length', cached.data.length);
+            res.setHeader('X-Cache', 'HIT-RAM');
+            return res.send(cached.data);
+        }
+
+        // Wait for background in-flight download if available
+        let inFlight = inFlightRequests.get(targetUrl);
+        if (inFlight && !req.headers['range']) {
+            try {
+                const result = await inFlight;
+                res.status(result.status || 200);
+                res.setHeader('Content-Type', result.contentType);
+                res.setHeader('Content-Length', result.data.length);
+                res.setHeader('X-Cache', 'HIT-INFLIGHT');
+                return res.send(result.data);
+            } catch (err) {}
+        }
+
         try {
             const u = new URL(targetUrl);
             const headers = getHeadersForUrl(targetUrl, u);
+            if (req.headers['range']) {
+                headers['Range'] = req.headers['range'];
+            }
             const upstream = await axios({
                 method: 'get',
                 url: targetUrl,
@@ -1634,14 +1782,20 @@ app.get('/proxy', async (req, res) => {
                 httpsAgent: httpsAgent,
                 validateStatus: (status) => status >= 200 && status < 400
             });
-
             let contentType = upstream.headers['content-type'] || 'video/mp2t';
             if (!contentType || contentType.includes('image/') || contentType.includes('text/') || targetUrl.includes('/c/') || targetUrl.includes('.jpg')) {
                 contentType = 'video/mp2t';
             }
+            res.status(upstream.status);
             res.setHeader('Content-Type', contentType);
             if (upstream.headers['content-length']) {
                 res.setHeader('Content-Length', upstream.headers['content-length']);
+            }
+            if (upstream.headers['content-range']) {
+                res.setHeader('Content-Range', upstream.headers['content-range']);
+            }
+            if (upstream.headers['accept-ranges']) {
+                res.setHeader('Accept-Ranges', upstream.headers['accept-ranges']);
             }
 
             req.on('close', () => {
@@ -1678,16 +1832,37 @@ app.get('/proxy', async (req, res) => {
         if (bodyStr.startsWith('#EXTM3U') || targetUrl.includes('.m3u8') || targetUrl.includes('index.txt')) {
             res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
             const lines = bodyStr.split('\n');
+            const segmentUrlsInPlaylist = [];
             const rewritten = lines.map(line => {
                 const trimmed = line.trim();
-                if (!trimmed || trimmed.startsWith('#')) return line;
+                if (!trimmed) return line;
+                if (trimmed.startsWith('#')) {
+                    if (trimmed.includes('URI="')) {
+                        return trimmed.replace(/URI="([^"]+)"/g, (match, p1) => {
+                            try {
+                                const resolved = new URL(p1, finalUrl).href;
+                                return 'URI="/proxy?url=' + encodeURIComponent(resolved) + '"';
+                            } catch (e) {
+                                return match;
+                            }
+                        });
+                    }
+                    return line;
+                }
                 try {
                     const resolvedUrl = new URL(trimmed, finalUrl).href;
+                    if (isSegmentUrl(resolvedUrl)) {
+                        segmentUrlsInPlaylist.push(resolvedUrl);
+                    }
                     return '/proxy?url=' + encodeURIComponent(resolvedUrl);
                 } catch (e) {
                     return line;
                 }
             }).join('\n');
+            if (segmentUrlsInPlaylist.length > 0) {
+                recordPlaylistOrder(segmentUrlsInPlaylist);
+                prefetchSegment(segmentUrlsInPlaylist[0]);
+            }
             return res.send(rewritten);
         }
 
