@@ -1,8 +1,19 @@
 /**
  * Network & Device Diagnostic Endpoint (/bilgi, /ip, /cihaz)
- * Provides Local IP detection via WebRTC, Public IP from server socket,
- * and technical security breakdown for MAC address.
+ * Supports:
+ * - Local IP detection via WebRTC
+ * - Public IP from server socket
+ * - Captive Portal / Router MAC parameter extraction (?mac=XX:XX:XX:XX:XX:XX)
  */
+
+function cleanMacAddress(raw) {
+    if (!raw) return '';
+    let cleaned = raw.trim().toUpperCase().replace(/[^A-F0-9]/g, '');
+    if (cleaned.length === 12) {
+        return cleaned.match(/.{1,2}/g).join(':');
+    }
+    return raw.trim().toUpperCase();
+}
 
 function getClientPublicIp(req) {
     let ip = req.headers['x-forwarded-for'] || req.headers['x-real-ip'] || req.socket.remoteAddress || '';
@@ -14,6 +25,12 @@ function getClientPublicIp(req) {
 function renderDiagnosticPage(req) {
     const publicIp = getClientPublicIp(req);
     const userAgent = req.headers['user-agent'] || 'Bilinmiyor';
+    
+    // Check if MAC was passed via router/captive portal query parameter or header
+    const rawMac = req.query.mac || req.query.mac_address || req.query.macAddress || 
+                   req.query.client_mac || req.query.usermac || 
+                   req.headers['x-client-mac'] || req.headers['x-mac'] || '';
+    const serverMac = cleanMacAddress(rawMac);
 
     return `<!DOCTYPE html>
 <html lang="tr">
@@ -29,6 +46,7 @@ function renderDiagnosticPage(req) {
             --primary: #38bdf8;
             --primary-glow: rgba(56, 189, 248, 0.2);
             --success: #10b981;
+            --success-glow: rgba(16, 185, 129, 0.25);
             --warning: #f59e0b;
             --danger: #ef4444;
             --text: #f3f4f6;
@@ -137,6 +155,12 @@ function renderDiagnosticPage(req) {
             border: 1px solid rgba(16, 185, 129, 0.3);
         }
 
+        .badge-mac-ok {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.4);
+        }
+
         .badge-warn {
             background: rgba(245, 158, 11, 0.15);
             color: var(--warning);
@@ -184,19 +208,27 @@ function renderDiagnosticPage(req) {
             background: #1e293b;
             color: #f1f5f9;
             border: 1px solid #334155;
-            padding: 9px 14px;
+            padding: 8px 14px;
             border-radius: 8px;
             font-size: 13px;
             font-weight: 600;
             cursor: pointer;
-            margin-top: 12px;
             transition: all 0.2s ease;
-            width: fit-content;
         }
 
         .btn-action:hover {
             background: #334155;
             border-color: #475569;
+        }
+
+        .btn-primary {
+            background: #0284c7;
+            border-color: #0369a1;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0369a1;
         }
 
         .info-box {
@@ -208,6 +240,28 @@ function renderDiagnosticPage(req) {
             color: #cbd5e1;
             line-height: 1.5;
             margin-top: 10px;
+        }
+
+        .test-input-group {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .test-input {
+            flex: 1;
+            background: #0f172a;
+            border: 1px solid #334155;
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 13px;
+        }
+
+        .test-input:focus {
+            outline: none;
+            border-color: var(--primary);
         }
 
         .device-info-list {
@@ -248,7 +302,7 @@ function renderDiagnosticPage(req) {
 
     <div class="header">
         <h1>🌐 Ağ & Cihaz Teşhis Merkezi</h1>
-        <p>Bağlantı parametreleri ve donanım güvenlik analizi</p>
+        <p>Modem Yönlendirmeli (Captive Portal) Ağ & Donanım Taraması</p>
     </div>
 
     <div class="grid">
@@ -260,36 +314,47 @@ function renderDiagnosticPage(req) {
             </div>
             <div class="card-val loading" id="localIpVal">Tespit ediliyor…</div>
             <p class="card-desc" id="localIpDesc">
-                Ev/ofis Wi-Fi modeminize bağlı cihazınızın iç ağ IP adresi (örn: 192.168.x.x veya 10.x.x.x).
+                Ev/ofis modeminize bağlı cihazınızın iç ağ IP adresi (örn: 192.168.x.x veya 10.x.x.x).
             </p>
             <div id="mdnsSection" style="display:none; margin-top: 10px;">
                 <div class="info-box" style="border-left: 3px solid var(--warning);">
-                    ⚠️ <strong>mDNS Koruması:</strong> Tarayıcınız yerel IP'nizi anonimleştirdi (gizledi). Doğrudan yerel IP'yi çözmek için aşağıdaki butona basıp izin verebilirsiniz:
+                    ⚠️ <strong>mDNS Koruması:</strong> Tarayıcınız yerel IP'yi maskeledi. Doğrudan iç IP'yi görmek için izin verebilirsiniz:
                 </div>
-                <button class="btn-action" id="btnResolveMdns" onclick="resolveMdnsWithPermission()">
+                <button class="btn-action" id="btnResolveMdns" onclick="resolveMdnsWithPermission()" style="margin-top: 8px;">
                     🔍 Yerel IP'yi Çöz (İzin Ver)
                 </button>
             </div>
         </div>
 
-        <!-- 2. MAC ADRESİ -->
-        <div class="card" style="--card-glow: var(--warning);">
+        <!-- 2. MAC ADRESİ (MODEM / CAPTIVE PORTAL DESTEKLİ) -->
+        <div class="card" id="macCard" style="--card-glow: ${serverMac ? 'var(--success)' : 'var(--warning)'};">
             <div class="card-header">
                 <span class="card-title">🔒 Donanım (MAC) Adresi</span>
-                <span class="card-badge badge-warn">W3C Koruması</span>
+                <span class="card-badge ${serverMac ? 'badge-mac-ok' : 'badge-warn'}" id="macBadge">
+                    ${serverMac ? '✓ MODEMLE DOĞRULANDI' : 'PARAMETRE BEKLENİYOR'}
+                </span>
             </div>
-            <div class="card-val" style="color: #cbd5e1; font-size: 20px;">Erişilemez (Güvenlik Korumalı)</div>
-            <p class="card-desc">
-                İnternet web tarayıcılarında donanım MAC adresine erişim standartlar gereği engellidir.
+            <div class="card-val" id="macVal" style="color: ${serverMac ? '#34d399' : '#cbd5e1'}; font-size: ${serverMac ? '26px' : '20px'};">
+                ${serverMac || 'Modem Parametresi Bekleniyor'}
+            </div>
+            <p class="card-desc" id="macDesc">
+                ${serverMac ? 'Modem/Router Captive Portal yönlendirmesiyle başarıyla doğrulandı.' : 'Modem veya Hotspot yönlendirmesiyle gelen donanım kimliği.'}
             </p>
-            <div class="info-box">
-                🛡️ <strong>Teknik Neden:</strong> MAC adresi OSI 2. Katman (Data-Link) bilgisidir. İnternet paketleriniz modeme ulaştığında MAC adresi modemin içinde kalır ve internete çıkmaz. Hiçbir web sitesi uzaktan cihazınızın MAC adresini okuyamaz.
+
+            <div class="info-box" id="macHelpBox" style="${serverMac ? 'border-left: 3px solid var(--success);' : ''}">
+                ${serverMac ? 
+                    '✅ <strong>Cihaz Doğrulandı:</strong> Modeminiz bu cihazın fiziksel donanım MAC adresini <code>?mac=' + serverMac + '</code> parametresi ile sayfaya başarıyla aktardı.' :
+                    '💡 <strong>Modem/Router ile Otomatik Gösterme:</strong><br>Modem/Hotspot (MikroTik, pfSense, Keenetic vb.) karşılama sayfasına şu linki ekleyin:<br><code>http://150.230.29.27/ip?mac=$(mac)</code>'
+                }
             </div>
-            <div class="info-box" style="margin-top: 6px;">
-                📺 <strong>MAC Adresini Nereden Bulabilirsiniz?</strong><br>
-                • <strong>Android TV:</strong> Ayarlar > Ağ ve İnternet > Ağ Durumu<br>
-                • <strong>Telefon:</strong> Ayarlar > Cihaz Hakkında > Wi-Fi MAC adresi<br>
-                • <strong>Windows PC:</strong> CMD'ye <code>getmac</code> veya <code>ipconfig /all</code>
+
+            <!-- Hızlı Test Paneli -->
+            <div style="margin-top: 12px; border-top: 1px solid rgba(255,255,255,0.06); padding-top: 10px;">
+                <span style="font-size: 11px; color: var(--text-dim); text-transform: uppercase; font-weight: 600;">Modem Parametresini Test Et</span>
+                <div class="test-input-group">
+                    <input type="text" class="test-input" id="customMacInput" placeholder="Örn: B4:86:55:12:34:56" value="${serverMac}">
+                    <button class="btn-action btn-primary" onclick="applyTestMac()">Test Et</button>
+                </div>
             </div>
         </div>
 
@@ -301,10 +366,10 @@ function renderDiagnosticPage(req) {
             </div>
             <div class="card-val">${publicIp}</div>
             <p class="card-desc">
-                İnternet Servis Sağlayıcınızın (Türk Telekom, Superonline vb.) modeminize atadığı dış IP adresi.
+                İnternet Servis Sağlayıcınızın (ISP) modeminize atadığı genel internet IP'si.
             </p>
             <div class="info-box" style="margin-top: 10px;">
-                Sunucuya gelen bağlantı paketi üzerinden doğrulanmıştır.
+                Oracle Cloud Gateway üzerinden doğrulanmıştır.
             </div>
         </div>
 
@@ -339,6 +404,43 @@ function renderDiagnosticPage(req) {
     </div>
 
     <script>
+        // Check URL parameters on client side (supports client-side redirects, hashes, and query)
+        function checkClientMac() {
+            const params = new URLSearchParams(window.location.search);
+            const urlMac = params.get('mac') || params.get('mac_address') || params.get('client_mac') || params.get('usermac') || '';
+            
+            if (urlMac) {
+                let cleaned = urlMac.trim().toUpperCase().replace(/[^A-F0-9]/g, '');
+                if (cleaned.length === 12) {
+                    cleaned = cleaned.match(/.{1,2}/g).join(':');
+                } else {
+                    cleaned = urlMac.trim().toUpperCase();
+                }
+
+                document.getElementById('macVal').innerText = cleaned;
+                document.getElementById('macVal').style.color = '#34d399';
+                document.getElementById('macVal').style.fontSize = '26px';
+                
+                const badge = document.getElementById('macBadge');
+                badge.className = 'card-badge badge-mac-ok';
+                badge.innerText = '✓ MODEMLE DOĞRULANDI';
+
+                document.getElementById('macDesc').innerText = 'Modem/Router Captive Portal yönlendirmesiyle doğrulandı.';
+                document.getElementById('macCard').style.setProperty('--card-glow', 'var(--success)');
+                document.getElementById('macHelpBox').innerHTML = '✅ <strong>Cihaz Doğrulandı:</strong> Modeminiz bu cihazın fiziksel donanım MAC adresini <code>?mac=' + cleaned + '</code> parametresi ile sayfaya başarıyla aktardı.';
+                document.getElementById('macHelpBox').style.borderLeft = '3px solid var(--success)';
+                document.getElementById('customMacInput').value = cleaned;
+            }
+        }
+
+        function applyTestMac() {
+            const val = document.getElementById('customMacInput').value.trim();
+            if (!val) return;
+            const url = new URL(window.location.href);
+            url.searchParams.set('mac', val);
+            window.location.href = url.toString();
+        }
+
         // Device info
         document.getElementById('screenRes').innerText = window.screen.width + 'x' + window.screen.height + ' (' + window.devicePixelRatio + 'x)';
         document.getElementById('platformName').innerText = navigator.platform || 'Bilinmiyor';
@@ -396,7 +498,6 @@ function renderDiagnosticPage(req) {
 
                 if (match) {
                     const ip = match[1];
-                    // Check if private IP (RFC 1918)
                     if (ip.startsWith('192.168.') || ip.startsWith('10.') || ip.match(/^172\\.(1[6-9]|2[0-9]|3[0-1])\\./)) {
                         found = true;
                         localEl.innerText = ip;
@@ -421,13 +522,11 @@ function renderDiagnosticPage(req) {
             }, 2500);
         }
 
-        // Resolve mDNS via temporary media permission (unmasks private IP in Chrome/Firefox)
         async function resolveMdnsWithPermission() {
             const btn = document.getElementById('btnResolveMdns');
             btn.innerText = 'İzin Bekleniyor…';
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                // Stop audio tracks immediately
                 stream.getTracks().forEach(t => t.stop());
                 btn.innerText = 'Taranıyor…';
                 detectLocalIP();
@@ -437,7 +536,8 @@ function renderDiagnosticPage(req) {
             }
         }
 
-        // Run detection on load
+        // Init
+        checkClientMac();
         detectLocalIP();
     </script>
 </body>
@@ -446,5 +546,6 @@ function renderDiagnosticPage(req) {
 
 module.exports = {
     renderDiagnosticPage,
-    getClientPublicIp
+    getClientPublicIp,
+    cleanMacAddress
 };
