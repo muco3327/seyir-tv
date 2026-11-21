@@ -3265,7 +3265,7 @@ app.get('/channel/:id.m3u8', async (req, res) => {
 
 
 
-                timeout: 4500,
+                timeout: 7000,
 
 
 
@@ -3920,7 +3920,7 @@ app.get('/proxy', async (req, res) => {
                 recordPlaylistOrder(segmentUrlsInPlaylist);
                 prefetchSegment(segmentUrlsInPlaylist[0]);
             }
-            playlistGraceCache.set(targetUrl, { body: rewritten, expires: Date.now() + 30000 });
+            playlistGraceCache.set(targetUrl, { body: rewritten, expires: Date.now() + 120000 });
             return res.send(rewritten);
         }
 

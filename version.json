@@ -1,6 +1,6 @@
 {
-  "versionCode": 92,
-  "versionName": "0.5.49",
-  "changelog": "Donma ve Sahte Duraklatma Düzeltmesi (v0.5.49):\n1. Tampon dalgalanmasında player'ın kendi kendini 'Duraklatıldı' moduna alması ve kontrol barının ekranda kilitli kalması engellendi.\n2. Buton durumu `playWhenReady` durumuna bağlandı; kullanıcı kumandadan basmadıkça yayın durdurulmaz.\n3. Ölü DNS/401 yedek linkler temizlendi; 100% test edilmiş 1080p ve 720p yedekler aktifleştirildi.\n4. Donma zaman aşımı 12 saniyeye çekildi ve otomatik yedek kaynağa geçiş garantilendi.",
-  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.49.apk"
+  "versionCode": 93,
+  "versionName": "0.5.50",
+  "changelog": "Tampon ve Player Mimarisi Yenilemesi (v0.5.50):\n1. Tekil Sanal Uç Nokta İzolasyonu: APK'nın üçüncü taraf kırılgan IPTV linklerine doğrudan atlaması tamamen kaldırıldı. Tüm kaynak rotasyonu ve yedekleme sunucu tarafında Oracle Gateway üzerinden yürütülür.\n2. Canlı Yayın Tampon Ayarı (DefaultLoadControl): Canlı HLS penceresine uygun 8s minBuffer, 1.5s playback ve 10s back-buffer ile donma döngüsü engellendi.\n3. Adaptif Kalite (ABR) İyileştirmesi: Otomatik modda zorla en yüksek video profili dayatması kaldırılarak ExoPlayer'ın bant genişliğine göre akıcı yayın sürdürmesi sağlandı.\n4. Tampon UI Kararması Giderildi: Anlık 2.5s altındaki küçük tamponlamalarda maç ekranının kararması ve spinner çıkması engellendi.",
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.50.apk"
 }
