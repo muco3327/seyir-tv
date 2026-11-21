@@ -390,18 +390,21 @@ public final class PlayerActivity extends Activity {
         });
     }
 
+    private int bufferRetryCount = 0;
     private final Runnable bufferingTimeoutTask = new Runnable() {
         @Override public void run() {
             if (player != null && player.getPlaybackState() == Player.STATE_BUFFERING && !closing && !isFinishing()) {
                 if (player.getBufferedPosition() > player.getCurrentPosition() + 1000) {
                     return;
                 }
-                if (title != null && title.source == Source.SPORTS && player.isCurrentMediaItemLive()) {
+                bufferRetryCount++;
+                if (bufferRetryCount <= 1 && title != null && title.source == Source.SPORTS && player.isCurrentMediaItemLive()) {
                     player.seekToDefaultPosition();
                     player.play();
                     startBufferingTimeout();
                     return;
                 }
+                bufferRetryCount = 0;
                 if (!fallbackList.isEmpty()) {
                     playerStatusBadge.setText("Yedek sunucu deneniyor…");
                     tryNextSource("Akış Zaman Aşımı");
@@ -412,7 +415,7 @@ public final class PlayerActivity extends Activity {
 
     private void startBufferingTimeout() {
         progressHandler.removeCallbacks(bufferingTimeoutTask);
-        long delay = (title != null && title.source == Source.SPORTS) ? 30000 : (hasPlayedOnce ? 15000 : 25000);
+        long delay = (title != null && title.source == Source.SPORTS) ? 12000 : (hasPlayedOnce ? 12000 : 20000);
         progressHandler.postDelayed(bufferingTimeoutTask, delay);
     }
 
@@ -920,21 +923,26 @@ public final class PlayerActivity extends Activity {
             player.addListener(new Player.Listener() {
                 @Override public void onIsPlayingChanged(boolean playing) {
                     liveRecovery.playing(playing, SystemClock.elapsedRealtime());
-                    btnPlayPause.setText(playing ? "Duraklat" : "Oynat");
+                    if (player == null || closing) return;
+                    boolean userWantsPlay = player.getPlayWhenReady();
+                    btnPlayPause.setText(userWantsPlay ? "Duraklat" : "Oynat");
                     if (playing) {
                         bufferingHandler.removeCallbacks(showBufferingTask);
                         if (playerBufferingLayout != null) playerBufferingLayout.setVisibility(View.GONE);
                         playerStatusBadge.setText("Oynatılıyor");
                         scheduleHide();
                     } else {
-                        playerStatusBadge.setText("Duraklatıldı");
-                        overlays(true);
+                        if (!userWantsPlay) {
+                            playerStatusBadge.setText("Duraklatıldı");
+                            overlays(true);
+                        }
                     }
                 }
                 @Override public void onPlaybackStateChanged(int s) {
                     if (player == null || closing) return;
                     if (s == Player.STATE_READY) {
                         hasPlayedOnce = true;
+                        bufferRetryCount = 0;
                         cancelBufferingTimeout();
                         bufferingHandler.removeCallbacks(showBufferingTask);
                         if (playerBufferingLayout != null) playerBufferingLayout.setVisibility(View.GONE);
@@ -1297,8 +1305,10 @@ public final class PlayerActivity extends Activity {
 
     private void scheduleHide() {
         progressHandler.removeCallbacks(hideControls);
-        if (player != null && player.isPlaying() && (channelSidebar == null || channelSidebar.getVisibility() != View.VISIBLE)) {
-            progressHandler.postDelayed(hideControls, 4000);
+        if (player != null && (channelSidebar == null || channelSidebar.getVisibility() != View.VISIBLE)) {
+            if (player.getPlayWhenReady()) {
+                progressHandler.postDelayed(hideControls, 4000);
+            }
         }
     }
 

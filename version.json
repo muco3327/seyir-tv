@@ -1,6 +1,6 @@
 {
-  "versionCode": 91,
-  "versionName": "0.5.48",
-  "changelog": "Kesintisiz Akış & Sıfır Tampon Titremesi (v0.5.48):\n1. Upstream 403/502 anlık düşüşlerinde 30s koruma tamponu (Grace Manifest) devreye alındı, oynatma kesintisi engellendi.\n2. beIN Sports ve S Sport kanallarına 4 bağımsız yedek akış kaynağı eklendi.\n3. Ufak tampon geçişlerinde ekranda beliren 'Yayın yükleniyor…' pop-up'ı debounce edilerek gereksiz görünmesi engellendi.\n4. Yeniden yükleme süresi (Rebuffer) 1.5 saniyeye düşürülerek anında akış sağlandı.",
-  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.48.apk"
+  "versionCode": 92,
+  "versionName": "0.5.49",
+  "changelog": "Donma ve Sahte Duraklatma Düzeltmesi (v0.5.49):\n1. Tampon dalgalanmasında player'ın kendi kendini 'Duraklatıldı' moduna alması ve kontrol barının ekranda kilitli kalması engellendi.\n2. Buton durumu `playWhenReady` durumuna bağlandı; kullanıcı kumandadan basmadıkça yayın durdurulmaz.\n3. Ölü DNS/401 yedek linkler temizlendi; 100% test edilmiş 1080p ve 720p yedekler aktifleştirildi.\n4. Donma zaman aşımı 12 saniyeye çekildi ve otomatik yedek kaynağa geçiş garantilendi.",
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.49.apk"
 }
