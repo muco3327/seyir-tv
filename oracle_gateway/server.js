@@ -2671,13 +2671,9 @@ function getHeadersForUrl(targetUrl, u) {
 
 
     const headers = {
-
-
-
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
-
-
-
+        'User-Agent': (targetUrl.includes('tomtv') || targetUrl.includes('/live/') || targetUrl.includes(':25461') || targetUrl.includes(':8080') || targetUrl.includes('Celalustun') || targetUrl.includes('LiudmilaSheremet') || targetUrl.includes('Mustafaozdem'))
+            ? 'IPTVSmartersPro/3.1.5 (Linux; Android 12)'
+            : 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
     };
 
 
@@ -2847,6 +2843,7 @@ const sourceCooldowns = new Map(); // url -> timestamp
 
 
 const manifestCache = new Map(); // channelId -> { body: string, expires: number }
+const playlistGraceCache = new Map(); // targetUrl -> { body: string, expires: number }
 
 
 
@@ -2902,7 +2899,7 @@ function markSourceFailed(url) {
 
 
 
-    sourceCooldowns.set(url, Date.now() + 60000); // Cooldown for 60 seconds
+    sourceCooldowns.set(url, Date.now() + 10000); // Cooldown for 10 seconds
 
 
 
@@ -3486,6 +3483,14 @@ app.get('/channel/:id.m3u8', async (req, res) => {
 
     }
 
+    const cachedManifest = manifestCache.get(channelId);
+    if (cachedManifest && cachedManifest.body) {
+        console.log(`[Channel] Serving grace period cached manifest for ${channelId} (preventing 502)`);
+        res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
+        res.setHeader('X-Cache', 'HIT-EMERGENCY-GRACE');
+        return res.send(cachedManifest.body);
+    }
+
     res.status(502).send(`All sources for channel ${channelId} currently unavailable.`);
 
 
@@ -3825,11 +3830,26 @@ app.get('/proxy', async (req, res) => {
             return upstream.data.pipe(res);
 
         } catch (err) {
-
-            console.warn('[Proxy] Segment fetch error:', err.message, targetUrl.substring(0, 80));
-
-            return res.status(503).send('Segment fetch failed');
-
+            try {
+                await new Promise(r => setTimeout(r, 200));
+                const retryUpstream = await axios({
+                    method: 'get',
+                    url: targetUrl,
+                    headers: headers,
+                    responseType: 'stream',
+                    timeout: 10000,
+                    httpAgent: httpAgent,
+                    httpsAgent: httpsAgent,
+                    validateStatus: (status) => status >= 200 && status < 400
+                });
+                let ct = retryUpstream.headers['content-type'] || 'video/mp2t';
+                res.status(retryUpstream.status);
+                res.setHeader('Content-Type', ct);
+                return retryUpstream.data.pipe(res);
+            } catch (retryErr) {
+                console.warn('[Proxy] Segment fetch error after retry:', retryErr.message, targetUrl.substring(0, 80));
+                return res.status(503).send('Segment fetch failed');
+            }
         }
 
     }
@@ -3900,13 +3920,22 @@ app.get('/proxy', async (req, res) => {
                 recordPlaylistOrder(segmentUrlsInPlaylist);
                 prefetchSegment(segmentUrlsInPlaylist[0]);
             }
+            playlistGraceCache.set(targetUrl, { body: rewritten, expires: Date.now() + 30000 });
             return res.send(rewritten);
         }
 
         res.setHeader('Content-Type', response.headers['content-type'] || 'text/plain');
         return res.send(buf);
     } catch (err) {
-
+        if (targetUrl && (targetUrl.includes('.m3u8') || targetUrl.includes('index.txt') || targetUrl.includes('/live/'))) {
+            const cachedPlaylist = playlistGraceCache.get(targetUrl);
+            if (cachedPlaylist && Date.now() < cachedPlaylist.expires) {
+                console.log('[Proxy] Serving cached playlist grace for', targetUrl.substring(0, 60));
+                res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
+                res.setHeader('X-Cache', 'HIT-PLAYLIST-GRACE');
+                return res.send(cachedPlaylist.body);
+            }
+        }
         const upstreamStatus = err.response ? err.response.status : 502;
 
         if (upstreamStatus === 404 && targetUrl) {

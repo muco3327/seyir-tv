@@ -5,6 +5,9 @@
     "category": "beIN Sports",
     "urls": [
       "http://190502.tomtv.eu:80/live/LiudmilaSheremet/233v9m9kjc/89.m3u8",
+      "https://raw.githubusercontent.com/kadirsener1/247/refs/heads/main/cdnlive/trbeinsports1.m3u8",
+      "https://raw.githubusercontent.com/kadirsener1/247/refs/heads/main/tvnow247/trbeinsports1.m3u8",
+      "https://raw.githubusercontent.com/kadirsener1/mahsun/refs/heads/main/channels/TR_beIN_Sport_1_HD.m3u8",
       "http://190502.tomtv.eu:80/live/LiudmilaSheremet/233v9m9kjc/77238.m3u8"
     ]
   },
@@ -14,6 +17,7 @@
     "category": "beIN Sports",
     "urls": [
       "http://190502.tomtv.eu:80/live/LiudmilaSheremet/233v9m9kjc/87.m3u8",
+      "https://raw.githubusercontent.com/kadirsener1/247/refs/heads/main/cdnlive/trbeinsports2.m3u8",
       "http://190502.tomtv.eu:80/live/LiudmilaSheremet/233v9m9kjc/31408.m3u8"
     ]
   },
@@ -23,6 +27,7 @@
     "category": "beIN Sports",
     "urls": [
       "http://190502.tomtv.eu:80/live/LiudmilaSheremet/233v9m9kjc/31409.m3u8",
+      "https://raw.githubusercontent.com/kadirsener1/247/refs/heads/main/cdnlive/trbeinsports3.m3u8",
       "http://190502.tomtv.eu:80/live/LiudmilaSheremet/233v9m9kjc/31407.m3u8"
     ]
   },
@@ -31,7 +36,8 @@
     "name": "beIN Sports 4",
     "category": "beIN Sports",
     "urls": [
-      "http://190502.tomtv.eu:80/live/LiudmilaSheremet/233v9m9kjc/81.m3u8"
+      "http://190502.tomtv.eu:80/live/LiudmilaSheremet/233v9m9kjc/81.m3u8",
+      "https://raw.githubusercontent.com/kadirsener1/247/refs/heads/main/cdnlive/trbeinsports4.m3u8"
     ]
   },
   {
@@ -178,7 +184,8 @@
     "name": "S Sport 1",
     "category": "Spor",
     "urls": [
-      "http://190502.tomtv.eu:80/live/LiudmilaSheremet/233v9m9kjc/68.m3u8"
+      "http://190502.tomtv.eu:80/live/LiudmilaSheremet/233v9m9kjc/68.m3u8",
+      "https://raw.githubusercontent.com/kadirsener1/247/refs/heads/main/cdnlive/trssport.m3u8"
     ]
   },
   {
@@ -186,7 +193,8 @@
     "name": "S Sport 2",
     "category": "Spor",
     "urls": [
-      "http://190502.tomtv.eu:80/live/LiudmilaSheremet/233v9m9kjc/15169.m3u8"
+      "http://190502.tomtv.eu:80/live/LiudmilaSheremet/233v9m9kjc/15169.m3u8",
+      "https://raw.githubusercontent.com/kadirsener1/247/refs/heads/main/cdnlive/trssport2.m3u8"
     ]
   },
   {

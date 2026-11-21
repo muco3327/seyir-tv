@@ -84,6 +84,15 @@ public final class PlayerActivity extends Activity {
 
     private final Handler progressHandler = new Handler(Looper.getMainLooper());
     private final Handler hudHandler = new Handler(Looper.getMainLooper());
+    private final Handler bufferingHandler = new Handler(Looper.getMainLooper());
+    private final Runnable showBufferingTask = () -> {
+        if (player != null && player.getPlaybackState() == Player.STATE_BUFFERING && !closing && !isFinishing()) {
+            if (playerBufferingLayout != null) {
+                playerBufferingLayout.setVisibility(View.VISIBLE);
+                tvBufferingStatus.setText("Yayın yükleniyor…");
+            }
+        }
+    };
     private int selectedQualityHeight = 0;
     private float currentSpeed = 1.0f;
 
@@ -880,10 +889,10 @@ public final class PlayerActivity extends Activity {
 
             DefaultLoadControl loadControl = new DefaultLoadControl.Builder()
                 .setBufferDurationsMs(
-                    20_000,
+                    15_000,
                     50_000,
-                    2_500,
-                    5_000
+                    1_500,
+                    1_500
                 )
                 .setPrioritizeTimeOverSizeThresholds(true)
                 .build();
@@ -913,6 +922,7 @@ public final class PlayerActivity extends Activity {
                     liveRecovery.playing(playing, SystemClock.elapsedRealtime());
                     btnPlayPause.setText(playing ? "Duraklat" : "Oynat");
                     if (playing) {
+                        bufferingHandler.removeCallbacks(showBufferingTask);
                         if (playerBufferingLayout != null) playerBufferingLayout.setVisibility(View.GONE);
                         playerStatusBadge.setText("Oynatılıyor");
                         scheduleHide();
@@ -926,6 +936,7 @@ public final class PlayerActivity extends Activity {
                     if (s == Player.STATE_READY) {
                         hasPlayedOnce = true;
                         cancelBufferingTimeout();
+                        bufferingHandler.removeCallbacks(showBufferingTask);
                         if (playerBufferingLayout != null) playerBufferingLayout.setVisibility(View.GONE);
                         boolean isLive = player.isCurrentMediaItemLive() || player.getDuration() <= 0;
                         if (badgeLive != null) badgeLive.setVisibility(isLive ? View.VISIBLE : View.GONE);
@@ -934,13 +945,19 @@ public final class PlayerActivity extends Activity {
                         updateQualityLabel();
                         scheduleHide();
                     } else if (s == Player.STATE_BUFFERING) {
-                        if (playerBufferingLayout != null) {
-                            playerBufferingLayout.setVisibility(View.VISIBLE);
-                            tvBufferingStatus.setText("Yayın yükleniyor…");
+                        if (!hasPlayedOnce) {
+                            if (playerBufferingLayout != null) {
+                                playerBufferingLayout.setVisibility(View.VISIBLE);
+                                tvBufferingStatus.setText("Yayın yükleniyor…");
+                            }
+                        } else {
+                            bufferingHandler.removeCallbacks(showBufferingTask);
+                            bufferingHandler.postDelayed(showBufferingTask, 1500);
                         }
                         playerStatusBadge.setText("Yükleniyor…");
                         startBufferingTimeout();
                     } else if (s == Player.STATE_ENDED) {
+                        bufferingHandler.removeCallbacks(showBufferingTask);
                         if (playerBufferingLayout != null) playerBufferingLayout.setVisibility(View.GONE);
                         library.progress(title, player.getDuration(), player.getDuration());
                         playerStatusBadge.setText("Tamamlandı");
@@ -1309,6 +1326,7 @@ public final class PlayerActivity extends Activity {
         if (pendingProbe != null) { pendingProbe.cancel(true); pendingProbe = null; }
         progressHandler.removeCallbacks(hideControls);
         progressHandler.removeCallbacks(updateProgressTask);
+        bufferingHandler.removeCallbacks(showBufferingTask);
         if (player == null) return;
         ExoPlayer old = player;
         player = null;
