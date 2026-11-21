@@ -1,6 +1,6 @@
 {
-  "versionCode": 89,
-  "versionName": "0.5.46",
-  "changelog": "Genişletilmiş 25s Canlı Tampon & Sıfır Takılma (v0.5.46):\n1. ExoPlayer 10s-30s garanti tampon ve 5s canlı ofset profili uygulandı (mikro git-gel donmaları sonlandırıldı).\n2. Okuma zaman aşımı 20 saniyeye çıkarıldı (4.7 MB FHD parçalarda bağlantı kopması engellendi).\n3. Oracle Gateway Zero-Buffer Stream Pipe ve Proactive Stream Supervisor devreye alındı.",
-  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.46.apk"
+  "versionCode": 90,
+  "versionName": "0.5.47",
+  "changelog": "Donma Algılama Döngüsü & Akıllı Canlı Kurtarma Düzeltmesi (v0.5.47):\n1. Erken yedek yayına atlama ve ekranda beliren donma uyarıları kaldırıldı.\n2. Kısa süreli canlı yayın gecikmelerinde anlık canlı noktaya otomatik senkronizasyon (LiveRecovery) sağlandı.\n3. Süresi bitmiş sunucu hesapları temizlenerek kesintisiz akış sağlandı.",
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.47.apk"
 }
