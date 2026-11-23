@@ -3,15 +3,29 @@ package tv.seyir.app;
 import java.util.HashSet;
 import java.util.Set;
 
-/** Only the root playlist's known redirects may be renewed via the channel entry URL. */
+/** Dynamic playlist route allowing warm channel transitions without rebuilding DataSource. */
 final class PlaylistRoute {
-    private final String entry;
+    private volatile String entry;
     private final Set<String> roots = new HashSet<>();
 
-    PlaylistRoute(String entry) { this.entry = entry; roots.add(entry); }
+    PlaylistRoute(String entry) {
+        setEntry(entry);
+    }
+
+    synchronized void setEntry(String newEntry) {
+        this.entry = newEntry;
+        roots.clear();
+        if (newEntry != null && !newEntry.isEmpty()) {
+            roots.add(newEntry);
+        }
+    }
+
+    synchronized String getEntry() {
+        return entry;
+    }
 
     synchronized String resolve(String requested) {
-        return roots.contains(requested) ? entry : requested;
+        return (entry != null && roots.contains(requested)) ? entry : requested;
     }
 
     synchronized void opened(String requested, String effective) {
