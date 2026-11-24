@@ -1998,6 +1998,86 @@ async function resolveJitStream(channelId, forceFresh = false) {
 
 
 
+
+async function testStreamUrl(targetUrl, timeoutMs = 2000) {
+    if (!targetUrl) return false;
+    try {
+        const u = new URL(targetUrl);
+        const headers = getHeadersForUrl(targetUrl, u);
+
+        // 1. Ultra-fast HEAD probe (30ms, 0 byte body)
+        try {
+            const headRes = await axios({
+                method: 'head',
+                url: targetUrl,
+                headers: headers,
+                timeout: timeoutMs,
+                httpAgent,
+                httpsAgent,
+                maxRedirects: 3,
+                validateStatus: (status) => status >= 200 && status < 400
+            });
+            if (headRes.status >= 200 && headRes.status < 400) {
+                return true;
+            }
+        } catch (headErr) {
+            // fallback to range GET probe
+        }
+
+        // 2. Safe Range GET probe (only first 2KB, stream destroyed immediately)
+        const reqHeaders = { ...headers, 'Range': 'bytes=0-2048' };
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+        const res = await axios({
+            method: 'get',
+            url: targetUrl,
+            headers: reqHeaders,
+            timeout: timeoutMs,
+            signal: controller.signal,
+            responseType: 'stream',
+            httpAgent,
+            httpsAgent,
+            maxRedirects: 3,
+            validateStatus: (status) => status >= 200 && status < 400
+        });
+
+        clearTimeout(timer);
+
+        return new Promise((resolve) => {
+            let received = '';
+            let resolved = false;
+
+            const finish = (result) => {
+                if (!resolved) {
+                    resolved = true;
+                    try { res.data.destroy(); } catch (e) {}
+                    resolve(result);
+                }
+            };
+
+            const ct = res.headers['content-type'] || '';
+            if (ct.includes('mpegurl') || ct.includes('video') || targetUrl.includes('.m3u8') || targetUrl.includes('index.txt')) {
+                finish(true);
+                return;
+            }
+
+            res.data.on('data', (chunk) => {
+                received += chunk.toString('utf-8');
+                if (received.includes('#EXT') || received.length > 512) {
+                    finish(true);
+                }
+            });
+
+            res.data.on('end', () => finish(received.includes('#EXT') || received.length > 0));
+            res.data.on('error', () => finish(false));
+            setTimeout(() => finish(false), timeoutMs);
+        });
+    } catch (e) {
+        return false;
+    }
+}
+
 async function refreshAllChannels() {
     if (isScanning) {
         console.log('[UniversalRefresh] Scan already in progress, skipping duplicate.');
@@ -2018,6 +2098,7 @@ async function refreshAllChannels() {
             const fresh = await resolveJitStream(cid, true);
             if (fresh) {
                 sportsUpdated++;
+                channelStatus[cid] = { online: true, checkedAt: Date.now(), workingCount: 1, primary: fresh };
                 const ch = curatedChannels.find(c => c.id === cid);
                 if (ch && Array.isArray(ch.urls)) {
                     if (!ch.urls.includes(fresh)) {
