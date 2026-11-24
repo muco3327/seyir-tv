@@ -76,6 +76,42 @@
     ]
   },
   {
+    "id": "ssport1",
+    "name": "S Sport 1",
+    "category": "Spor",
+    "urls": [
+      "http://190502.tomtv.eu:80/live/LiudmilaSheremet/233v9m9kjc/68.m3u8"
+    ]
+  },
+  {
+    "id": "ssport2",
+    "name": "S Sport 2",
+    "category": "Spor",
+    "urls": [
+      "http://190502.tomtv.eu:80/live/LiudmilaSheremet/233v9m9kjc/15169.m3u8"
+    ]
+  },
+  {
+    "id": "trtspor",
+    "name": "TRT Spor",
+    "category": "Spor",
+    "urls": [
+      "https://tv-trtspor1.medya.trt.com.tr/master_1080.m3u8",
+      "https://tv-trtspor1.medya.trt.com.tr/master_720.m3u8",
+      "https://trt.daioncdn.net/trtspor/master.m3u8?app=web"
+    ]
+  },
+  {
+    "id": "trtsporyildiz",
+    "name": "TRT Spor Yıldız",
+    "category": "Spor",
+    "urls": [
+      "http://me.mdmfista.com:80/play/live.php?mac=00:1A:79:F5:CE:D7&stream=18644&extension=ts&play_token=6fextF0Ovq",
+      "http://me.mdmfista.com:80/play/live.php?mac=00:1A:79:F5:CE:D7&stream=18645&extension=ts&play_token=hg6kFiym3N",
+      "http://me.mdmfista.com:80/play/live.php?mac=00:1A:79:F5:CE:D7&stream=615827&extension=ts&play_token=xGWV8Z6zFD"
+    ]
+  },
+  {
     "id": "aspor",
     "name": "A Spor",
     "category": "Spor",
@@ -143,52 +179,6 @@
     "category": "Spor",
     "urls": [
       "http://me.mdmfista.com:80/play/live.php?mac=00:1A:79:F5:CE:D7&stream=15516&extension=ts&play_token=5QGT1mdeQC"
-    ]
-  },
-  {
-    "id": "fbtv",
-    "name": "FB TV",
-    "category": "Spor",
-    "urls": [
-      "http://eempiree.com:8080/Exe381SZV/jTGka52/94894?output=ts",
-      "http://eempiree.com:8080/Exe381SZV/jTGka52/596874?output=ts",
-      "http://deat1.com:8080/Celalustun/sEUTbRUtkwJH/45?output=ts"
-    ]
-  },
-  {
-    "id": "gstv",
-    "name": "GS TV",
-    "category": "Spor",
-    "urls": [
-      "http://me.mdmfista.com:80/play/live.php?mac=00:1A:79:F5:CE:D7&stream=696&extension=ts&play_token=7X0Jam6lh9",
-      "http://deat1.com:8080/Celalustun/sEUTbRUtkwJH/44?output=ts",
-      "https://owifavo5.rocketcdn.com/gstv/gstv.smil/master.m3u8"
-    ]
-  },
-  {
-    "id": "htspor",
-    "name": "HT Spor",
-    "category": "Spor",
-    "urls": [
-      "https://ciner-live.daioncdn.net/ht-spor/ht-spor_1080p.m3u8",
-      "http://me.mdmfista.com:80/play/live.php?mac=00:1A:79:F5:CE:D7&stream=1245942&extension=ts&play_token=Zo53i3J9qC",
-      "http://me.mdmfista.com:80/play/live.php?mac=00:1A:79:F5:CE:D7&stream=1245940&extension=ts&play_token=qebqaIhlw2"
-    ]
-  },
-  {
-    "id": "ssport1",
-    "name": "S Sport 1",
-    "category": "Spor",
-    "urls": [
-      "http://190502.tomtv.eu:80/live/LiudmilaSheremet/233v9m9kjc/68.m3u8"
-    ]
-  },
-  {
-    "id": "ssport2",
-    "name": "S Sport 2",
-    "category": "Spor",
-    "urls": [
-      "http://190502.tomtv.eu:80/live/LiudmilaSheremet/233v9m9kjc/15169.m3u8"
     ]
   },
   {
@@ -279,23 +269,13 @@
     ]
   },
   {
-    "id": "trtspor",
-    "name": "TRT Spor",
+    "id": "htspor",
+    "name": "HT Spor",
     "category": "Spor",
     "urls": [
-      "https://tv-trtspor1.medya.trt.com.tr/master_1080.m3u8",
-      "https://tv-trtspor1.medya.trt.com.tr/master_720.m3u8",
-      "https://trt.daioncdn.net/trtspor/master.m3u8?app=web"
-    ]
-  },
-  {
-    "id": "trtsporyildiz",
-    "name": "TRT Spor Yıldız",
-    "category": "Spor",
-    "urls": [
-      "http://me.mdmfista.com:80/play/live.php?mac=00:1A:79:F5:CE:D7&stream=18644&extension=ts&play_token=6fextF0Ovq",
-      "http://me.mdmfista.com:80/play/live.php?mac=00:1A:79:F5:CE:D7&stream=18645&extension=ts&play_token=hg6kFiym3N",
-      "http://me.mdmfista.com:80/play/live.php?mac=00:1A:79:F5:CE:D7&stream=615827&extension=ts&play_token=xGWV8Z6zFD"
+      "https://ciner-live.daioncdn.net/ht-spor/ht-spor_1080p.m3u8",
+      "http://me.mdmfista.com:80/play/live.php?mac=00:1A:79:F5:CE:D7&stream=1245942&extension=ts&play_token=Zo53i3J9qC",
+      "http://me.mdmfista.com:80/play/live.php?mac=00:1A:79:F5:CE:D7&stream=1245940&extension=ts&play_token=qebqaIhlw2"
     ]
   },
   {
@@ -306,6 +286,26 @@
       "https://rkhubpaomb.turknet.ercdn.net/fwjkgpasof/tv8bucuk/tv8bucuk_1080p.m3u8",
       "https://tv8.daioncdn.net/tv8bucuk/tv8bucuk_1080p.m3u8?app=tv8bucuk_web",
       "https://tv8.daioncdn.net/tv8bucuk/tv8bucuk_1080p.m3u8?&sid=7tra76g4cefx&app=bf58ab52-4865-4c81-b223-26b41009801e&ce=3"
+    ]
+  },
+  {
+    "id": "fbtv",
+    "name": "FB TV",
+    "category": "Spor",
+    "urls": [
+      "http://eempiree.com:8080/Exe381SZV/jTGka52/94894?output=ts",
+      "http://eempiree.com:8080/Exe381SZV/jTGka52/596874?output=ts",
+      "http://deat1.com:8080/Celalustun/sEUTbRUtkwJH/45?output=ts"
+    ]
+  },
+  {
+    "id": "gstv",
+    "name": "GS TV",
+    "category": "Spor",
+    "urls": [
+      "http://me.mdmfista.com:80/play/live.php?mac=00:1A:79:F5:CE:D7&stream=696&extension=ts&play_token=7X0Jam6lh9",
+      "http://deat1.com:8080/Celalustun/sEUTbRUtkwJH/44?output=ts",
+      "https://owifavo5.rocketcdn.com/gstv/gstv.smil/master.m3u8"
     ]
   },
   {
@@ -539,76 +539,6 @@
     ]
   },
   {
-    "id": "discovery",
-    "name": "Discovery Channel",
-    "category": "Belgesel",
-    "urls": [
-      "http://me.mdmfista.com:80/play/live.php?mac=00:1A:79:F5:CE:D7&stream=197427&extension=ts&play_token=rXjLa9bDy7",
-      "http://eempiree.com:8080/Exe381SZV/jTGka52/653783?output=ts",
-      "http://eempiree.com:8080/Exe381SZV/jTGka52/643907?output=ts"
-    ]
-  },
-  {
-    "id": "dmax",
-    "name": "DMAX",
-    "category": "Belgesel",
-    "urls": [
-      "https://dogus.daioncdn.net/dmax/dmax_720p.m3u8?token=RVlMSWxlU1Exc0QzemhZaGt0UnlDWWNRVnQ1b0VMbWpHYndYRjRrM2l0Yz0=&sid=859nsaxc33ff&app=5a02c599-d17e-4982-9b04-090934d51af7&ce=3",
-      "https://dogus-live.daioncdn.net/dmax/dmax_720p.m3u8",
-      "http://me.mdmfista.com:80/play/live.php?mac=00:1A:79:F5:CE:D7&stream=197428&extension=ts&play_token=AmK9aorYxN"
-    ]
-  },
-  {
-    "id": "natgeo",
-    "name": "National Geographic",
-    "category": "Belgesel",
-    "urls": [
-      "https://saran-live.ercdn.net/natgeohd/index.m3u8",
-      "http://mag.tivi-one-iptv.net:80/play/live.php?mac=00:1A:79:C0:8F:65&stream=197433&extension=ts&play_token=vIAFFKePWW",
-      "http://me.mdmfista.com:80/play/live.php?mac=00:1A:79:F5:CE:D7&stream=197433&extension=ts&play_token=vIAFFKePWW"
-    ]
-  },
-  {
-    "id": "natgeowild",
-    "name": "Nat Geo Wild",
-    "category": "Belgesel",
-    "urls": [
-      "http://me.mdmfista.com:80/play/live.php?mac=00:1A:79:F5:CE:D7&stream=197432&extension=ts&play_token=EgZySyAGug",
-      "http://eempiree.com:8080/Exe381SZV/jTGka52/152330?output=ts",
-      "http://eempiree.com:8080/Exe381SZV/jTGka52/94153?output=ts"
-    ]
-  },
-  {
-    "id": "tarihtv",
-    "name": "Tarih TV",
-    "category": "Belgesel",
-    "urls": [
-      "https://playlist.fasttvcdn.com/pl/rfrk9821hdy9dayo8wfyha/tarih-tv/playlist.m3u8",
-      "http://me.mdmfista.com:80/play/live.php?mac=00:1A:79:F5:CE:D7&stream=197450&extension=ts&play_token=PwfkIVPsct",
-      "http://eempiree.com:8080/Exe381SZV/jTGka52/676697?output=ts"
-    ]
-  },
-  {
-    "id": "tlc",
-    "name": "TLC",
-    "category": "Belgesel",
-    "urls": [
-      "https://dogus-live.daioncdn.net/tlc/tlc_720p.m3u8",
-      "http://me.mdmfista.com:80/play/live.php?mac=00:1A:79:F5:CE:D7&stream=197429&extension=ts&play_token=K6dnYNtVcu",
-      "http://eempiree.com:8080/Exe381SZV/jTGka52/676699?output=ts"
-    ]
-  },
-  {
-    "id": "trtbelgesel",
-    "name": "TRT Belgesel",
-    "category": "Belgesel",
-    "urls": [
-      "https://tv-trtbelgesel.medya.trt.com.tr/master_1080.m3u8",
-      "https://tv-trtbelgesel.medya.trt.com.tr/master_720.m3u8",
-      "http://me.mdmfista.com:80/play/live.php?mac=00:1A:79:F5:CE:D7&stream=197441&extension=ts&play_token=2YxNaeWuvv"
-    ]
-  },
-  {
     "id": "beinmoviesaction",
     "name": "beIN Movies Action",
     "category": "Sinema & Dizi",
@@ -682,6 +612,76 @@
       "https://raw.githubusercontent.com/Elvin4K/restream/refs/heads/pro4k/1siriustv.m3u8",
       "http://me.mdmfista.com:80/play/live.php?mac=00:1A:79:F5:CE:D7&stream=1471688&extension=ts&play_token=uLYwagAIiW",
       "http://me.mdmfista.com:80/play/live.php?mac=00:1A:79:F5:CE:D7&stream=1471689&extension=ts&play_token=rlz9LlxLPS"
+    ]
+  },
+  {
+    "id": "discovery",
+    "name": "Discovery Channel",
+    "category": "Belgesel",
+    "urls": [
+      "http://me.mdmfista.com:80/play/live.php?mac=00:1A:79:F5:CE:D7&stream=197427&extension=ts&play_token=rXjLa9bDy7",
+      "http://eempiree.com:8080/Exe381SZV/jTGka52/653783?output=ts",
+      "http://eempiree.com:8080/Exe381SZV/jTGka52/643907?output=ts"
+    ]
+  },
+  {
+    "id": "dmax",
+    "name": "DMAX",
+    "category": "Belgesel",
+    "urls": [
+      "https://dogus.daioncdn.net/dmax/dmax_720p.m3u8?token=RVlMSWxlU1Exc0QzemhZaGt0UnlDWWNRVnQ1b0VMbWpHYndYRjRrM2l0Yz0=&sid=859nsaxc33ff&app=5a02c599-d17e-4982-9b04-090934d51af7&ce=3",
+      "https://dogus-live.daioncdn.net/dmax/dmax_720p.m3u8",
+      "http://me.mdmfista.com:80/play/live.php?mac=00:1A:79:F5:CE:D7&stream=197428&extension=ts&play_token=AmK9aorYxN"
+    ]
+  },
+  {
+    "id": "natgeo",
+    "name": "National Geographic",
+    "category": "Belgesel",
+    "urls": [
+      "https://saran-live.ercdn.net/natgeohd/index.m3u8",
+      "http://mag.tivi-one-iptv.net:80/play/live.php?mac=00:1A:79:C0:8F:65&stream=197433&extension=ts&play_token=vIAFFKePWW",
+      "http://me.mdmfista.com:80/play/live.php?mac=00:1A:79:F5:CE:D7&stream=197433&extension=ts&play_token=vIAFFKePWW"
+    ]
+  },
+  {
+    "id": "natgeowild",
+    "name": "Nat Geo Wild",
+    "category": "Belgesel",
+    "urls": [
+      "http://me.mdmfista.com:80/play/live.php?mac=00:1A:79:F5:CE:D7&stream=197432&extension=ts&play_token=EgZySyAGug",
+      "http://eempiree.com:8080/Exe381SZV/jTGka52/152330?output=ts",
+      "http://eempiree.com:8080/Exe381SZV/jTGka52/94153?output=ts"
+    ]
+  },
+  {
+    "id": "tarihtv",
+    "name": "Tarih TV",
+    "category": "Belgesel",
+    "urls": [
+      "https://playlist.fasttvcdn.com/pl/rfrk9821hdy9dayo8wfyha/tarih-tv/playlist.m3u8",
+      "http://me.mdmfista.com:80/play/live.php?mac=00:1A:79:F5:CE:D7&stream=197450&extension=ts&play_token=PwfkIVPsct",
+      "http://eempiree.com:8080/Exe381SZV/jTGka52/676697?output=ts"
+    ]
+  },
+  {
+    "id": "tlc",
+    "name": "TLC",
+    "category": "Belgesel",
+    "urls": [
+      "https://dogus-live.daioncdn.net/tlc/tlc_720p.m3u8",
+      "http://me.mdmfista.com:80/play/live.php?mac=00:1A:79:F5:CE:D7&stream=197429&extension=ts&play_token=K6dnYNtVcu",
+      "http://eempiree.com:8080/Exe381SZV/jTGka52/676699?output=ts"
+    ]
+  },
+  {
+    "id": "trtbelgesel",
+    "name": "TRT Belgesel",
+    "category": "Belgesel",
+    "urls": [
+      "https://tv-trtbelgesel.medya.trt.com.tr/master_1080.m3u8",
+      "https://tv-trtbelgesel.medya.trt.com.tr/master_720.m3u8",
+      "http://me.mdmfista.com:80/play/live.php?mac=00:1A:79:F5:CE:D7&stream=197441&extension=ts&play_token=2YxNaeWuvv"
     ]
   },
   {

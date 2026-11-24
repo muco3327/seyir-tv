@@ -243,7 +243,7 @@ const httpAgent = new http.Agent({ keepAlive: true, maxSockets: 100, timeout: 60
 
 
 
-const httpsAgent = new https.Agent({ keepAlive: true, maxSockets: 100, timeout: 60000 });
+const httpsAgent = new https.Agent({ keepAlive: true, maxSockets: 100, timeout: 60000, rejectUnauthorized: false });
 
 
 
@@ -267,42 +267,55 @@ let isScanning = false;
 
 
 
-function reloadChannels() {
 
+const CATEGORY_PRIORITY = {
+    'beIN Sports': 1,
+    'Spor': 2,
+    'Ulusal': 3,
+    'Haber': 4,
+    'Sinema & Dizi': 5,
+    'Belgesel': 6,
+    'Çocuk': 7,
+    'Müzik': 8
+};
 
+function sortChannels(channels) {
+    if (!Array.isArray(channels)) return [];
+    return channels.sort((a, b) => {
+        const catA = CATEGORY_PRIORITY[a.category] || 99;
+        const catB = CATEGORY_PRIORITY[b.category] || 99;
+        if (catA !== catB) return catA - catB;
 
-    try {
+        if (a.category === 'beIN Sports' && b.category === 'beIN Sports') {
+            const beinOrder = ['beinsports1', 'beinsports2', 'beinsports3', 'beinsports4', 'beinsports5', 'beinsportsmax1', 'beinsportsmax2', 'beinsportshaber'];
+            const idxA = beinOrder.indexOf(a.id);
+            const idxB = beinOrder.indexOf(b.id);
+            if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+            if (idxA !== -1) return -1;
+            if (idxB !== -1) return 1;
+        }
 
+        if (a.category === 'Spor' && b.category === 'Spor') {
+            const sporOrder = ['ssport1', 'ssport2', 'trtspor', 'trtsporyildiz', 'aspor', 'eurosport1', 'eurosport2', 'exxen1', 'exxen2', 'exxen3', 'exxen4', 'exxen5', 'smartspor1', 'smartspor2', 'tabiispor1', 'tabiispor2', 'tabiispor3', 'tivibuspor1', 'tivibuspor2', 'tivibuspor3', 'tivibuspor4', 'htspor', 'tv85', 'fbtv', 'gstv'];
+            const idxA = sporOrder.indexOf(a.id);
+            const idxB = sporOrder.indexOf(b.id);
+            if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+            if (idxA !== -1) return -1;
+            if (idxB !== -1) return 1;
+        }
 
-
-        const raw = fs.readFileSync(path.join(__dirname, 'verified_channels.json'), 'utf-8');
-
-
-
-        curatedChannels = JSON.parse(raw);
-
-
-
-        console.log(`Loaded ${curatedChannels.length} curated master channels.`);
-
-
-
-    } catch (e) {
-
-
-
-        console.error('Failed to load verified_channels.json', e.message);
-
-
-
-    }
-
-
-
+        return 0;
+    });
 }
-
-
-
+function reloadChannels() {
+    try {
+        const raw = fs.readFileSync(path.join(__dirname, 'verified_channels.json'), 'utf-8');
+        curatedChannels = sortChannels(JSON.parse(raw));
+        console.log(`Loaded ${curatedChannels.length} curated master channels (strictly sorted).`);
+    } catch (e) {
+        console.error('Failed to load verified_channels.json', e.message);
+    }
+}
 reloadChannels();
 
 
@@ -1985,109 +1998,141 @@ async function resolveJitStream(channelId, forceFresh = false) {
 
 
 
-async function fastSportsRefresh() {
+async function refreshAllChannels() {
+    if (isScanning) {
+        console.log('[UniversalRefresh] Scan already in progress, skipping duplicate.');
+        return { running: true, message: 'Tarama devam ediyor.' };
+    }
+    isScanning = true;
+    const startTime = Date.now();
+    console.log(`[UniversalRefresh] Universal health-check & token refresh started for ${curatedChannels.length} channels...`);
 
-    let changed = 0;
+    let sportsUpdated = 0;
+    let fallbackPromoted = 0;
+    const deadChannels = [];
 
-    const channelIds = Object.keys(SPORTS_RESOLVE_MAP);
-
-    await Promise.all(channelIds.map(async (cid) => {
-
-        const fresh = await resolveJitStream(cid, true);
-
-        if (fresh) changed++;
-
+    // 1. JIT Sports Refresh (beIN Sports, S Sport, TRT 1, TRT Spor, A Spor)
+    const sportsIds = Object.keys(SPORTS_RESOLVE_MAP);
+    await Promise.allSettled(sportsIds.map(async (cid) => {
+        try {
+            const fresh = await resolveJitStream(cid, true);
+            if (fresh) {
+                sportsUpdated++;
+                const ch = curatedChannels.find(c => c.id === cid);
+                if (ch && Array.isArray(ch.urls)) {
+                    if (!ch.urls.includes(fresh)) {
+                        ch.urls.unshift(fresh);
+                    } else {
+                        const idx = ch.urls.indexOf(fresh);
+                        if (idx > 0) {
+                            ch.urls.splice(idx, 1);
+                            ch.urls.unshift(fresh);
+                        }
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn(`[UniversalRefresh] JIT resolve failed for ${cid}:`, e.message);
+        }
     }));
 
-    if (changed > 0) {
+    // 2. Health-check all non-JIT channels (Ulusal, Haber, Sinema, Belgesel, Çocuk, Müzik, other sports)
+    const nonJitChannels = curatedChannels.filter(c => !SPORTS_RESOLVE_MAP[c.id]);
+    const batchSize = 8;
+    for (let i = 0; i < nonJitChannels.length; i += batchSize) {
+        const batch = nonJitChannels.slice(i, i + batchSize);
+        await Promise.allSettled(batch.map(async (ch) => {
+            const urls = ch.urls || [];
+            if (urls.length === 0) {
+                deadChannels.push(ch);
+                return;
+            }
 
-        try {
+            // Test primary candidate first
+            const primaryWorks = await testStreamUrl(urls[0], 2500);
+            if (primaryWorks) {
+                channelStatus[ch.id] = { online: true, checkedAt: Date.now(), workingCount: 1, primary: urls[0] };
+                return;
+            }
 
-            fs.writeFileSync(path.join(__dirname, 'verified_channels.json'), JSON.stringify(curatedChannels, null, 2), 'utf-8');
+            // Primary URL failed! Test backups
+            let foundWorking = false;
+            for (let uIdx = 1; uIdx < urls.length; uIdx++) {
+                const candidate = urls[uIdx];
+                const candidateWorks = await testStreamUrl(candidate, 2500);
+                if (candidateWorks) {
+                    ch.urls.splice(uIdx, 1);
+                    ch.urls.unshift(candidate);
+                    fallbackPromoted++;
+                    foundWorking = true;
+                    channelStatus[ch.id] = { online: true, checkedAt: Date.now(), workingCount: 1, primary: candidate };
+                    console.log(`[UniversalRefresh] Promoted working backup for ${ch.id} -> ${candidate.substring(0, 50)}...`);
+                    break;
+                }
+            }
 
-            manifestCache.clear();
-
-            activeChannelSources.clear();
-
-            console.log(`[FastRefresh] Updated ${changed} sports channels.`);
-
-        } catch (saveErr) {
-
-            console.error('[FastRefresh] Save error:', saveErr.message);
-
-        }
-
+            if (!foundWorking) {
+                deadChannels.push(ch);
+                channelStatus[ch.id] = { online: false, checkedAt: Date.now(), workingCount: 0, primary: urls[0] };
+            }
+        }));
     }
 
-    return changed;
+    // 3. Auto-recover dead channels from community playlists
+    if (deadChannels.length > 0) {
+        console.log(`[UniversalRefresh] ${deadChannels.length} channels offline. Attempting community auto-recovery...`);
+        try {
+            await autoRecoverDeadChannels(deadChannels);
+        } catch (discErr) {
+            console.warn('[UniversalRefresh] Auto-recovery error:', discErr.message);
+        }
+    }
 
+    // 4. Enforce strict sort order: beIN Sports -> Spor -> Ulusal -> Haber -> Sinema -> Belgesel -> Çocuk -> Müzik
+    curatedChannels = sortChannels(curatedChannels);
+
+    // 5. Persist to disk and reset memory caches
+    try {
+        fs.writeFileSync(path.join(__dirname, 'verified_channels.json'), JSON.stringify(curatedChannels, null, 2), 'utf-8');
+        manifestCache.clear();
+        activeChannelSources.clear();
+    } catch (saveErr) {
+        console.error('[UniversalRefresh] Failed to save verified_channels.json:', saveErr.message);
+    }
+
+    lastScanTime = Date.now();
+    isScanning = false;
+    const duration = ((Date.now() - startTime) / 1000).toFixed(1);
+    const onlineTotal = Object.values(channelStatus).filter(s => s && s.online).length;
+    console.log(`[UniversalRefresh] Finished in ${duration}s. Sports updated: ${sportsUpdated}, Backups promoted: ${fallbackPromoted}. Online: ${onlineTotal}/${curatedChannels.length}`);
+
+    return {
+        success: true,
+        duration: `${duration}s`,
+        total: curatedChannels.length,
+        sportsUpdated,
+        fallbackPromoted,
+        onlineTotal,
+        timestamp: Date.now()
+    };
 }
-
-
 
 let lastManualRefreshTime = 0;
 
-
-
-// Trigger on-demand channel scan & health refresh
-
-
-
+// Universal on-demand channel scan & health refresh endpoint
 app.get('/api/channels/refresh', async (req, res) => {
-
-
-
-    const now = Date.now();
-
-
-
     try {
-
-
-
-        const updated = await fastSportsRefresh();
-
-
-
+        const result = await refreshAllChannels();
         res.json({
-
-
-
             success: true,
-
-
-
-            message: `Kaynaklar yenilendi (${updated} spor kanalı canlı bağlandı).`,
-
-
-
-            count: curatedChannels.length,
-
-
-
-            timestamp: now
-
-
-
+            message: `Tüm kanallar yenilendi (80 kanal tarandı, sporlar bağlandı, yedekler güncellendi).`,
+            details: result,
+            timestamp: Date.now()
         });
-
-
-
     } catch (e) {
-
-
-
         res.status(500).json({ error: e.message });
-
-
-
     }
-
-
-
 });
-
-
 
 app.get('/api/channels' , (req, res) => {
 
@@ -3180,26 +3225,16 @@ app.get('/channel/:id.m3u8', async (req, res) => {
 
 
 
-    // 3. Fallback to JIT resolver ONLY if no verified candidate is available
-
-    if (urlsToTry.length === 0 && SPORTS_RESOLVE_MAP[channelId]) {
-
+    // 1. For sports channels with JIT, prioritize live token stream FIRST
+    if (SPORTS_RESOLVE_MAP[channelId]) {
         try {
-
             const jitUrl = await resolveJitStream(channelId, false);
-
             if (jitUrl && !isSourceCooledDown(jitUrl)) {
-
-                urlsToTry.push(jitUrl);
-
+                urlsToTry.unshift(jitUrl);
             }
-
         } catch (jitErr) {
-
             console.warn(`[JIT] Pre-fetch error for ${channelId}:`, jitErr.message);
-
         }
-
     }
 
 
@@ -3491,9 +3526,43 @@ app.get('/channel/:id.m3u8', async (req, res) => {
         } catch (e) {
 
             console.warn(`[JIT] Rapid emergency recovery failed for ${channelId}:`, e.message);
-
         }
+    }
 
+    // Universal Failover for all channels (test remaining candidate URLs)
+    for (const altUrl of (ch.urls || [])) {
+        if (!urlsToTry.includes(altUrl)) {
+            try {
+                const u = new URL(altUrl);
+                const headers = getHeadersForUrl(altUrl, u);
+                const altResp = await axios.get(altUrl, { headers, timeout: 3000, httpAgent, httpsAgent });
+                const bodyStr = altResp.data.toString('utf-8');
+                if (bodyStr.includes('#EXTM3U')) {
+                    console.log(`[Channel] Universal emergency recovery succeeded for ${channelId} with alternative URL.`);
+                    res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
+                    const manifestLines = bodyStr.split('\n');
+                    const liveSegs2 = [];
+                    const rewritten = manifestLines.map(l => {
+                        const trimmed = l.trim();
+                        if (!trimmed || trimmed.startsWith('#')) return l;
+                        try {
+                            const resolvedUrl = new URL(trimmed, altUrl).href;
+                            if (isSegmentUrl(resolvedUrl)) liveSegs2.push(resolvedUrl);
+                            return '/proxy?url=' + encodeURIComponent(resolvedUrl);
+                        } catch (err) {
+                            return l;
+                        }
+                    }).join('\n');
+                    if (liveSegs2.length > 0) {
+                        recordPlaylistOrder(liveSegs2);
+                        prefetchSegment(liveSegs2[liveSegs2.length - 1]);
+                    }
+                    markSourceSuccess(channelId, altUrl);
+                    manifestCache.set(channelId, { body: rewritten, expires: Date.now() + 3500 });
+                    return res.send(rewritten);
+                }
+            } catch (err) {}
+        }
     }
 
     const cachedManifest = manifestCache.get(channelId);
@@ -9955,157 +10024,152 @@ function normalizeChannelName(rawName) {
 
 
 function matchChannelId(rawName) {
-
-
-
     const n = normalizeChannelName(rawName);
-
-
-
     if (!n) return null;
 
-
-
+    // beIN Sports
     if (n.includes('beinsports1') || n.includes('bein1') || n.includes('beinsport1')) return 'beinsports1';
-
-
-
     if (n.includes('beinsports2') || n.includes('bein2') || n.includes('beinsport2')) return 'beinsports2';
-
-
-
     if (n.includes('beinsports3') || n.includes('bein3') || n.includes('beinsport3')) return 'beinsports3';
-
-
-
     if (n.includes('beinsports4') || n.includes('bein4') || n.includes('beinsport4')) return 'beinsports4';
-
-
-
     if (n.includes('beinsports5') || n.includes('bein5') || n.includes('beinsport5')) return 'beinsports5';
+    if (n.includes('beinmax1') || n.includes('beinsportsmax1')) return 'beinsportsmax1';
+    if (n.includes('beinmax2') || n.includes('beinsportsmax2')) return 'beinsportsmax2';
+    if (n.includes('beinsportshaber') || n.includes('beinhaber')) return 'beinsportshaber';
 
-
-
+    // Spor
     if (n.includes('ssport1') || n.includes('ssportplus') || n === 'ssport') return 'ssport1';
-
-
-
     if (n.includes('ssport2')) return 'ssport2';
-
-
-
-    if (n.includes('tivibuspor1') || n === 'tivibuspor') return 'tivibuspor1';
-
-
-
-    if (n.includes('tivibuspor2')) return 'tivibuspor2';
-
-
-
-    if (n.includes('tivibuspor3')) return 'tivibuspor3';
-
-
-
-    if (n.includes('tivibuspor4')) return 'tivibuspor4';
-
-
-
-    if (n.includes('smartspor1') || n === 'smartspor') return 'smartspor1';
-
-
-
-    if (n.includes('smartspor2')) return 'smartspor2';
-
-
-
-    if (n.includes('trtsporyildiz')) return 'trtsporyildiz';
-
-
-
+    if (n.includes('trtsporyildiz') || n.includes('trtyildiz')) return 'trtsporyildiz';
     if (n.includes('trtspor')) return 'trtspor';
-
-
-
     if (n.includes('aspor')) return 'aspor';
-
-
-
+    if (n.includes('eurosport1') || n === 'eurosport') return 'eurosport1';
+    if (n.includes('eurosport2')) return 'eurosport2';
+    if (n.includes('smartspor1') || n === 'smartspor') return 'smartspor1';
+    if (n.includes('smartspor2')) return 'smartspor2';
+    if (n.includes('tivibuspor1') || n === 'tivibuspor') return 'tivibuspor1';
+    if (n.includes('tivibuspor2')) return 'tivibuspor2';
+    if (n.includes('tivibuspor3')) return 'tivibuspor3';
+    if (n.includes('tivibuspor4')) return 'tivibuspor4';
     if (n.includes('exxen1')) return 'exxen1';
-
-
-
     if (n.includes('exxen2')) return 'exxen2';
-
-
-
     if (n.includes('exxen3')) return 'exxen3';
-
-
-
     if (n.includes('exxen4')) return 'exxen4';
-
-
-
     if (n.includes('exxen5')) return 'exxen5';
-
-
-
-    if (n.includes('exxen6')) return 'exxen6';
-
-
-
-    if (n.includes('exxen7')) return 'exxen7';
-
-
-
-    if (n.includes('exxen8')) return 'exxen8';
-
-
-
     if (n.includes('tabiispor1') || n.includes('tabispor1')) return 'tabiispor1';
-
-
-
     if (n.includes('tabiispor2') || n.includes('tabispor2')) return 'tabiispor2';
-
-
-
     if (n.includes('tabiispor3') || n.includes('tabispor3')) return 'tabiispor3';
+    if (n.includes('fbtv') || n.includes('fenerbahce')) return 'fbtv';
+    if (n.includes('gstv') || n.includes('galatasaray')) return 'gstv';
+    if (n.includes('htspor')) return 'htspor';
+    if (n.includes('tv85') || n.includes('tv8bucuk')) return 'tv85';
 
+    // Ulusal
+    if (n === 'trt1' || n === 'trt1hd') return 'trt1';
+    if (n.startsWith('atv') && !n.includes('avrupa') && !n.includes('haber')) return 'atv';
+    if (n.startsWith('kanald')) return 'kanald';
+    if (n.startsWith('showtv') || n === 'show') return 'showtv';
+    if (n.startsWith('startv') || n === 'star') return 'startv';
+    if (n.startsWith('nowtv') || n === 'now' || n.startsWith('foxtv') || n === 'fox') return 'nowtv';
+    if (n === 'tv8' || n === 'tv8hd') return 'tv8';
+    if (n.startsWith('kanal7')) return 'kanal7';
+    if (n.startsWith('beyaztv') || n === 'beyaz') return 'beyaztv';
+    if (n === 'tv360' || n === '360tv' || n === '360') return 'tv360';
+    if (n.startsWith('teve2')) return 'teve2';
 
+    // Haber
+    if (n.startsWith('ahaber')) return 'ahaber';
+    if (n.includes('cnnturk')) return 'cnnturk';
+    if (n.includes('ekoltv')) return 'ekoltv';
+    if (n.includes('haberglobal')) return 'haberglobal';
+    if (n.includes('haberturk')) return 'haberturk';
+    if (n.includes('halktv')) return 'halktv';
+    if (n.includes('kanal24') || n === '24tv') return 'kanal24';
+    if (n === 'ntv' || n === 'ntvhd') return 'ntv';
+    if (n.includes('sozcutv') || n.includes('sozcu')) return 'sozcutv';
+    if (n.includes('tele1')) return 'tele1';
+    if (n.includes('trthaber')) return 'trthaber';
+    if (n.includes('tv100')) return 'tv100';
 
-    if (n === 'trt1') return 'trt1';
+    // Belgesel
+    if (n.includes('discoverychannel') || n.includes('discovery')) return 'discovery';
+    if (n.includes('dmax')) return 'dmax';
+    if ((n.includes('natgeo') || n.includes('nationalgeographic')) && !n.includes('wild')) return 'natgeo';
+    if (n.includes('natgeowild') || n.includes('wild')) return 'natgeowild';
+    if (n.includes('tarihtv')) return 'tarihtv';
+    if (n.includes('tlc')) return 'tlc';
+    if (n.includes('trtbelgesel')) return 'trtbelgesel';
 
+    // Sinema & Dizi
+    if (n.includes('beinmoviesaction') || n.includes('moviesaction')) return 'beinmoviesaction';
+    if (n.includes('beinmoviesfamily') || n.includes('moviesfamily')) return 'beinmoviesfamily';
+    if (n.includes('beinmoviespremiere') || n.includes('moviespremiere')) return 'beinmoviespremiere';
+    if (n.includes('beinmoviesstars') || n.includes('moviesstars')) return 'beinmoviesstars';
+    if (n.includes('filmbox')) return 'filmbox';
+    if (n.includes('sinemaaile')) return 'sinemaaile';
+    if (n.includes('sinemaaksiyon')) return 'sinemaaksiyon';
+    if (n.includes('sinematv') && !n.includes('aile') && !n.includes('aksiyon')) return 'sinematv';
 
+    // Çocuk
+    if (n.includes('cartoonnetwork') || n.includes('cartoon')) return 'cartoonnetwork';
+    if (n.includes('minikacocuk')) return 'minikacocuk';
+    if (n.includes('minikago')) return 'minikago';
+    if (n.includes('trtcocuk')) return 'trtcocuk';
 
-    if (n === 'atv') return 'atv';
-
-
-
-    if (n === 'kanald') return 'kanald';
-
-
-
-    if (n === 'showtv' || n === 'show') return 'showtv';
-
-
-
-    if (n === 'startv' || n === 'star') return 'star';
-
-
-
-    if (n === 'tv8') return 'tv8';
-
-
+    // Müzik
+    if (n.includes('dreamtv')) return 'dreamtv';
+    if (n.includes('kralpop')) return 'kralpop';
+    if (n.includes('numberone') || n.includes('nr1')) return 'numberone';
+    if (n.includes('powertv')) return 'powertv';
+    if (n.includes('trtmuzik')) return 'trtmuzik';
 
     return null;
-
-
-
 }
 
+async function autoRecoverDeadChannels(deadChannelsList) {
+    if (!deadChannelsList || deadChannelsList.length === 0) return;
+    const deadIds = new Set(deadChannelsList.map(c => c.id));
+    const discovered = {};
 
+    for (const src of COMMUNITY_SOURCES) {
+        try {
+            const res = await axios.get(src.url, { timeout: 6000, httpAgent, httpsAgent });
+            const lines = res.data.toString('utf-8').split('\n');
+            let currentName = '';
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (line.startsWith('#EXTINF:')) {
+                    const commaIdx = line.indexOf(',');
+                    currentName = commaIdx !== -1 ? line.substring(commaIdx + 1).trim() : '';
+                } else if (!line.startsWith('#') && (line.startsWith('http://') || line.startsWith('https://'))) {
+                    const matchedId = matchChannelId(currentName);
+                    if (matchedId && deadIds.has(matchedId)) {
+                        const streamUrl = line.split('|')[0].trim();
+                        if (!discovered[matchedId]) discovered[matchedId] = new Set();
+                        discovered[matchedId].add(streamUrl);
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn(`[AutoRecover] Failed to fetch source ${src.name}:`, e.message);
+        }
+    }
 
+    for (const ch of deadChannelsList) {
+        const candidates = discovered[ch.id] ? Array.from(discovered[ch.id]) : [];
+        for (const candidate of candidates.slice(0, 4)) {
+            const resolved = await resolveNestedStreamUrl(candidate);
+            const works = await testStreamUrl(resolved, 2500);
+            if (works) {
+                if (!ch.urls) ch.urls = [];
+                ch.urls.unshift(resolved);
+                channelStatus[ch.id] = { online: true, checkedAt: Date.now(), workingCount: 1, primary: resolved };
+                console.log(`[AutoRecover] Successfully recovered dead channel ${ch.id} -> ${resolved.substring(0, 50)}...`);
+                break;
+            }
+        }
+    }
+}
 async function testStreamUrl(targetUrl, timeoutMs = 2500) {
 
 
@@ -10618,15 +10682,15 @@ async function scanAndRefreshChannels() {
 
 
 
-// Scanner disabled in live gateway process to preserve CPU and zero-memory leaks
+// Universal Periodic Health & Refresh (Every 10 minutes)
+setInterval(() => {
+    refreshAllChannels().catch(err => console.error('[PeriodicRefresh] Error:', err.message));
+}, 10 * 60 * 1000);
 
-
-
-// setInterval(scanAndRefreshChannels, 2 * 60 * 1000);
-
-
-
-// setTimeout(scanAndRefreshChannels, 3000);
+// Initial refresh after server startup
+setTimeout(() => {
+    refreshAllChannels().catch(err => console.error('[StartupRefresh] Error:', err.message));
+}, 5000);
 
 
 
