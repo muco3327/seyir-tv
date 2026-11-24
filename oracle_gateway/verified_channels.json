@@ -273,6 +273,7 @@
     "name": "HT Spor",
     "category": "Spor",
     "urls": [
+      "https://ciner.daioncdn.net/ht-spor/ht-spor.m3u8?app=web",
       "https://ciner-live.daioncdn.net/ht-spor/ht-spor_1080p.m3u8",
       "http://me.mdmfista.com:80/play/live.php?mac=00:1A:79:F5:CE:D7&stream=1245942&extension=ts&play_token=Zo53i3J9qC",
       "http://me.mdmfista.com:80/play/live.php?mac=00:1A:79:F5:CE:D7&stream=1245940&extension=ts&play_token=qebqaIhlw2"
