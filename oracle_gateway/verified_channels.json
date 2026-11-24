@@ -283,9 +283,9 @@
     "name": "TRT Spor",
     "category": "Spor",
     "urls": [
-      "https://trt.daioncdn.net/trtspor/master.m3u8?app=web",
-      "https://trt.daioncdn.net/trtspor/master.m3u8?app=web&platform=trtspor",
-      "http://176.65.153.35:6001/play/a020/index.m3u8"
+      "https://tv-trtspor1.medya.trt.com.tr/master_1080.m3u8",
+      "https://tv-trtspor1.medya.trt.com.tr/master_720.m3u8",
+      "https://trt.daioncdn.net/trtspor/master.m3u8?app=web"
     ]
   },
   {
@@ -393,9 +393,9 @@
     "name": "TRT 1",
     "category": "Ulusal",
     "urls": [
-      "https://trt.daioncdn.net/trt-1/master.m3u8?app=web",
       "https://tv-trt1.medya.trt.com.tr/master_1080.m3u8",
-      "http://89.187.191.41/TRT-1-HD-TR/video.m3u8"
+      "https://tv-trt1.medya.trt.com.tr/master_720.m3u8",
+      "https://trt.daioncdn.net/trt-1/master.m3u8?app=web"
     ]
   },
   {

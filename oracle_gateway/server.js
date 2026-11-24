@@ -1849,6 +1849,8 @@ const SPORTS_RESOLVE_MAP = {
 
     aspor: 'a-spor',
 
+    trt1: 'trt-1',
+
     trtspor: 'trt-spor'
 
 };
@@ -3001,6 +3003,17 @@ app.get('/channel/:id.m3u8', async (req, res) => {
 
 
 
+    // TRT Direct Bypass: CloudFront/Akamai blocks foreign cloud servers (Oracle VM) during UEFA matches.
+    // Turkish clients stream TRT directly from official CDN without proxy delay or geo-block.
+    if (channelId.startsWith('trt') || channelId === 'trt1' || channelId === 'trtspor' || channelId === 'trtspor2') {
+        const directTRT = (ch.urls || []).find(u => u.includes('medya.trt.com.tr') || u.includes('daioncdn.net')) || (ch.urls && ch.urls[0]);
+        if (directTRT) {
+            return res.redirect(directTRT);
+        }
+    }
+
+
+
     res.setHeader('Access-Control-Allow-Origin', '*');
 
 
@@ -3685,6 +3698,11 @@ app.get('/proxy', async (req, res) => {
 
     }
 
+    // TRT Direct Bypass: Never proxy geo-blocked official TRT streams through foreign Oracle VM
+    if (targetUrl.includes('medya.trt.com.tr') || targetUrl.includes('trt.daioncdn.net') || targetUrl.includes('trt.com.tr')) {
+        return res.redirect(targetUrl);
+    }
+
 
 
     const isSegment = isSegmentUrl(targetUrl);
@@ -3832,10 +3850,12 @@ app.get('/proxy', async (req, res) => {
         } catch (err) {
             try {
                 await new Promise(r => setTimeout(r, 200));
+                const retryU = new URL(targetUrl);
+                const retryHeaders = getHeadersForUrl(targetUrl, retryU);
                 const retryUpstream = await axios({
                     method: 'get',
                     url: targetUrl,
-                    headers: headers,
+                    headers: retryHeaders,
                     responseType: 'stream',
                     timeout: 10000,
                     httpAgent: httpAgent,
