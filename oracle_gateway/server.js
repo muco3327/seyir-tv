@@ -10253,14 +10253,48 @@ async function autoRecoverDeadChannels(deadChannelsList) {
     }));
 }
 
-// Universal Periodic Health & Refresh (Every 10 minutes)
-setInterval(() => {
-    refreshAllChannels().catch(err => console.error('[PeriodicRefresh] Error:', err.message));
-}, 10 * 60 * 1000);
+// Dynamic Universal Periodic Health & Refresh
+// Peak hours (16:00 - 23:59 Turkey time): Every 3 minutes
+// Off-peak hours (00:00 - 15:59 Turkey time): Every 15 minutes
+function getTurkeyHour() {
+    const formatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Europe/Istanbul',
+        hour: 'numeric',
+        hour12: false
+    });
+    const parsed = parseInt(formatter.format(new Date()), 10);
+    return parsed === 24 ? 0 : parsed;
+}
 
-// Initial refresh after server startup
-setTimeout(() => {
-    refreshAllChannels().catch(err => console.error('[StartupRefresh] Error:', err.message));
+function scheduleNextUniversalRefresh() {
+    const trHour = getTurkeyHour();
+    const isPeak = trHour >= 16 && trHour <= 23;
+    const intervalMs = isPeak ? (3 * 60 * 1000) : (15 * 60 * 1000);
+    const intervalMin = isPeak ? 3 : 15;
+    console.log(`[ScheduledRefresh] Next scan in ${intervalMin}m (Mode: ${isPeak ? 'PEAK 16-24 (3m)' : 'OFF-PEAK (15m)'}, TR: ${trHour}:00).`);
+
+    setTimeout(async () => {
+        try {
+            console.log(`[ScheduledRefresh] Triggering scan... (TR Hour: ${getTurkeyHour()}:00)`);
+            await refreshAllChannels();
+        } catch (err) {
+            console.error('[ScheduledRefresh] Error:', err.message);
+        } finally {
+            scheduleNextUniversalRefresh();
+        }
+    }, intervalMs);
+}
+
+// Initial refresh after server startup (5s) then start dynamic scheduler
+setTimeout(async () => {
+    try {
+        console.log('[StartupRefresh] Running initial startup refresh...');
+        await refreshAllChannels();
+    } catch (err) {
+        console.error('[StartupRefresh] Error:', err.message);
+    } finally {
+        scheduleNextUniversalRefresh();
+    }
 }, 5000);
 
 
