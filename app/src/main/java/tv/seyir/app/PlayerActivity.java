@@ -1637,11 +1637,11 @@ public final class PlayerActivity extends Activity {
                 item.setMimeType(MimeTypes.APPLICATION_M3U8);
                 if (title != null && title.source == Source.SPORTS) {
                     item.setLiveConfiguration(new MediaItem.LiveConfiguration.Builder()
-                        .setTargetOffsetMs(4000)
-                        .setMinOffsetMs(2000)
-                        .setMaxOffsetMs(8000)
-                        .setMinPlaybackSpeed(0.97f)
-                        .setMaxPlaybackSpeed(1.03f)
+                        .setTargetOffsetMs(12000)
+                        .setMinOffsetMs(6000)
+                        .setMaxOffsetMs(25000)
+                        .setMinPlaybackSpeed(1.0f)
+                        .setMaxPlaybackSpeed(1.0f)
                         .build());
                 }
             } else if (isRawTs) {
@@ -1825,13 +1825,13 @@ public final class PlayerActivity extends Activity {
 
                 .setBufferDurationsMs(
 
-                    8_000,
+                    15_000,
 
-                    35_000,
+                    50_000,
 
-                    1_500,
+                    2_500,
 
-                    2_500
+                    4_000
 
                 )
 
@@ -2023,11 +2023,11 @@ public final class PlayerActivity extends Activity {
 
                     item.setLiveConfiguration(new MediaItem.LiveConfiguration.Builder()
 
-                        .setTargetOffsetMs(4000)
-                        .setMinOffsetMs(2000)
-                        .setMaxOffsetMs(8000)
-                        .setMinPlaybackSpeed(0.97f)
-                        .setMaxPlaybackSpeed(1.03f)
+                        .setTargetOffsetMs(12000)
+                        .setMinOffsetMs(6000)
+                        .setMaxOffsetMs(25000)
+                        .setMinPlaybackSpeed(1.0f)
+                        .setMaxPlaybackSpeed(1.0f)
 
                         .build());
 
