@@ -1,6 +1,6 @@
 {
-  "versionCode": 94,
-  "versionName": "0.5.51",
-  "changelog": "Profesyonel Yayıncı Motoru ve Hızlı Zapping (v0.5.51):\n1. Sıcak Decoder Kanal Değişimi: Player'ı yok etmeden anlık kanal değişimi (<800ms) sağlandı.\n2. Profesyonel Canlı Uç Takibi (Live Catch-up): MediaItem.LiveConfiguration ile 4s hedef gecikme ve kulak fark etmeyen %3 pitch-neutral hız ayarı entegre edildi.\n3. Android TV / Kumanda D-Pad İyileştirmesi: Sol/Sağ 10s geri/ileri sarma, Yukarı/Aşağı doğrudan kanal değiştirme, Orta (OK) tuşuna uzun basarak anında kanal rehberini açma eklendi.",
-  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.51.apk"
+  "versionCode": 95,
+  "versionName": "0.5.52",
+  "changelog": "Canlı Yayın Tampon (Buffer) ve Donma Düzeltmesi (v0.5.52):\n1. Canlı yayın hedef gecikmesi 4s -> 12s (6s-25s aralığı) yapılarak 30-40 sn'deki mikro donmalar ve 'Yükleniyor' takılmaları giderildi.\n2. ExoPlayer tampon süresi 8s -> 15s (max 50s) artırıldı, hızlandırma/yavaşlatma titremesi kaldırıldı.",
+  "apkUrl": "https://raw.githubusercontent.com/muco3327/seyir-tv/main/dist/Seyir-TV-0.5.52.apk"
 }
